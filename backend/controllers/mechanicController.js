@@ -1,92 +1,56 @@
-const MechanicService = require('../services/mechanicService');
+const mechanicService = require('../services/mechanicService');
 
-exports.listMechanics = (req, res, next) => {
+exports.listMechanics = async (req, res, next) => {
   try {
-    const mechanics = MechanicService.list();
-    res.json(mechanics);
-  } catch (err) {
-    next(err);
-  }
+    res.json(await mechanicService.list());
+  } catch (err) { next(err); }
 };
 
-exports.getMechanic = (req, res, next) => {
+exports.getMechanic = async (req, res, next) => {
   try {
-    const mechanic = MechanicService.findById(req.params.id);
-    if (!mechanic) return res.status(404).json({ error: 'Mechanic not found' });
-    res.json(mechanic);
-  } catch (err) {
-    next(err);
-  }
+    const m = await mechanicService.findById(req.params.id);
+    if (!m) return res.status(404).json({ error: 'Mechanic not found' });
+    res.json(m);
+  } catch (err) { next(err); }
 };
 
-exports.createMechanic = (req, res, next) => {
+exports.getMechanicProfile = async (req, res, next) => {
   try {
-    const created = MechanicService.create(req.body);
-    res.status(201).json(created);
-  } catch (err) {
-    next(err);
-  }
+    const profile = await mechanicService.getProfile(req.params.id);
+    if (!profile) return res.status(404).json({ error: 'Mechanic not found' });
+    res.json(profile);
+  } catch (err) { next(err); }
 };
 
-exports.updateMechanic = (req, res, next) => {
-    try {
-        const mechanic = MechanicService.findById(req.params.id);
-        if (!mechanic) return res.status(404).json({ error: 'Mechanic not found' });
-        const updated = MechanicService.update(req.params.id, req.body);
-        res.json(updated);
-    } catch (err) {
-        next(err);
-    }
+exports.updateMechanic = async (req, res, next) => {
+  try {
+    const updated = await mechanicService.update(req.params.id, req.body);
+    if (!updated) return res.status(404).json({ error: 'Mechanic not found' });
+    res.json(updated);
+  } catch (err) { next(err); }
 };
 
-exports.deleteMechanic = (req, res, next) => {
-    try {
-        const mechanic = MechanicService.findById(req.params.id);
-        if (!mechanic) return res.status(404).json({ error: 'Mechanic not found' });
-        MechanicService.delete(req.params.id);
-        res.status(204).send();
-    } catch (err) {
-        next(err);
-    }
+exports.deleteMechanic = async (req, res, next) => {
+  try {
+    await mechanicService.delete(req.params.id);
+    res.status(204).send();
+  } catch (err) { next(err); }
 };
 
-exports.searchMechanics = (req, res, next) => {
-    try {
-        const { query } = req.query;
-        const results = MechanicService.search(query);
-        res.json(results);
-    } catch (err) {
-        next(err);
-    }
+exports.searchMechanics = async (req, res, next) => {
+  try {
+    res.json(await mechanicService.search(req.query.query || ''));
+  } catch (err) { next(err); }
 };
 
-exports.filterMechanics = (req, res, next) => {
-    try {
-        const { specialty, location } = req.query;
-        const results = MechanicService.filter({ specialty, location });
-        res.json(results);
-    } catch (err) {
-        next(err);
-    }
+exports.filterMechanics = async (req, res, next) => {
+  try {
+    res.json(await mechanicService.filter(req.query));
+  } catch (err) { next(err); }
 };
 
-exports.findNearbyMechanics = (req, res, next) => {
-    try {
-        const { lat, lng } = req.query;
-        const results = MechanicService.findNearby(lat, lng);
-        res.json(results);
-    } catch (err) {
-        next(err);
-    }
+exports.findNearbyMechanics = async (req, res, next) => {
+  try {
+    res.json(await mechanicService.findNearby(req.query.lat, req.query.lng));
+  } catch (err) { next(err); }
 };
-
-exports.getMechanicProfile = (req, res, next) => {
-    try {
-        const mechanic = MechanicService.findById(req.params.id);
-        if (!mechanic) return res.status(404).json({ error: 'Mechanic not found' });
-        res.json(mechanic);
-    } catch (err) {
-        next(err);
-    }
-};
-

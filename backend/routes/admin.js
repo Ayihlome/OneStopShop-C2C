@@ -1,15 +1,19 @@
-import express from 'express';
-import amdinController from '../controllers/adminController';
-
+const express = require('express');
 const router = express.Router();
+const c = require('../controllers/adminController');
+const { authenticate, requireRole } = require('../middleware/auth');
 
-router.get('/dashboard', amdinController.getDashboard);
-router.get('/users', amdinController.listUsers);
-router.get('/users/:id', amdinController.getUser);
-router.delete('/users/:id', amdinController.deleteUser);
-router.get('/mechanics', amdinController.listMechanics);
-router.get('/mechanics/:id', amdinController.getMechanic);
-router.delete('/mechanics/:id', amdinController.deleteMechanic);
-router.get('/reports', amdinController.listReports);
-router.get('/reports/:id', amdinController.getReport);
-router.delete('/reports/:id', amdinController.deleteReport);
+const isMod = [authenticate, requireRole('superadmin', 'moderator')];
+const isSuperAdmin = [authenticate, requireRole('superadmin')];
+
+router.get('/dashboard',              ...isMod,        c.dashboard);
+router.get('/users',                  ...isMod,        c.listUsers);
+router.delete('/users/:id',           ...isSuperAdmin, c.deleteUser);
+router.get('/mechanics',              ...isMod,        c.listMechanics);
+router.delete('/mechanics/:id',       ...isSuperAdmin, c.deleteMechanic);
+router.patch('/mechanics/:id/verify', ...isSuperAdmin, c.verifyMechanic);
+router.patch('/accounts/:id/suspend', ...isSuperAdmin, c.suspendAccount);
+router.get('/reports',                ...isMod,        c.listReports);
+router.delete('/reports/:id',         ...isSuperAdmin, c.deleteReport);
+
+module.exports = router;
