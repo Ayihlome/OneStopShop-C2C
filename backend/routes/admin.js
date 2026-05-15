@@ -15,5 +15,8 @@ router.patch('/mechanics/:id/verify', ...isSuperAdmin, c.verifyMechanic);
 router.patch('/accounts/:id/suspend', ...isSuperAdmin, c.suspendAccount);
 router.get('/reports',                ...isMod,        c.listReports);
 router.delete('/reports/:id',         ...isSuperAdmin, c.deleteReport);
+router.get('/admin/documents',      ...isMod,        c.listDocuments);
+router.patch('/admin/documents/:id/approve', ...isSuperAdmin, c.approveDocument);
+router.patch('/admin/documents/:id/reject',  ...isSuperAdmin, c.rejectDocument);
 
 module.exports = router;

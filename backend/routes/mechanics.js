@@ -11,5 +11,6 @@ router.get('/:id',         c.getMechanic);
 router.get('/:id/profile', c.getMechanicProfile);
 router.put('/:id',         authenticate, c.updateMechanic);
 router.delete('/:id',      authenticate, requireRole('superadmin'), c.deleteMechanic);
+router.post('/mechanics/documents', authenticate, c.uploadDocuments);
 
 module.exports = router;

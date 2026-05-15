@@ -4,11 +4,15 @@ const config = require('./config');
 const routes = require('./routes');
 const requestLogger = require('./middleware/requestLogger');
 const errorHandler = require('./middleware/errorHandler');
+const helmet = require('helmet');
+const cors = require('cors');
 
 const app = express();
 
 app.use(express.json());
 app.use(requestLogger);
+app.use(helmet());
+app.use(cors({ origin: ['http://localhost:3001'], credentials: true }));
 
 app.use('/api', routes);
 
