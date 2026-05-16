@@ -131,32 +131,32 @@ export default function MechanicProfileSetup() {
   );
 
   return (
-    <Layout className="bg-[#f8f9fa]" variant="onboarding">
+    <Layout className="bg-[#5B360B]" variant="onboarding">
       <section className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[0.85fr_1.15fr] lg:px-8 lg:py-14">
         <aside className="space-y-5">
           <Button
-            className="px-0 text-[#00346f]"
+            className="px-0 text-[#010813]"
             onClick={() => navigate("/signup")}
             variant="link"
           >
             <ArrowLeft className="size-4" />
             Back to signup
           </Button>
-          <div className="rounded-lg bg-[#00346f] p-6 text-white">
+          <div className="rounded-lg bg-[#010813] p-6 text-white">
             <Wrench className="mb-6 size-10" />
             <h1 className="text-3xl font-semibold">
               Build your mechanic profile
             </h1>
-            <p className="mt-3 text-sm text-blue-100">
+            <p className="mt-3 text-sm text-[#5B360B]">
               Set up the business details drivers will use to evaluate your
               services before verification.
             </p>
           </div>
-          <Card className="rounded-lg bg-white">
+          <Card className="rounded-lg bg-[#FAD775]">
             <CardHeader>
               <CardTitle className="text-lg">Setup checklist</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 text-sm text-slate-600">
+            <CardContent className="space-y-3 text-sm text-[#362007]">
               <p>Business details</p>
               <p>Specialties and bio</p>
               <p>Verification review</p>
@@ -167,7 +167,7 @@ export default function MechanicProfileSetup() {
         <Card className="rounded-lg shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-2xl">
-              <BriefcaseBusiness className="size-5 text-[#00346f]" />
+              <BriefcaseBusiness className="size-5 text-[#010813]" />
               Mechanic details
             </CardTitle>
             <CardDescription>
@@ -196,8 +196,8 @@ export default function MechanicProfileSetup() {
                       <button
                         className={`rounded-md border px-3 py-2 text-sm transition ${
                           active
-                            ? "border-[#00346f] bg-[#00346f] text-white"
-                            : "bg-white text-slate-700 hover:border-slate-300"
+                            ? "border-[#010813] bg-[#010813] text-white"
+                            : "bg-[#FAD775] text-[#010813] hover:border-[#362007]"
                         }`}
                         key={specialty}
                         onClick={() => toggleSpecialty(specialty)}
@@ -229,7 +229,7 @@ export default function MechanicProfileSetup() {
 
               <div className="flex flex-wrap gap-2">
                 {form.specialties.map((specialty) => (
-                  <Badge className="bg-[#00346f] text-white" key={specialty}>
+                  <Badge className="bg-[#010813] text-white" key={specialty}>
                     {specialty}
                   </Badge>
                 ))}
@@ -244,7 +244,7 @@ export default function MechanicProfileSetup() {
                   Back
                 </Button>
                 <Button
-                  className="bg-[#00346f] text-white hover:bg-[#002b5c]"
+                  className="bg-[#010813] text-white hover:bg-[#362007]"
                   type="submit"
                 >
                   Continue to verification

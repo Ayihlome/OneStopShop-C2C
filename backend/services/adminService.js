@@ -1,6 +1,8 @@
 const pool = require('../db/pool');
 const userService = require('./userService');
 const mechanicService = require('./mechanicService');
+const logger = require('../utils/logger');
+const { errorMeta } = require('../utils/logging');
 const { sanitize } = require('../utils/sanitize');
 const { createError } = require('../utils/errors');
 
@@ -42,6 +44,13 @@ async function getDashboardStats() {
     ),
   ]);
 
+  logger.debug('Admin dashboard stats loaded', {
+    totalUsers,
+    totalMechanics,
+    activeBookings,
+    pendingVerifications,
+  });
+
   return {
     total_users: totalUsers,
     total_mechanics: totalMechanics,
@@ -69,6 +78,10 @@ async function listPendingDocuments() {
      ORDER BY md.created_at ASC`
   );
 
+  logger.debug('Pending mechanic documents listed', {
+    count: result.rowCount,
+  });
+
   return sanitize(result.rows);
 }
 
@@ -90,6 +103,10 @@ async function approveDocument(id, adminId) {
     const document = documentResult.rows[0];
 
     if (!document) {
+      logger.warn('Document approval failed because document was not found', {
+        documentId: id,
+        adminId,
+      });
       throw createError(404, 'Document not found');
     }
 
@@ -101,9 +118,20 @@ async function approveDocument(id, adminId) {
     );
 
     await client.query('COMMIT');
+    logger.info('Mechanic document approved', {
+      documentId: id,
+      mechanicId: document.mechanic_id,
+      adminId,
+    });
+
     return sanitize(document);
   } catch (error) {
     await client.query('ROLLBACK');
+    logger.error('Document approval rolled back', {
+      ...errorMeta(error, { includeStack: true }),
+      documentId: id,
+      adminId,
+    });
     throw error;
   } finally {
     client.release();
@@ -122,8 +150,18 @@ async function rejectDocument(id, adminId) {
   );
 
   if (!result.rows[0]) {
+    logger.warn('Document rejection failed because document was not found', {
+      documentId: id,
+      adminId,
+    });
     throw createError(404, 'Document not found');
   }
+
+  logger.info('Mechanic document rejected', {
+    documentId: id,
+    mechanicId: result.rows[0].mechanic_id,
+    adminId,
+  });
 
   return sanitize(result.rows[0]);
 }
@@ -133,7 +171,11 @@ async function listUsers() {
 }
 
 async function deleteUser(id) {
-  return userService.deleteUser(id);
+  const deleted = await userService.deleteUser(id);
+  logger.info('User deleted by admin service', {
+    userId: id,
+  });
+  return deleted;
 }
 
 async function listMechanics() {
@@ -141,15 +183,27 @@ async function listMechanics() {
 }
 
 async function deleteMechanic(id) {
-  return mechanicService.deleteMechanic(id);
+  const deleted = await mechanicService.deleteMechanic(id);
+  logger.info('Mechanic deleted by admin service', {
+    mechanicId: id,
+  });
+  return deleted;
 }
 
 async function verifyMechanic(id) {
-  return mechanicService.verifyMechanic(id);
+  const verified = await mechanicService.verifyMechanic(id);
+  logger.info('Mechanic verified by admin service', {
+    mechanicId: id,
+  });
+  return verified;
 }
 
 async function suspendAccount(id) {
-  return userService.suspendAccount(id);
+  const suspended = await userService.suspendAccount(id);
+  logger.info('Account suspended by admin service', {
+    accountId: id,
+  });
+  return suspended;
 }
 
 module.exports = {

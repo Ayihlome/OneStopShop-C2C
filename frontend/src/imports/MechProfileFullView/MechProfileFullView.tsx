@@ -83,10 +83,10 @@ export default function MechProfileFullView() {
   );
 
   return (
-    <Layout className="bg-[#f8f9fa]" variant="app">
+    <Layout className="bg-[#5B360B]" variant="app">
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <Button
-          className="mb-6 px-0 text-[#00346f]"
+          className="mb-6 px-0 text-[#010813]"
           onClick={() => navigate("/find-mechanic")}
           variant="link"
         >
@@ -95,11 +95,11 @@ export default function MechProfileFullView() {
         </Button>
 
         <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <Card className="rounded-lg bg-white">
+          <Card className="rounded-lg bg-[#FAD775]">
             <CardHeader>
               <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
                 <Avatar className="size-20">
-                  <AvatarFallback className="bg-[#00346f] text-xl text-white">
+                  <AvatarFallback className="bg-[#010813] text-xl text-white">
                     {mechanic.name
                       .split(" ")
                       .map((part) => part[0])
@@ -109,7 +109,7 @@ export default function MechProfileFullView() {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     {mechanic.verified && (
-                      <Badge className="bg-[#00346f] text-white">
+                      <Badge className="bg-[#010813] text-white">
                         <CheckCircle2 className="size-3" />
                         Verified
                       </Badge>
@@ -127,21 +127,21 @@ export default function MechProfileFullView() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid gap-4 sm:grid-cols-3">
-                <div className="rounded-md bg-[#f8f9fa] p-4">
-                  <MapPin className="mb-2 size-4 text-[#00346f]" />
-                  <p className="text-sm text-slate-500">Location</p>
+                <div className="rounded-md bg-[#5B360B] p-4">
+                  <MapPin className="mb-2 size-4 text-[#010813]" />
+                  <p className="text-sm text-[#362007]">Location</p>
                   <p className="font-medium">{mechanic.location}</p>
                 </div>
-                <div className="rounded-md bg-[#f8f9fa] p-4">
-                  <Star className="mb-2 size-4 fill-[#00346f] text-[#00346f]" />
-                  <p className="text-sm text-slate-500">Rating</p>
+                <div className="rounded-md bg-[#5B360B] p-4">
+                  <Star className="mb-2 size-4 fill-[#010813] text-[#010813]" />
+                  <p className="text-sm text-[#362007]">Rating</p>
                   <p className="font-medium">
                     {mechanic.rating} ({mechanic.reviewCount})
                   </p>
                 </div>
-                <div className="rounded-md bg-[#f8f9fa] p-4">
-                  <CalendarPlus className="mb-2 size-4 text-[#00346f]" />
-                  <p className="text-sm text-slate-500">Availability</p>
+                <div className="rounded-md bg-[#5B360B] p-4">
+                  <CalendarPlus className="mb-2 size-4 text-[#010813]" />
+                  <p className="text-sm text-[#362007]">Availability</p>
                   <p className="font-medium">Weekdays</p>
                 </div>
               </div>
@@ -150,7 +150,7 @@ export default function MechProfileFullView() {
 
               <div>
                 <h2 className="text-xl font-semibold">About</h2>
-                <p className="mt-3 leading-7 text-slate-600">{mechanic.bio}</p>
+                <p className="mt-3 leading-7 text-[#362007]">{mechanic.bio}</p>
               </div>
 
               <div>
@@ -167,7 +167,7 @@ export default function MechProfileFullView() {
           </Card>
 
           <div className="space-y-6">
-            <Card className="rounded-lg bg-white">
+            <Card className="rounded-lg bg-[#FAD775]">
               <CardHeader>
                 <CardTitle>Request service</CardTitle>
                 <CardDescription>
@@ -176,7 +176,7 @@ export default function MechProfileFullView() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button
-                  className="w-full bg-[#00346f] text-white hover:bg-[#002b5c]"
+                  className="w-full bg-[#010813] text-white hover:bg-[#362007]"
                   onClick={() => setStatus("Service request drafted locally.")}
                 >
                   <CalendarPlus className="size-4" />
@@ -190,18 +190,18 @@ export default function MechProfileFullView() {
                   <MessageSquare className="size-4" />
                   Contact mechanic
                 </Button>
-                {status && <p className="text-sm text-[#00346f]">{status}</p>}
+                {status && <p className="text-sm text-[#010813]">{status}</p>}
               </CardContent>
             </Card>
 
-            <Card className="rounded-lg bg-white">
+            <Card className="rounded-lg bg-[#FAD775]">
               <CardHeader>
                 <CardTitle>Recent reviews</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {reviews.map((review) => (
                   <div className="rounded-md border p-4" key={review.name}>
-                    <div className="mb-2 flex gap-1 text-[#00346f]">
+                    <div className="mb-2 flex gap-1 text-[#010813]">
                       {Array.from({ length: 5 }).map((_, index) => (
                         <Star
                           className="size-4 fill-current"
@@ -209,7 +209,7 @@ export default function MechProfileFullView() {
                         />
                       ))}
                     </div>
-                    <p className="text-sm text-slate-600">{review.text}</p>
+                    <p className="text-sm text-[#362007]">{review.text}</p>
                     <p className="mt-2 text-sm font-medium">{review.name}</p>
                   </div>
                 ))}

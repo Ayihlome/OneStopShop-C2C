@@ -2,6 +2,8 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('../db/pool');
 const config = require('../config');
+const logger = require('../utils/logger');
+const { errorMeta } = require('../utils/logging');
 const { sanitize } = require('../utils/sanitize');
 const { createError } = require('../utils/errors');
 
@@ -49,6 +51,9 @@ async function createAccount(client, input) {
 
 function handleUniqueEmail(error) {
   if (error.code === '23505') {
+    logger.warn('Signup rejected because account email already exists', {
+      ...errorMeta(error),
+    });
     throw createError(409, 'An account with this email already exists');
   }
 
@@ -71,6 +76,11 @@ async function signupUser(input) {
     await client.query('COMMIT');
 
     const user = sanitize({ ...account, role: 'user' });
+    logger.info('User signup completed', {
+      userId: user.id,
+      role: user.role,
+    });
+
     return {
       user,
       token: signToken(user),
@@ -108,6 +118,12 @@ async function signupMechanic(input) {
     await client.query('COMMIT');
 
     const mechanic = sanitize({ ...account, role: 'mechanic' });
+    logger.info('Mechanic signup completed', {
+      userId: mechanic.id,
+      mechanicId: mechanic.id,
+      role: mechanic.role,
+    });
+
     return {
       user: mechanic,
       token: signToken(mechanic),
@@ -143,20 +159,38 @@ async function loginAccount(email, password, expectedRole) {
   const account = await findAccountByEmail(email);
 
   if (!account || account.role !== expectedRole) {
+    logger.warn('Login rejected because credentials or role were invalid', {
+      expectedRole,
+      actualRole: account?.role || null,
+    });
     throw createError(401, 'Invalid email or password');
   }
 
   if (account.status !== 'active') {
+    logger.warn('Login rejected because account is not active', {
+      userId: account.id,
+      role: account.role,
+      status: account.status,
+    });
     throw createError(403, 'Account is not active');
   }
 
   const isPasswordValid = await bcrypt.compare(password, account.password_hash);
 
   if (!isPasswordValid) {
+    logger.warn('Login rejected because password was invalid', {
+      userId: account.id,
+      role: account.role,
+    });
     throw createError(401, 'Invalid email or password');
   }
 
   const user = sanitize(account);
+  logger.info('Login completed', {
+    userId: user.id,
+    role: user.role,
+  });
+
   return {
     user,
     token: signToken(user),
@@ -173,16 +207,28 @@ async function loginAdmin(email, password) {
   const admin = result.rows[0];
 
   if (!admin) {
+    logger.warn('Admin login rejected because credentials were invalid', {
+      role: 'admin',
+    });
     throw createError(401, 'Invalid email or password');
   }
 
   const isPasswordValid = await bcrypt.compare(password, admin.password_hash);
 
   if (!isPasswordValid) {
+    logger.warn('Admin login rejected because password was invalid', {
+      adminId: admin.id,
+      role: admin.role,
+    });
     throw createError(401, 'Invalid email or password');
   }
 
   const user = sanitize(admin);
+  logger.info('Admin login completed', {
+    adminId: user.id,
+    role: user.role,
+  });
+
   return {
     user,
     token: signToken(user),

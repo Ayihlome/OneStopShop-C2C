@@ -1,4 +1,5 @@
 const pool = require('../db/pool');
+const logger = require('../utils/logger');
 const { sanitize } = require('../utils/sanitize');
 const { createError } = require('../utils/errors');
 
@@ -10,6 +11,10 @@ async function listUsers() {
      WHERE a.status <> 'deleted'
      ORDER BY a.created_at DESC`
   );
+
+  logger.debug('Users listed', {
+    count: result.rowCount,
+  });
 
   return sanitize(result.rows);
 }
@@ -24,6 +29,9 @@ async function getUser(accountId) {
   );
 
   if (!result.rows[0]) {
+    logger.warn('User lookup failed because user was not found', {
+      userId: accountId,
+    });
     throw createError(404, 'User not found');
   }
 
@@ -54,8 +62,16 @@ async function updateUser(accountId, input) {
   );
 
   if (!result.rows[0]) {
+    logger.warn('User update failed because user was not found', {
+      userId: accountId,
+    });
     throw createError(404, 'User not found');
   }
+
+  logger.info('User profile updated', {
+    userId: accountId,
+    updatedFields: Object.keys(input).filter((key) => input[key] !== undefined),
+  });
 
   return sanitize(result.rows[0]);
 }
@@ -70,8 +86,15 @@ async function deleteUser(accountId) {
   );
 
   if (!result.rows[0]) {
+    logger.warn('User deletion failed because user was not found', {
+      userId: accountId,
+    });
     throw createError(404, 'User not found');
   }
+
+  logger.info('User account deleted', {
+    userId: accountId,
+  });
 
   return sanitize(result.rows[0]);
 }
@@ -86,8 +109,16 @@ async function suspendAccount(accountId) {
   );
 
   if (!result.rows[0]) {
+    logger.warn('Account suspension failed because account was not found', {
+      accountId,
+    });
     throw createError(404, 'Account not found');
   }
+
+  logger.info('Account suspended', {
+    accountId,
+    status: result.rows[0].status,
+  });
 
   return sanitize(result.rows[0]);
 }

@@ -22,6 +22,7 @@ app.use(
         return callback(null, true);
       }
 
+      logger.warn('CORS origin rejected', { origin });
       return callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
@@ -38,6 +39,15 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many auth attempts. Please try again later.' },
+  handler(req, res) {
+    logger.warn('Auth rate limit exceeded', {
+      method: req.method,
+      url: req.originalUrl,
+      ip: req.ip,
+    });
+
+    return res.status(429).json({ error: 'Too many auth attempts. Please try again later.' });
+  },
 });
 
 app.use('/api/auth', authLimiter);
@@ -45,6 +55,12 @@ app.use('/api', trackVisit);
 app.use('/api', routes);
 
 app.use((req, res) => {
+  logger.warn('Route not found', {
+    method: req.method,
+    url: req.originalUrl,
+    ip: req.ip,
+  });
+
   res.status(404).json({ error: 'Route not found' });
 });
 

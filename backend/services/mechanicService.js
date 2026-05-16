@@ -1,4 +1,6 @@
 const pool = require('../db/pool');
+const logger = require('../utils/logger');
+const { errorMeta } = require('../utils/logging');
 const { sanitize } = require('../utils/sanitize');
 const { createError } = require('../utils/errors');
 
@@ -64,6 +66,10 @@ async function listMechanics() {
      ORDER BY m.verification_badge DESC, a.created_at DESC`
   );
 
+  logger.debug('Mechanics listed', {
+    count: result.rowCount,
+  });
+
   return sanitize(result.rows.map(withWhatsappUrl));
 }
 
@@ -76,6 +82,9 @@ async function getMechanic(accountId) {
   );
 
   if (!result.rows[0]) {
+    logger.warn('Mechanic lookup failed because mechanic was not found', {
+      mechanicId: accountId,
+    });
     throw createError(404, 'Mechanic not found');
   }
 
@@ -104,6 +113,11 @@ async function searchMechanics(query) {
     [search]
   );
 
+  logger.debug('Mechanic search completed', {
+    count: result.rowCount,
+    hasQuery: Boolean(query),
+  });
+
   return sanitize(result.rows.map(withWhatsappUrl));
 }
 
@@ -128,6 +142,14 @@ async function filterMechanics(filters) {
      ORDER BY m.verification_badge DESC, average_rating DESC`,
     values
   );
+
+  logger.debug('Mechanic filter completed', {
+    count: result.rowCount,
+    filters: {
+      hasCity: Boolean(filters.city),
+      hasSpecialty: Boolean(filters.specialty),
+    },
+  });
 
   return sanitize(result.rows.map(withWhatsappUrl));
 }
@@ -172,6 +194,11 @@ async function findNearby(lat, lng) {
      LIMIT 25`,
     [lat, lng]
   );
+
+  logger.debug('Nearby mechanics lookup completed', {
+    count: result.rowCount,
+    hasCoordinates: lat !== undefined && lng !== undefined,
+  });
 
   return sanitize(result.rows.map(withWhatsappUrl));
 }
@@ -260,15 +287,27 @@ async function update(accountId, input) {
     );
 
     if (!mechanicUpdate.rows[0]) {
+      logger.warn('Mechanic update failed because mechanic was not found', {
+        mechanicId: accountId,
+      });
       throw createError(404, 'Mechanic not found');
     }
 
     await syncSpecialities(client, accountId, input.specialities);
     await client.query('COMMIT');
 
+    logger.info('Mechanic profile updated', {
+      mechanicId: accountId,
+      updatedFields: Object.keys(input).filter((key) => input[key] !== undefined),
+    });
+
     return getMechanic(accountId);
   } catch (error) {
     await client.query('ROLLBACK');
+    logger.error('Mechanic update rolled back', {
+      ...errorMeta(error, { includeStack: true }),
+      mechanicId: accountId,
+    });
     throw error;
   } finally {
     client.release();
@@ -277,6 +316,10 @@ async function update(accountId, input) {
 
 async function uploadDocument(mechanicId, docType, file) {
   if (!file) {
+    logger.warn('Document upload rejected because file is missing', {
+      mechanicId,
+      docType,
+    });
     throw createError(400, 'Document file is required');
   }
 
@@ -286,6 +329,12 @@ async function uploadDocument(mechanicId, docType, file) {
      RETURNING *`,
     [mechanicId, docType, `/uploads/documents/${file.filename}`]
   );
+
+  logger.info('Mechanic document uploaded', {
+    mechanicId,
+    documentId: result.rows[0].id,
+    docType,
+  });
 
   return sanitize(result.rows[0]);
 }
@@ -300,8 +349,15 @@ async function deleteMechanic(accountId) {
   );
 
   if (!result.rows[0]) {
+    logger.warn('Mechanic deletion failed because mechanic was not found', {
+      mechanicId: accountId,
+    });
     throw createError(404, 'Mechanic not found');
   }
+
+  logger.info('Mechanic account deleted', {
+    mechanicId: accountId,
+  });
 
   return sanitize(result.rows[0]);
 }
@@ -316,8 +372,15 @@ async function verifyMechanic(accountId) {
   );
 
   if (!result.rows[0]) {
+    logger.warn('Mechanic verification failed because mechanic was not found', {
+      mechanicId: accountId,
+    });
     throw createError(404, 'Mechanic not found');
   }
+
+  logger.info('Mechanic verified', {
+    mechanicId: accountId,
+  });
 
   return getMechanic(accountId);
 }

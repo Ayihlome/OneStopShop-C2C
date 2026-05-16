@@ -17,11 +17,11 @@ export default function DriverEmailVerification() {
   const navigate = useNavigate();
 
   return (
-    <Layout className="bg-[#f8f9fa]" variant="onboarding">
+    <Layout className="bg-[#5B360B]" variant="onboarding">
       <section className="mx-auto flex max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
-        <Card className="w-full rounded-lg bg-white text-center shadow-sm">
+        <Card className="w-full rounded-lg bg-[#FAD775] text-center shadow-sm">
           <CardHeader>
-            <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-[#00346f] text-white">
+            <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-[#010813] text-white">
               <Mail className="size-7" />
             </div>
             <CardTitle className="text-3xl">Verify your email</CardTitle>
@@ -30,12 +30,12 @@ export default function DriverEmailVerification() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="rounded-md bg-[#f8f9fa] p-4 text-sm text-slate-600">
+            <div className="rounded-md bg-[#5B360B] p-4 text-sm text-[#362007]">
               {status}
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <Button
-                className="bg-[#00346f] text-white hover:bg-[#002b5c]"
+                className="bg-[#010813] text-white hover:bg-[#362007]"
                 onClick={() => setStatus("Verification email resent locally.")}
               >
                 <RefreshCw className="size-4" />

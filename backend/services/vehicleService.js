@@ -1,4 +1,5 @@
 const pool = require('../db/pool');
+const logger = require('../utils/logger');
 const { sanitize } = require('../utils/sanitize');
 const { createError } = require('../utils/errors');
 
@@ -10,6 +11,11 @@ async function listVehicles(userId) {
      ORDER BY created_at DESC`,
     [userId]
   );
+
+  logger.debug('Vehicles listed', {
+    userId,
+    count: result.rowCount,
+  });
 
   return sanitize(result.rows);
 }
@@ -24,8 +30,17 @@ async function getVehicle(id, userId) {
   );
 
   if (!result.rows[0]) {
+    logger.warn('Vehicle lookup failed because vehicle was not found', {
+      vehicleId: id,
+      userId,
+    });
     throw createError(404, 'Vehicle not found');
   }
+
+  logger.info('Vehicle created', {
+    vehicleId: result.rows[0].id,
+    userId,
+  });
 
   return sanitize(result.rows[0]);
 }
@@ -83,8 +98,18 @@ async function updateVehicle(id, userId, input) {
   );
 
   if (!result.rows[0]) {
+    logger.warn('Vehicle update failed because vehicle was not found', {
+      vehicleId: id,
+      userId,
+    });
     throw createError(404, 'Vehicle not found');
   }
+
+  logger.info('Vehicle updated', {
+    vehicleId: id,
+    userId,
+    updatedFields: Object.keys(input).filter((key) => input[key] !== undefined),
+  });
 
   return sanitize(result.rows[0]);
 }
@@ -99,8 +124,17 @@ async function deleteVehicle(id, userId) {
   );
 
   if (!result.rows[0]) {
+    logger.warn('Vehicle deletion failed because vehicle was not found', {
+      vehicleId: id,
+      userId,
+    });
     throw createError(404, 'Vehicle not found');
   }
+
+  logger.info('Vehicle deleted', {
+    vehicleId: id,
+    userId,
+  });
 
   return sanitize(result.rows[0]);
 }

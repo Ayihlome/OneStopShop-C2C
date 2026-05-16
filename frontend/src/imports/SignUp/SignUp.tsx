@@ -77,16 +77,16 @@ export default function SignUp() {
   };
 
   return (
-    <Layout className="bg-[#f8f9fa]" variant="public">
+    <Layout className="bg-[#5B360B]" variant="public">
       <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <div className="mx-auto max-w-3xl text-center">
-          <Badge className="mb-4 bg-[#00346f] text-white">
+          <Badge className="mb-4 bg-[#010813] text-white">
             One account, two paths
           </Badge>
-          <h1 className="text-4xl font-semibold text-slate-950 sm:text-5xl">
+          <h1 className="text-4xl font-semibold text-[#010813] sm:text-5xl">
             Join OneStopShop
           </h1>
-          <p className="mt-4 text-lg text-slate-600">
+          <p className="mt-4 text-lg text-[#362007]">
             Create your account, choose how you will use the platform, and we
             will route you into the right setup flow.
           </p>
@@ -113,24 +113,24 @@ export default function SignUp() {
 
               return (
                 <button
-                  className={`rounded-lg border bg-white p-5 text-left transition ${
+                  className={`rounded-lg border bg-[#FAD775] p-5 text-left transition ${
                     active
-                      ? "border-[#00346f] ring-2 ring-[#00346f]/20"
-                      : "hover:border-slate-300"
+                      ? "border-[#010813] ring-2 ring-[#010813]/20"
+                      : "hover:border-[#362007]"
                   }`}
                   key={option.role}
                   onClick={() => updateField("role", option.role)}
                   type="button"
                 >
                   <div className="flex items-start gap-4">
-                    <span className="flex size-11 items-center justify-center rounded-md bg-[#f8f9fa] text-[#00346f]">
+                    <span className="flex size-11 items-center justify-center rounded-md bg-[#5B360B] text-[#010813]">
                       <Icon className="size-5" />
                     </span>
                     <span>
-                      <span className="block font-semibold text-slate-950">
+                      <span className="block font-semibold text-[#010813]">
                         {option.title}
                       </span>
-                      <span className="mt-1 block text-sm text-slate-600">
+                      <span className="mt-1 block text-sm text-[#362007]">
                         {option.copy}
                       </span>
                     </span>
@@ -138,8 +138,8 @@ export default function SignUp() {
                 </button>
               );
             })}
-            <div className="rounded-lg border bg-white p-5 text-sm text-slate-600">
-              <ShieldCheck className="mb-3 size-5 text-[#00346f]" />
+            <div className="rounded-lg border bg-[#FAD775] p-5 text-sm text-[#362007]">
+              <ShieldCheck className="mb-3 size-5 text-[#010813]" />
               Account creation is local-only in this demo. The API helper is
               ready for backend wiring later.
             </div>
@@ -225,7 +225,7 @@ export default function SignUp() {
                 </div>
 
                 <Button
-                  className="bg-[#00346f] text-white hover:bg-[#002b5c]"
+                  className="bg-[#010813] text-white hover:bg-[#362007]"
                   type="submit"
                 >
                   Continue as {form.role === "driver" ? "driver" : "mechanic"}
@@ -233,10 +233,10 @@ export default function SignUp() {
                 </Button>
               </form>
 
-              <div className="mt-6 text-center text-sm text-slate-600">
+              <div className="mt-6 text-center text-sm text-[#5B360B]">
                 Already have an account?{" "}
                 <Button
-                  className="h-auto p-0 text-[#00346f]"
+                  className="h-auto p-0 text-[#5B360B]"
                   onClick={() => navigate("/login")}
                   variant="link"
                 >

@@ -1,4 +1,5 @@
 const pool = require('../db/pool');
+const logger = require('../utils/logger');
 const { sanitize } = require('../utils/sanitize');
 const { createError } = require('../utils/errors');
 
@@ -20,6 +21,12 @@ async function getNotifications(user) {
     [user.id, recipientTypeForRole(user.role)]
   );
 
+  logger.debug('Notifications listed', {
+    userId: user.id,
+    role: user.role,
+    count: result.rowCount,
+  });
+
   return sanitize(result.rows);
 }
 
@@ -35,8 +42,19 @@ async function markRead(id, user) {
   );
 
   if (!result.rows[0]) {
+    logger.warn('Notification mark-read failed because notification was not found', {
+      notificationId: id,
+      userId: user.id,
+      role: user.role,
+    });
     throw createError(404, 'Notification not found');
   }
+
+  logger.info('Notification marked read', {
+    notificationId: id,
+    userId: user.id,
+    role: user.role,
+  });
 
   return sanitize(result.rows[0]);
 }

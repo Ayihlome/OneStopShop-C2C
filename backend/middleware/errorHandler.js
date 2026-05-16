@@ -1,4 +1,5 @@
 const logger = require('../utils/logger');
+const { errorMeta, requestMeta } = require('../utils/logging');
 
 function errorHandler(error, req, res, next) {
   let statusCode = error.statusCode || error.status || 500;
@@ -19,12 +20,17 @@ function errorHandler(error, req, res, next) {
     message = error.message;
   }
 
-  logger.error('Unhandled request error', {
-    message: error.message,
-    stack: error.stack,
-    method: req.method,
-    url: req.originalUrl,
-  });
+  const logPayload = {
+    ...requestMeta(req),
+    ...errorMeta(error, { includeStack: statusCode >= 500 }),
+    statusCode,
+  };
+
+  if (statusCode >= 500) {
+    logger.error('Unhandled request error', logPayload);
+  } else {
+    logger.warn('Request failed', logPayload);
+  }
 
   if (res.headersSent) {
     return next(error);

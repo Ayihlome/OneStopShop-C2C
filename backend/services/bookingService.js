@@ -1,4 +1,6 @@
 const pool = require('../db/pool');
+const logger = require('../utils/logger');
+const { errorMeta } = require('../utils/logging');
 const { sanitize } = require('../utils/sanitize');
 const { createError } = require('../utils/errors');
 
@@ -28,6 +30,10 @@ async function ensureVehicleBelongsToUser(vehicleId, userId) {
   );
 
   if (!result.rows[0]) {
+    logger.warn('Booking validation failed because vehicle is not owned by user', {
+      userId,
+      vehicleId,
+    });
     throw createError(400, 'Vehicle does not belong to this user');
   }
 }
@@ -41,6 +47,9 @@ async function ensureMechanicExists(mechanicId) {
   );
 
   if (!result.rows[0]) {
+    logger.warn('Booking validation failed because mechanic was not found', {
+      mechanicId,
+    });
     throw createError(400, 'Mechanic not found');
   }
 }
@@ -79,9 +88,23 @@ async function createBooking(userId, input) {
     );
 
     await client.query('COMMIT');
+    logger.info('Booking created', {
+      bookingId: booking.rows[0].id,
+      userId,
+      mechanicId: input.mechanicId,
+      vehicleId: input.vehicleId,
+      status: booking.rows[0].status,
+    });
+
     return sanitize(booking.rows[0]);
   } catch (error) {
     await client.query('ROLLBACK');
+    logger.error('Booking creation rolled back', {
+      ...errorMeta(error, { includeStack: true }),
+      userId,
+      mechanicId: input.mechanicId,
+      vehicleId: input.vehicleId,
+    });
     throw error;
   } finally {
     client.release();
@@ -97,6 +120,11 @@ async function getBooking(id, requester) {
   const booking = result.rows[0];
 
   if (!booking) {
+    logger.warn('Booking lookup failed because booking was not found', {
+      bookingId: id,
+      requesterId: requester.id,
+      role: requester.role,
+    });
     throw createError(404, 'Booking not found');
   }
 
@@ -105,6 +133,11 @@ async function getBooking(id, requester) {
   const isAdmin = ['moderator', 'superadmin'].includes(requester.role);
 
   if (!isOwner && !isMechanic && !isAdmin) {
+    logger.warn('Booking access forbidden', {
+      bookingId: id,
+      requesterId: requester.id,
+      role: requester.role,
+    });
     throw createError(403, 'Forbidden');
   }
 
@@ -143,6 +176,12 @@ async function updateBookingStatus(id, status, requester) {
   const booking = current.rows[0];
 
   if (!booking) {
+    logger.warn('Booking status update failed because booking was not found', {
+      bookingId: id,
+      requestedStatus: status,
+      requesterId: requester.id,
+      role: requester.role,
+    });
     throw createError(404, 'Booking not found');
   }
 
@@ -152,16 +191,43 @@ async function updateBookingStatus(id, status, requester) {
   const isAdmin = ['moderator', 'superadmin'].includes(requester.role);
 
   if (!isMechanic && !isUserCancelling && !isAdmin) {
+    logger.warn('Booking status update forbidden', {
+      bookingId: id,
+      requestedStatus: status,
+      requesterId: requester.id,
+      role: requester.role,
+    });
     throw createError(403, 'Forbidden');
   }
 
-  const result = await pool.query(
-    `UPDATE bookings
-     SET status = $2
-     WHERE id = $1
-     RETURNING *`,
-    [id, status]
-  );
+  let result;
+
+  try {
+    result = await pool.query(
+      `UPDATE bookings
+       SET status = $2
+       WHERE id = $1
+       RETURNING *`,
+      [id, status]
+    );
+  } catch (error) {
+    logger.error('Booking status update failed', {
+      ...errorMeta(error, { includeStack: true }),
+      bookingId: id,
+      requestedStatus: status,
+      requesterId: requester.id,
+      role: requester.role,
+    });
+    throw error;
+  }
+
+  logger.info('Booking status updated', {
+    bookingId: id,
+    status: result.rows[0].status,
+    previousStatus: booking.status,
+    requesterId: requester.id,
+    role: requester.role,
+  });
 
   return sanitize(result.rows[0]);
 }
