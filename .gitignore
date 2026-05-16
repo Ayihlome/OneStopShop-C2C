@@ -1,6 +1,11 @@
 # Dependencies
 node_modules/
 frontend/node_modules/
+logs/*.log
+uploads/documents/
+backend/logs/*.log
+backend/uploads/documents/*
+!backend/uploads/documents/.gitkeep
 
 # Build output
 dist/
