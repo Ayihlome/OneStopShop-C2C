@@ -36,13 +36,13 @@ export default function DriverEmailVerification() {
             <div className="grid gap-3 sm:grid-cols-2">
               <Button
                 className="bg-[#010813] text-white hover:bg-[#362007]"
-                onClick={() => setStatus("Verification email resent locally.")}
+                onClick={() => setStatus("The backend does not expose email resend yet. Continue once your profile is saved.")}
               >
                 <RefreshCw className="size-4" />
                 Resend email
               </Button>
               <Button
-                onClick={() => setStatus("Inbox action opened locally.")}
+                onClick={() => setStatus("Inbox opening is a client-side action; no backend endpoint is required.")}
                 variant="outline"
               >
                 Open inbox

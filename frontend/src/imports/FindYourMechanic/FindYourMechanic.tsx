@@ -1,5 +1,5 @@
 import { MapPin, Search, Star, Wrench } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
 import Layout from "@/app/components/Layout";
@@ -22,8 +22,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/components/ui/select";
+import { StatusMessage } from "@/app/components/ui/status-message";
+import { filterMechanics, listMechanics } from "@/api/mechanics";
 
-const mechanics = [
+const fallbackMechanics = [
   {
     id: "robert-auto",
     name: "Robert Daniels",
@@ -63,25 +65,101 @@ const mechanics = [
 ];
 
 const specialtyOptions = Array.from(
-  new Set(mechanics.flatMap((mechanic) => mechanic.specialties)),
+  new Set(fallbackMechanics.flatMap((mechanic) => mechanic.specialties)),
 ).sort();
+
+type BackendMechanic = {
+  id: number | string;
+  first_name?: string;
+  last_name?: string;
+  name?: string;
+  businessName?: string;
+  business_name?: string;
+  city?: string;
+  town?: string;
+  location?: string;
+  specialities?: string[];
+  specialties?: string[];
+  average_rating?: number | string;
+  rating?: number | string;
+  review_count?: number | string;
+  reviewCount?: number | string;
+  is_available?: boolean;
+  bio?: string;
+  verification_badge?: boolean;
+  verified?: boolean;
+};
+
+function normalizeMechanic(mechanic: BackendMechanic) {
+  const name =
+    [mechanic.first_name, mechanic.last_name].filter(Boolean).join(" ") ||
+    mechanic.name ||
+    "Mechanic";
+
+  return {
+    id: String(mechanic.id),
+    name,
+    businessName: mechanic.businessName || mechanic.business_name || name,
+    location: mechanic.city || mechanic.town || mechanic.location || "Unknown",
+    specialties: mechanic.specialities || mechanic.specialties || [],
+    rating: Number(mechanic.average_rating || mechanic.rating || 0),
+    reviewCount: Number(mechanic.review_count || mechanic.reviewCount || 0),
+    responseTime: mechanic.is_available
+      ? "Available for requests"
+      : "Availability on request",
+    bio: mechanic.bio || "No bio provided yet.",
+    verified: Boolean(mechanic.verification_badge ?? mechanic.verified),
+  };
+}
 
 export default function FindYourMechanic() {
   const [location, setLocation] = useState("");
   const [specialty, setSpecialty] = useState("all");
+  const [mechanics, setMechanics] = useState(fallbackMechanics);
+  const [status, setStatus] = useState("Loading mechanics from backend...");
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  const filteredMechanics = useMemo(() => {
-    return mechanics.filter((mechanic) => {
-      const matchesLocation =
-        !location ||
-        mechanic.location.toLowerCase().includes(location.toLowerCase());
-      const matchesSpecialty =
-        specialty === "all" || mechanic.specialties.includes(specialty);
+  useEffect(() => {
+    const timer = window.setTimeout(async () => {
+      setIsLoading(true);
+      setStatus("Loading mechanics from backend...");
 
-      return matchesLocation && matchesSpecialty;
-    });
+      try {
+        const response =
+          location || specialty !== "all"
+            ? await filterMechanics({
+                city: location || undefined,
+                specialty: specialty === "all" ? undefined : specialty,
+              })
+            : await listMechanics();
+
+        setMechanics(response.data.map(normalizeMechanic));
+        setStatus("Mechanics loaded from backend.");
+      } catch (error) {
+        setMechanics(fallbackMechanics);
+        setStatus(
+          error instanceof Error
+            ? `${error.message}. Showing local fallback mechanics.`
+            : "Could not load backend mechanics. Showing local fallback mechanics.",
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    }, 300);
+
+    return () => window.clearTimeout(timer);
   }, [location, specialty]);
+
+  const filteredMechanics = mechanics.filter((mechanic) => {
+    const matchesLocation =
+      !location ||
+      mechanic.location.toLowerCase().includes(location.toLowerCase());
+    const matchesSpecialty =
+      specialty === "all" || mechanic.specialties.includes(specialty);
+
+    return matchesLocation && matchesSpecialty;
+  });
 
   return (
     <Layout className="bg-[#5B360B]" variant="app">
@@ -133,6 +211,11 @@ export default function FindYourMechanic() {
             </CardContent>
           </Card>
         </div>
+
+        <StatusMessage
+          className="mt-4"
+          message={isLoading ? "Loading mechanics..." : status}
+        />
 
         <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {filteredMechanics.map((mechanic) => (

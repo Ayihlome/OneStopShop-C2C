@@ -6,7 +6,7 @@ import {
   MessageSquare,
   Star,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 
 import Layout from "@/app/components/Layout";
@@ -20,7 +20,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/app/components/ui/card";
+import { Input } from "@/app/components/ui/input";
+import { Label } from "@/app/components/ui/label";
 import { Separator } from "@/app/components/ui/separator";
+import { StatusMessage } from "@/app/components/ui/status-message";
+import { Textarea } from "@/app/components/ui/textarea";
+import { createBooking } from "@/api/bookings";
+import { getMechanicProfile } from "@/api/mechanics";
+import { getMechanicReviews } from "@/api/reviews";
+import { listVehicles } from "@/api/vehicles";
 
 const mechanics = [
   {
@@ -72,15 +80,147 @@ const reviews = [
   },
 ];
 
+type BackendReview = {
+  user_first_name?: string;
+  user_last_name?: string;
+  comment?: string;
+};
+
+type BackendVehicle = {
+  id: number | string;
+  make?: string;
+  model?: string;
+};
+
 export default function MechProfileFullView() {
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState("Loading mechanic from backend...");
+  const [mechanicData, setMechanicData] = useState<(typeof mechanics)[number] | null>(null);
+  const [backendReviews, setBackendReviews] = useState(reviews);
+  const [vehicles, setVehicles] = useState<BackendVehicle[]>([]);
+  const [bookingForm, setBookingForm] = useState({
+    vehicleId: "",
+    description: "",
+    preferredSchedule: "",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadProfile() {
+      if (!id) {
+        return;
+      }
+
+      try {
+        const [profileResponse, reviewResponse] = await Promise.all([
+          getMechanicProfile(id),
+          getMechanicReviews(id).catch(() => ({ data: [] })),
+        ]);
+        const profile = profileResponse.data;
+        const name =
+          [profile.first_name, profile.last_name].filter(Boolean).join(" ") ||
+          "Mechanic";
+
+        if (!ignore) {
+          setMechanicData({
+            id: String(profile.id),
+            name,
+            businessName: profile.business_name || name,
+            location: profile.city || profile.town || "Unknown",
+            specialties: profile.specialities || [],
+            rating: Number(profile.average_rating || 0),
+            reviewCount: Number(profile.review_count || 0),
+            responseTime: profile.is_available
+              ? "Available for requests"
+              : "Availability on request",
+            bio: profile.bio || "No bio provided yet.",
+            verified: Boolean(profile.verification_badge),
+          });
+          setBackendReviews(
+            (reviewResponse.data || []).map((review: BackendReview) => ({
+              name:
+                [review.user_first_name, review.user_last_name]
+                  .filter(Boolean)
+                  .join(" ") || "Customer",
+              text: review.comment,
+            })),
+          );
+          setStatus("Mechanic profile loaded from backend.");
+        }
+      } catch (error) {
+        if (!ignore) {
+          setMechanicData(null);
+          setStatus(
+            error instanceof Error
+              ? `${error.message}. Showing local fallback profile.`
+              : "Could not load backend mechanic profile. Showing local fallback profile.",
+          );
+        }
+      }
+    }
+
+    async function loadVehicles() {
+      try {
+        const response = await listVehicles();
+        if (!ignore) {
+          setVehicles(response.data || []);
+        }
+      } catch {
+        if (!ignore) {
+          setVehicles([]);
+        }
+      }
+    }
+
+    loadProfile();
+    loadVehicles();
+
+    return () => {
+      ignore = true;
+    };
+  }, [id]);
+
   const mechanic = useMemo(
-    () => mechanics.find((item) => item.id === id) ?? mechanics[0],
-    [id],
+    () =>
+      mechanicData ||
+      mechanics.find((item) => item.id === id) ||
+      mechanics[0],
+    [id, mechanicData],
   );
+
+  const submitBooking = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!bookingForm.vehicleId || !bookingForm.description || !bookingForm.preferredSchedule) {
+      setStatus("Choose a vehicle, describe the job, and pick a preferred schedule.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setStatus("Sending booking request to backend...");
+
+    try {
+      await createBooking({
+        mechanicId: Number(mechanic.id),
+        vehicleId: Number(bookingForm.vehicleId),
+        description: bookingForm.description,
+        preferredSchedule: new Date(bookingForm.preferredSchedule).toISOString(),
+      });
+      setStatus("Booking request created in backend.");
+      setBookingForm({ vehicleId: "", description: "", preferredSchedule: "" });
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : "Could not create booking. Please sign in as a driver and try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <Layout className="bg-[#5B360B]" variant="app">
@@ -171,26 +311,79 @@ export default function MechProfileFullView() {
               <CardHeader>
                 <CardTitle>Request service</CardTitle>
                 <CardDescription>
-                  Actions are local stubs until backend messaging is connected.
+                  Submit a booking request to the backend.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <Button
-                  className="w-full bg-[#010813] text-white hover:bg-[#362007]"
-                  onClick={() => setStatus("Service request drafted locally.")}
-                >
-                  <CalendarPlus className="size-4" />
-                  Request booking
-                </Button>
+              <CardContent>
+                <form className="space-y-3" onSubmit={submitBooking}>
+                  <div className="space-y-2">
+                    <Label htmlFor="vehicleId">Vehicle</Label>
+                    <select
+                      className="flex h-9 w-full rounded-md border border-[#010813]/60 bg-input-background px-3 py-1 text-sm text-[#010813] outline-none"
+                      id="vehicleId"
+                      onChange={(event) =>
+                        setBookingForm((current) => ({
+                          ...current,
+                          vehicleId: event.target.value,
+                        }))
+                      }
+                      value={bookingForm.vehicleId}
+                    >
+                      <option value="">Choose a saved vehicle</option>
+                      {vehicles.map((vehicle) => (
+                        <option key={vehicle.id} value={vehicle.id}>
+                          {vehicle.make} {vehicle.model}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="preferredSchedule">Preferred schedule</Label>
+                    <Input
+                      id="preferredSchedule"
+                      min={new Date().toISOString().slice(0, 16)}
+                      onChange={(event) =>
+                        setBookingForm((current) => ({
+                          ...current,
+                          preferredSchedule: event.target.value,
+                        }))
+                      }
+                      type="datetime-local"
+                      value={bookingForm.preferredSchedule}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Job description</Label>
+                    <Textarea
+                      id="description"
+                      onChange={(event) =>
+                        setBookingForm((current) => ({
+                          ...current,
+                          description: event.target.value,
+                        }))
+                      }
+                      placeholder="Describe the issue or service needed."
+                      value={bookingForm.description}
+                    />
+                  </div>
+                  <Button
+                    className="w-full bg-[#010813] text-white hover:bg-[#362007]"
+                    disabled={isSubmitting}
+                    type="submit"
+                  >
+                    <CalendarPlus className="size-4" />
+                    {isSubmitting ? "Sending..." : "Request booking"}
+                  </Button>
+                </form>
                 <Button
                   className="w-full"
-                  onClick={() => setStatus("Message composer opened locally.")}
+                  onClick={() => setStatus("Messaging is not exposed by the backend yet. Booking requests are connected.")}
                   variant="outline"
                 >
                   <MessageSquare className="size-4" />
                   Contact mechanic
                 </Button>
-                {status && <p className="text-sm text-[#010813]">{status}</p>}
+                {status && <StatusMessage className="mt-3" message={status} />}
               </CardContent>
             </Card>
 
@@ -199,7 +392,7 @@ export default function MechProfileFullView() {
                 <CardTitle>Recent reviews</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {reviews.map((review) => (
+                {(backendReviews.length ? backendReviews : reviews).map((review) => (
                   <div className="rounded-md border p-4" key={review.name}>
                     <div className="mb-2 flex gap-1 text-[#010813]">
                       {Array.from({ length: 5 }).map((_, index) => (

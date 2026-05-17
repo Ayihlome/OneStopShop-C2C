@@ -14,6 +14,8 @@ import {
 } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
+import { StatusMessage } from "@/app/components/ui/status-message";
+import { signupMechanic, signupUser } from "@/api/auth";
 
 type Role = "driver" | "mechanic";
 
@@ -36,6 +38,8 @@ const initialForm: SignupForm = {
 export default function SignUp() {
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState<Partial<SignupForm>>({});
+  const [status, setStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const updateField = (field: keyof SignupForm, value: string) => {
@@ -66,14 +70,50 @@ export default function SignUp() {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const splitName = () => {
+    const parts = form.name.trim().split(/\s+/);
+    return {
+      first_name: parts[0] || "",
+      last_name: parts.slice(1).join(" ") || parts[0] || "",
+    };
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!validate()) {
       return;
     }
 
-    navigate(form.role === "driver" ? "/driver/setup" : "/mechanic/setup");
+    setIsSubmitting(true);
+    setStatus("Creating account with the backend API...");
+
+    try {
+      const name = splitName();
+      const payload = {
+        ...name,
+        email: form.email,
+        password: form.password,
+      };
+      const response =
+        form.role === "driver"
+          ? await signupUser(payload)
+          : await signupMechanic(payload);
+      const auth = response.data;
+
+      localStorage.setItem("oss_token", auth.token);
+      localStorage.setItem("oss_user", JSON.stringify(auth.user));
+      setStatus("Account created. Continue setup to sync profile details.");
+      navigate(form.role === "driver" ? "/driver/setup" : "/mechanic/setup");
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : "Signup failed. Please try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -140,8 +180,7 @@ export default function SignUp() {
             })}
             <div className="rounded-lg border bg-[#FAD775] p-5 text-sm text-[#362007]">
               <ShieldCheck className="mb-3 size-5 text-[#010813]" />
-              Account creation is local-only in this demo. The API helper is
-              ready for backend wiring later.
+              Account creation now syncs with the backend before setup begins.
             </div>
           </div>
 
@@ -226,11 +265,15 @@ export default function SignUp() {
 
                 <Button
                   className="bg-[#010813] text-white hover:bg-[#362007]"
+                  disabled={isSubmitting}
                   type="submit"
                 >
-                  Continue as {form.role === "driver" ? "driver" : "mechanic"}
+                  {isSubmitting
+                    ? "Creating account..."
+                    : `Continue as ${form.role === "driver" ? "driver" : "mechanic"}`}
                   <ArrowRight className="size-4" />
                 </Button>
+                {status && <StatusMessage message={status} />}
               </form>
 
               <div className="mt-6 text-center text-sm text-[#5B360B]">

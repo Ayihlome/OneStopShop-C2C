@@ -1,5 +1,5 @@
 import { CheckCircle2, FileCheck2, ShieldCheck } from "lucide-react";
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router";
 
 import Layout from "@/app/components/Layout";
@@ -13,6 +13,10 @@ import {
   CardTitle,
 } from "@/app/components/ui/card";
 import { Progress } from "@/app/components/ui/progress";
+import { Input } from "@/app/components/ui/input";
+import { Label } from "@/app/components/ui/label";
+import { StatusMessage } from "@/app/components/ui/status-message";
+import { uploadDocument } from "@/api/mechanics";
 
 const checklist = [
   "Business profile submitted",
@@ -21,8 +25,37 @@ const checklist = [
 ];
 
 export default function MechanicVerification() {
-  const [status, setStatus] = useState("Verification packet prepared locally.");
+  const [status, setStatus] = useState("Upload a document to send it to backend review.");
+  const [docType, setDocType] = useState("id");
+  const [file, setFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+
+  const handleUpload = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!file) {
+      setStatus("Choose a PDF, JPG, JPEG, or PNG document first.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setStatus("Uploading document to backend...");
+
+    try {
+      await uploadDocument(file, docType);
+      setStatus("Document uploaded to backend for review.");
+      setFile(null);
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : "Document upload failed. Please sign in as a mechanic and try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <Layout className="bg-[#5B360B]" variant="onboarding">
@@ -34,8 +67,8 @@ export default function MechanicVerification() {
             </Badge>
             <CardTitle className="text-3xl">Review your verification status</CardTitle>
             <CardDescription>
-              This page is ready for document and status APIs once the backend
-              is connected.
+              Upload verification documents directly to the backend review
+              queue.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-8">
@@ -67,14 +100,49 @@ export default function MechanicVerification() {
                     Upload and review controls will connect here. For now, use
                     the local action below to continue to your editable profile.
                   </p>
-                  <p className="mt-3 text-sm text-[#010813]">{status}</p>
+                  <StatusMessage className="mt-3" message={status} />
                 </div>
               </div>
             </div>
 
+            <form className="rounded-md border p-5" onSubmit={handleUpload}>
+              <h2 className="font-semibold">Upload verification document</h2>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="docType">Document type</Label>
+                  <select
+                    className="flex h-9 w-full rounded-md border border-[#010813]/60 bg-input-background px-3 py-1 text-sm text-[#010813] outline-none"
+                    id="docType"
+                    onChange={(event) => setDocType(event.target.value)}
+                    value={docType}
+                  >
+                    <option value="id">ID document</option>
+                    <option value="certification">Certification</option>
+                    <option value="proof_of_residence">Proof of residence</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="document">Document file</Label>
+                  <Input
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    id="document"
+                    onChange={(event) => setFile(event.target.files?.[0] || null)}
+                    type="file"
+                  />
+                </div>
+              </div>
+              <Button
+                className="mt-4 bg-[#010813] text-white hover:bg-[#362007]"
+                disabled={isSubmitting}
+                type="submit"
+              >
+                {isSubmitting ? "Uploading..." : "Upload document"}
+              </Button>
+            </form>
+
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
               <Button
-                onClick={() => setStatus("Verification check refreshed locally.")}
+                onClick={() => setStatus("Verification status is refreshed when the backend returns updated document state.")}
                 variant="outline"
               >
                 <FileCheck2 className="size-4" />

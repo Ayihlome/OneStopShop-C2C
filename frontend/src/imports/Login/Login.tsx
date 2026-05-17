@@ -13,15 +13,19 @@ import {
 } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
+import { StatusMessage } from "@/app/components/ui/status-message";
+import { loginAdmin, loginMechanic, loginUser } from "@/api/auth";
 
 type LoginForm = {
   email: string;
   password: string;
+  role: "user" | "mechanic" | "admin";
 };
 
 const initialForm: LoginForm = {
   email: "",
   password: "",
+  role: "user",
 };
 
 export default function Login() {
@@ -51,7 +55,13 @@ export default function Login() {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const apiForRole = {
+    user: loginUser,
+    mechanic: loginMechanic,
+    admin: loginAdmin,
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!validate()) {
@@ -59,12 +69,35 @@ export default function Login() {
     }
 
     setIsSubmitting(true);
-    setStatus("Demo login accepted. Redirecting...");
+    setStatus("Signing in with the backend API...");
 
-    window.setTimeout(() => {
+    try {
+      const response = await apiForRole[form.role]({
+        email: form.email,
+        password: form.password,
+      });
+      const auth = response.data;
+
+      localStorage.setItem("oss_token", auth.token);
+      localStorage.setItem("oss_user", JSON.stringify(auth.user));
+      setStatus("Login successful. Redirecting...");
+
+      navigate(
+        form.role === "admin"
+          ? "/admin/dashboard"
+          : form.role === "mechanic"
+            ? "/mechanic/profile"
+            : "/find-mechanic",
+      );
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : "Login failed. Please check your details and try again.",
+      );
+    } finally {
       setIsSubmitting(false);
-      navigate("/find-mechanic");
-    }, 500);
+    }
   };
 
   return (
@@ -105,6 +138,22 @@ export default function Login() {
           <CardContent>
             <form className="space-y-5" onSubmit={handleSubmit}>
               <div className="space-y-2">
+                <Label htmlFor="role">Account type</Label>
+                <select
+                  className="flex h-9 w-full rounded-md border border-[#010813]/60 bg-input-background px-3 py-1 text-sm text-[#010813] outline-none focus-visible:border-[#010813] focus-visible:ring-[3px] focus-visible:ring-[#010813]/30"
+                  id="role"
+                  onChange={(event) =>
+                    updateField("role", event.target.value as LoginForm["role"])
+                  }
+                  value={form.role}
+                >
+                  <option value="user">Driver</option>
+                  <option value="mechanic">Mechanic</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="email">Email address</Label>
                 <div className="relative">
                   <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#362007]" />
@@ -142,7 +191,7 @@ export default function Login() {
                 )}
               </div>
 
-              {status && <p className="text-sm text-[#010813]">{status}</p>}
+              {status && <StatusMessage message={status} />}
 
               <Button
                 className="w-full bg-[#010813] text-white hover:bg-[#362007]"

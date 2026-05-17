@@ -206,3 +206,20 @@
 .bg-\[\#5B360B\] .bg-\[\#FAD775\] .text-\[\#362007\] {
   color: #362007;
 }
+
+.bg-\[\#5B360B\] [data-slot="card"] {
+  color: #010813;
+}
+
+.bg-\[\#5B360B\] [data-slot="card"] label,
+.bg-\[\#5B360B\] [data-slot="card"] input,
+.bg-\[\#5B360B\] [data-slot="card"] textarea,
+.bg-\[\#5B360B\] [data-slot="card"] select,
+.bg-\[\#5B360B\] [data-slot="card"] .text-\[\#010813\] {
+  color: #010813;
+}
+
+.bg-\[\#5B360B\] [data-slot="card"] [data-slot="card-description"],
+.bg-\[\#5B360B\] [data-slot="card"] .text-\[\#362007\] {
+  color: #362007;
+}

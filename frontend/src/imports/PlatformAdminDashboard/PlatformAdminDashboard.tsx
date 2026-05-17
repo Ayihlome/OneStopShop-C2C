@@ -5,6 +5,7 @@ import {
   UsersRound,
   Wrench,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import Layout from "@/app/components/Layout";
 import { Badge } from "@/app/components/ui/badge";
@@ -23,6 +24,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/app/components/ui/table";
+import { StatusMessage } from "@/app/components/ui/status-message";
+import { getDashboard, listPendingDocuments } from "@/api/admin";
 
 const stats = [
   {
@@ -82,7 +85,95 @@ const activity = [
   },
 ];
 
+type PendingDocument = {
+  id: number | string;
+  first_name?: string;
+  last_name?: string;
+  doc_type?: string;
+  status?: string;
+  created_at?: string;
+};
+
 export default function PlatformAdminDashboard() {
+  const [dashboardStats, setDashboardStats] = useState(stats);
+  const [activityRows, setActivityRows] = useState(activity);
+  const [status, setStatus] = useState("Loading admin dashboard from backend...");
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadAdminDashboard() {
+      try {
+        const [dashboardResponse, documentsResponse] = await Promise.all([
+          getDashboard(),
+          listPendingDocuments(),
+        ]);
+        const data = dashboardResponse.data;
+        const documents = documentsResponse.data || [];
+
+        if (!ignore) {
+          setDashboardStats([
+            {
+              label: "Total users",
+              value: String(data.total_users ?? 0),
+              icon: UsersRound,
+              tone: "bg-[#5B360B] text-[#010813]",
+            },
+            {
+              label: "Verified mechanics",
+              value: String(data.verified_mechanics ?? 0),
+              icon: ShieldCheck,
+              tone: "bg-emerald-50 text-emerald-700",
+            },
+            {
+              label: "Active jobs",
+              value: String(data.active_bookings ?? 0),
+              icon: Wrench,
+              tone: "bg-[#5B360B] text-[#010813]",
+            },
+            {
+              label: "Pending documents",
+              value: String(data.pending_verifications ?? documents.length),
+              icon: AlertTriangle,
+              tone: "bg-[#5B360B] text-[#010813]",
+            },
+          ]);
+          setActivityRows(
+            documents.length
+              ? documents.map((document: PendingDocument) => ({
+                  id: `DOC-${document.id}`,
+                  actor:
+                    [document.first_name, document.last_name]
+                      .filter(Boolean)
+                      .join(" ") || "Mechanic",
+                  action: `Uploaded ${document.doc_type}`,
+                  status: document.status || "pending",
+                  time: document.created_at
+                    ? new Date(document.created_at).toLocaleString()
+                    : "Unknown",
+                }))
+              : activity,
+          );
+          setStatus("Admin dashboard loaded from backend.");
+        }
+      } catch (error) {
+        if (!ignore) {
+          setStatus(
+            error instanceof Error
+              ? `${error.message}. Showing local fallback dashboard.`
+              : "Could not load backend admin dashboard. Showing local fallback dashboard.",
+          );
+        }
+      }
+    }
+
+    loadAdminDashboard();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
   return (
     <Layout className="bg-[#5B360B]" variant="admin">
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -96,16 +187,14 @@ export default function PlatformAdminDashboard() {
             </h1>
             <p className="mt-3 max-w-2xl text-[#362007]">
               Monitor platform health, verification flow, and recent user
-              activity with API-ready local data.
+              activity from backend dashboard endpoints.
             </p>
           </div>
-          <div className="rounded-md border bg-[#FAD775] px-4 py-3 text-sm text-[#362007]">
-            Last updated locally
-          </div>
+          <StatusMessage className="sm:max-w-sm" message={status} />
         </div>
 
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          {stats.map((stat) => {
+          {dashboardStats.map((stat) => {
             const Icon = stat.icon;
 
             return (
@@ -136,7 +225,8 @@ export default function PlatformAdminDashboard() {
                 Recent activity
               </CardTitle>
               <CardDescription>
-                Placeholder feed for `/api/admin/activity`.
+                Pending document activity from the backend, with fallback data
+                when unavailable.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -151,7 +241,7 @@ export default function PlatformAdminDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {activity.map((item) => (
+                  {activityRows.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>{item.id}</TableCell>
                       <TableCell>{item.actor}</TableCell>

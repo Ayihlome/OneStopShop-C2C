@@ -13,7 +13,10 @@ import {
 } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
+import { StatusMessage } from "@/app/components/ui/status-message";
 import { Textarea } from "@/app/components/ui/textarea";
+import { updateMe } from "@/api/users";
+import { createVehicle } from "@/api/vehicles";
 
 type DriverForm = {
   firstName: string;
@@ -23,6 +26,7 @@ type DriverForm = {
   vehicleMake: string;
   vehicleModel: string;
   vehicleYear: string;
+  vehiclePlate: string;
   notes: string;
 };
 
@@ -34,12 +38,15 @@ const initialForm: DriverForm = {
   vehicleMake: "",
   vehicleModel: "",
   vehicleYear: "",
+  vehiclePlate: "",
   notes: "",
 };
 
 export default function DriverProfileSetup() {
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState<Partial<DriverForm>>({});
+  const [status, setStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const updateField = (field: keyof DriverForm, value: string) => {
@@ -57,6 +64,7 @@ export default function DriverProfileSetup() {
       "vehicleMake",
       "vehicleModel",
       "vehicleYear",
+      "vehiclePlate",
     ];
 
     required.forEach((field) => {
@@ -75,11 +83,42 @@ export default function DriverProfileSetup() {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (validate()) {
+    if (!validate()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setStatus("Saving driver profile and vehicle to the backend...");
+
+    try {
+      await updateMe({
+        first_name: form.firstName,
+        last_name: form.lastName,
+        phone_number: form.phone,
+        city: form.location,
+      });
+
+      await createVehicle({
+        make: form.vehicleMake,
+        model: form.vehicleModel,
+        year_produced: Number(form.vehicleYear),
+        license_plate: form.vehiclePlate,
+        notes: form.notes || null,
+      });
+
+      setStatus("Driver profile and vehicle saved.");
       navigate("/driver/verify");
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : "Could not save profile. Please sign in and try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -151,8 +190,8 @@ export default function DriverProfileSetup() {
               Driver details
             </CardTitle>
             <CardDescription>
-              These fields are held locally for now and ready for the driver
-              profile API later.
+              These fields update your backend user profile and create a saved
+              vehicle.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -173,6 +212,7 @@ export default function DriverProfileSetup() {
                   {renderInput("vehicleMake", "Make", "Toyota")}
                   {renderInput("vehicleModel", "Model", "Corolla")}
                   {renderInput("vehicleYear", "Year", "2020", "number")}
+                  {renderInput("vehiclePlate", "License plate", "ABC 123 GP")}
                 </div>
               </div>
 
@@ -196,12 +236,14 @@ export default function DriverProfileSetup() {
                 </Button>
                 <Button
                   className="bg-[#010813] text-white hover:bg-[#362007]"
+                  disabled={isSubmitting}
                   type="submit"
                 >
-                  Continue to verification
+                  {isSubmitting ? "Saving..." : "Continue to verification"}
                   <ArrowRight className="size-4" />
                 </Button>
               </div>
+              {status && <StatusMessage message={status} />}
             </form>
           </CardContent>
         </Card>

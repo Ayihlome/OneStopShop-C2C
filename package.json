@@ -5,9 +5,16 @@
   "description": "OneStopShop C2C monorepo with React frontend and plain PHP API backend.",
   "scripts": {
     "dev": "npm --prefix frontend run dev",
+    "dev:all": "concurrently \"npm --prefix frontend run dev\" \"npm --prefix backend run dev\"",
     "build": "npm --prefix frontend run build",
     "preview": "npm --prefix frontend run preview",
     "lint": "npm --prefix frontend run lint",
     "install:frontend": "npm --prefix frontend install"
+  },
+  "dependencies": {
+    "concurrency": "^0.1.4"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }

@@ -14,7 +14,9 @@ import {
 } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
+import { StatusMessage } from "@/app/components/ui/status-message";
 import { Textarea } from "@/app/components/ui/textarea";
+import { updateMechanic } from "@/api/mechanics";
 
 type MechanicForm = {
   businessName: string;
@@ -54,6 +56,8 @@ export default function MechanicProfileSetup() {
   const [errors, setErrors] = useState<Partial<Record<keyof MechanicForm, string>>>(
     {},
   );
+  const [status, setStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const updateField = (field: keyof MechanicForm, value: string) => {
@@ -102,11 +106,55 @@ export default function MechanicProfileSetup() {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const currentUser = () => {
+    try {
+      return JSON.parse(localStorage.getItem("oss_user") || "{}") as {
+        id?: number | string;
+      };
+    } catch {
+      return {};
+    }
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (validate()) {
+    if (!validate()) {
+      return;
+    }
+
+    const user = currentUser();
+    if (!user.id) {
+      setStatus("Please sign in as a mechanic before saving this profile.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setStatus("Saving mechanic profile to the backend...");
+
+    try {
+      const ownerParts = form.ownerName.trim().split(/\s+/);
+      await updateMechanic(user.id, {
+        first_name: ownerParts[0] || form.ownerName,
+        last_name: ownerParts.slice(1).join(" ") || ownerParts[0] || "",
+        phone_number: form.phone,
+        city: form.location,
+        bio: form.bio,
+        whatsapp_number: form.phone,
+        is_available: true,
+        specialities: form.specialties,
+      });
+
+      setStatus("Mechanic profile saved.");
       navigate("/mechanic/verify");
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : "Could not save mechanic profile. Please try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -171,8 +219,7 @@ export default function MechanicProfileSetup() {
               Mechanic details
             </CardTitle>
             <CardDescription>
-              Stored locally for now; shaped for the future mechanic profile
-              endpoint.
+              These details sync to your backend mechanic profile.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -245,12 +292,14 @@ export default function MechanicProfileSetup() {
                 </Button>
                 <Button
                   className="bg-[#010813] text-white hover:bg-[#362007]"
+                  disabled={isSubmitting}
                   type="submit"
                 >
-                  Continue to verification
+                  {isSubmitting ? "Saving..." : "Continue to verification"}
                   <ArrowRight className="size-4" />
                 </Button>
               </div>
+              {status && <StatusMessage message={status} />}
             </form>
           </CardContent>
         </Card>

@@ -4,6 +4,7 @@ export * from './bookings';
 export * from './mechanics';
 export * from './notifications';
 export * from './reviews';
+export * from './users';
 export * from './vehicles';
 export * as adminApi from './admin';
 export {

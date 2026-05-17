@@ -1,5 +1,5 @@
 import { Eye, Save, Star, Wrench } from "lucide-react";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
 import Layout from "@/app/components/Layout";
@@ -15,8 +15,10 @@ import {
 } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
+import { StatusMessage } from "@/app/components/ui/status-message";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
 import { Textarea } from "@/app/components/ui/textarea";
+import { getMechanicProfile, updateMechanic } from "@/api/mechanics";
 
 type ProfileForm = {
   businessName: string;
@@ -43,8 +45,68 @@ const initialProfile: ProfileForm = {
 export default function MyMechanicProfile() {
   const [profile, setProfile] = useState(initialProfile);
   const [errors, setErrors] = useState<Partial<ProfileForm>>({});
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState("Loading profile from backend...");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+
+  const currentUser = () => {
+    try {
+      return JSON.parse(localStorage.getItem("oss_user") || "{}") as {
+        id?: number | string;
+      };
+    } catch {
+      return {};
+    }
+  };
+
+  useEffect(() => {
+    const user = currentUser();
+
+    if (!user.id) {
+      setStatus("Please sign in as a mechanic to load your backend profile.");
+      return;
+    }
+
+    let ignore = false;
+
+    async function loadProfile() {
+      try {
+        const response = await getMechanicProfile(user.id);
+        const mechanic = response.data;
+        const fullName = [mechanic.first_name, mechanic.last_name]
+          .filter(Boolean)
+          .join(" ");
+
+        if (!ignore) {
+          setProfile({
+            businessName: mechanic.business_name || mechanic.first_name || "",
+            ownerName: fullName || initialProfile.ownerName,
+            email: mechanic.email || "",
+            phone: mechanic.phone_number || mechanic.whatsapp_number || "",
+            location: mechanic.city || mechanic.town || "",
+            specialties: (mechanic.specialities || []).join(", "),
+            bio: mechanic.bio || "",
+            availability: mechanic.is_available ? "Available" : "Unavailable",
+          });
+          setStatus("Profile loaded from backend.");
+        }
+      } catch (error) {
+        if (!ignore) {
+          setStatus(
+            error instanceof Error
+              ? error.message
+              : "Could not load backend profile.",
+          );
+        }
+      }
+    }
+
+    loadProfile();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const updateField = (field: keyof ProfileForm, value: string) => {
     setProfile((current) => ({ ...current, [field]: value }));
@@ -78,11 +140,44 @@ export default function MyMechanicProfile() {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (validate()) {
-      setStatus("Profile saved locally.");
+    if (!validate()) {
+      return;
+    }
+
+    const user = currentUser();
+    if (!user.id) {
+      setStatus("Please sign in as a mechanic before saving.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setStatus("Saving profile to backend...");
+
+    try {
+      const ownerParts = profile.ownerName.trim().split(/\s+/);
+      await updateMechanic(user.id, {
+        first_name: ownerParts[0] || profile.ownerName,
+        last_name: ownerParts.slice(1).join(" ") || ownerParts[0] || "",
+        phone_number: profile.phone,
+        city: profile.location,
+        bio: profile.bio,
+        whatsapp_number: profile.phone,
+        is_available: profile.availability.toLowerCase() !== "unavailable",
+        specialities: specialties,
+      });
+
+      setStatus("Profile saved to backend.");
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : "Could not save profile to backend.",
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -190,14 +285,15 @@ export default function MyMechanicProfile() {
                     )}
                   </div>
 
-                  {status && <p className="text-sm text-[#010813]">{status}</p>}
+                  {status && <StatusMessage message={status} />}
 
                   <Button
                     className="bg-[#010813] text-white hover:bg-[#362007]"
+                    disabled={isSubmitting}
                     type="submit"
                   >
                     <Save className="size-4" />
-                    Save profile
+                    {isSubmitting ? "Saving..." : "Save profile"}
                   </Button>
                 </form>
               </CardContent>
