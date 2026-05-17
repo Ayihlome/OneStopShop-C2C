@@ -3,6 +3,10 @@ const logger = require('../utils/logger');
 const { errorMeta } = require('../utils/logging');
 const { sanitize } = require('../utils/sanitize');
 const { createError } = require('../utils/errors');
+const {
+  buildWhatsappUrl,
+  buildBookingNotificationMessage,
+} = require('../utils/whatsapp');
 
 const BOOKING_SELECT = `
   SELECT
@@ -96,7 +100,49 @@ async function createBooking(userId, input) {
       status: booking.rows[0].status,
     });
 
-    return sanitize(booking.rows[0]);
+    const createdBooking = sanitize(booking.rows[0]);
+    createdBooking.whatsapp_notify_url = null;
+
+    try {
+      const [mechanicResult, userResult] = await Promise.all([
+        pool.query(
+          `SELECT whatsapp_number
+           FROM mechanics
+           WHERE account_id = $1`,
+          [input.mechanicId]
+        ),
+        pool.query(
+          `SELECT first_name, last_name
+           FROM accounts
+           WHERE id = $1`,
+          [userId]
+        ),
+      ]);
+      const mechanic = mechanicResult.rows[0];
+      const user = userResult.rows[0];
+      const userName = user ? `${user.first_name} ${user.last_name}`.trim() : 'a client';
+
+      if (mechanic && mechanic.whatsapp_number) {
+        createdBooking.whatsapp_notify_url = buildWhatsappUrl(
+          mechanic.whatsapp_number,
+          buildBookingNotificationMessage(
+            createdBooking.id,
+            userName,
+            createdBooking.description,
+            createdBooking.preferred_schedule
+          )
+        );
+      }
+    } catch (error) {
+      logger.warn('Booking WhatsApp notification link generation failed', {
+        ...errorMeta(error),
+        bookingId: createdBooking.id,
+        userId,
+        mechanicId: input.mechanicId,
+      });
+    }
+
+    return createdBooking;
   } catch (error) {
     await client.query('ROLLBACK');
     logger.error('Booking creation rolled back', {

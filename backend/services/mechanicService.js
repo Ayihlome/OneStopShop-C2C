@@ -3,6 +3,11 @@ const logger = require('../utils/logger');
 const { errorMeta } = require('../utils/logging');
 const { sanitize } = require('../utils/sanitize');
 const { createError } = require('../utils/errors');
+const {
+  formatE164,
+  buildWhatsappUrl,
+  buildContactMessage,
+} = require('../utils/whatsapp');
 const ocrService = require('./ocrService');
 
 const MECHANIC_SELECT = `
@@ -47,16 +52,21 @@ function withWhatsappUrl(record) {
     return record;
   }
 
+  const whatsappNumber = formatE164(record.whatsapp_number);
+
   return {
     ...record,
-    whatsapp_url: record.whatsapp_number
-      ? `https://wa.me/${String(record.whatsapp_number).replace(/\D/g, '')}`
-      : null,
+    whatsapp_url: whatsappNumber ? `https://wa.me/${whatsappNumber}` : null,
   };
 }
 
 function toNullable(value) {
   return value === undefined ? null : value;
+}
+
+function truncateQueryValue(value, maxLength) {
+  const text = String(value || '').trim();
+  return text.length > maxLength ? text.slice(0, maxLength).trim() : text;
 }
 
 async function listMechanics() {
@@ -204,6 +214,58 @@ async function findNearby(lat, lng) {
   return sanitize(result.rows.map(withWhatsappUrl));
 }
 
+async function getWhatsappContact(mechanicId, query = {}) {
+  const result = await pool.query(
+    `SELECT m.whatsapp_number, a.first_name, a.last_name
+     FROM accounts a
+     INNER JOIN mechanics m ON m.account_id = a.id
+     WHERE a.id = $1
+       AND a.status = 'active'`,
+    [mechanicId]
+  );
+  const mechanic = result.rows[0];
+
+  if (!mechanic) {
+    logger.warn('WhatsApp contact lookup failed because mechanic was not found', {
+      mechanicId,
+    });
+    throw createError(404, 'Mechanic not found');
+  }
+
+  if (!mechanic.whatsapp_number) {
+    logger.info('WhatsApp contact link unavailable for mechanic', {
+      mechanicId,
+      has_whatsapp: false,
+      clientNameProvided: Boolean(query.clientName),
+    });
+
+    return {
+      whatsapp_url: null,
+      has_whatsapp: false,
+    };
+  }
+
+  const mechanicName = `${mechanic.first_name} ${mechanic.last_name}`.trim();
+  const clientName =
+    truncateQueryValue(query.clientName, 200) || 'A potential client';
+  const serviceDescription =
+    truncateQueryValue(query.serviceDescription, 200) || 'general mechanical work';
+  const message = buildContactMessage(mechanicName, clientName, serviceDescription);
+  const whatsappUrl = buildWhatsappUrl(mechanic.whatsapp_number, message);
+  const hasWhatsapp = Boolean(whatsappUrl);
+
+  logger.info('WhatsApp contact link generated for mechanic', {
+    mechanicId,
+    has_whatsapp: hasWhatsapp,
+    clientNameProvided: Boolean(truncateQueryValue(query.clientName, 200)),
+  });
+
+  return {
+    whatsapp_url: whatsappUrl,
+    has_whatsapp: hasWhatsapp,
+  };
+}
+
 async function syncSpecialities(client, mechanicAccountId, specialities) {
   if (!Array.isArray(specialities)) {
     return;
@@ -240,6 +302,19 @@ async function syncSpecialities(client, mechanicAccountId, specialities) {
 }
 
 async function update(accountId, input) {
+  let whatsappNumber = input.whatsapp_number;
+
+  if (input.whatsapp_number !== undefined) {
+    whatsappNumber = formatE164(input.whatsapp_number);
+
+    if (!whatsappNumber) {
+      logger.warn('Mechanic update rejected because WhatsApp number is invalid', {
+        mechanicId: accountId,
+      });
+      throw createError(400, 'Invalid WhatsApp number format');
+    }
+  }
+
   const client = await pool.connect();
 
   try {
@@ -281,7 +356,7 @@ async function update(accountId, input) {
         toNullable(input.bio),
         toNullable(input.years_experience),
         toNullable(input.is_available),
-        toNullable(input.whatsapp_number),
+        toNullable(whatsappNumber),
         toNullable(input.lat),
         toNullable(input.lng),
       ]
@@ -473,6 +548,7 @@ module.exports = {
   searchMechanics,
   filterMechanics,
   findNearby,
+  getWhatsappContact,
   update,
   uploadDocument,
   deleteMechanic,

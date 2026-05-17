@@ -15,6 +15,11 @@ async function getMechanicProfile(req, res) {
   return res.status(200).json({ data });
 }
 
+async function getWhatsappContact(req, res) {
+  const data = await mechanicService.getWhatsappContact(req.params.id, req.query);
+  return res.status(200).json({ data });
+}
+
 async function searchMechanics(req, res) {
   const data = await mechanicService.searchMechanics(req.query.query || '');
   return res.status(200).json({ data });
@@ -59,6 +64,7 @@ module.exports = {
   listMechanics,
   getMechanic,
   getMechanicProfile,
+  getWhatsappContact,
   searchMechanics,
   filterMechanics,
   findNearby,

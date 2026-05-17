@@ -39,6 +39,7 @@ router.post(
   asyncHandler(mechanicController.uploadDocument)
 );
 
+router.get('/:id/whatsapp-contact', asyncHandler(mechanicController.getWhatsappContact));
 router.get('/:id/profile', asyncHandler(mechanicController.getMechanicProfile));
 router.get('/:id', asyncHandler(mechanicController.getMechanic));
 
