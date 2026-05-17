@@ -1,0 +1,13 @@
+services:
+  backend:
+    environment:
+      NODE_ENV: production
+    volumes: !override
+      - uploads_data:/app/uploads
+    command: npm start
+
+  frontend:
+    environment:
+      NODE_ENV: production
+    volumes: !reset []
+    command: sh -c "npm run build && npx serve dist -p 5173 -s"
