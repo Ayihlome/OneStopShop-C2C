@@ -4,6 +4,8 @@ const mechanicController = require('../controllers/mechanicController');
 const { authenticate, requireRole } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const upload = require('../middleware/upload');
+const validateDocument = require('../middleware/validateDocument');
+const checkDocumentLimit = require('../middleware/checkDocumentLimit');
 const asyncHandler = require('../utils/asyncHandler');
 
 const router = express.Router();
@@ -25,7 +27,9 @@ router.post(
   '/documents',
   authenticate,
   requireRole('mechanic'),
+  checkDocumentLimit,
   upload.single('document'),
+  validateDocument,
   [
     body('doc_type')
       .isIn(['id', 'certification', 'proof_of_residence'])

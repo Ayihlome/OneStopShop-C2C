@@ -1,6 +1,6 @@
 function errorMeta(error, options = {}) {
   const meta = {
-    message: error.message,
+    errorMessage: error.message,
   };
 
   if (error.code) {

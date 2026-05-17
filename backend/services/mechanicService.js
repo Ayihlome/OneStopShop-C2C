@@ -3,6 +3,7 @@ const logger = require('../utils/logger');
 const { errorMeta } = require('../utils/logging');
 const { sanitize } = require('../utils/sanitize');
 const { createError } = require('../utils/errors');
+const ocrService = require('./ocrService');
 
 const MECHANIC_SELECT = `
   SELECT
@@ -314,6 +315,31 @@ async function update(accountId, input) {
   }
 }
 
+async function checkAndGrantBadge(mechanicId) {
+  const result = await pool.query(
+    `SELECT COUNT(*)::int AS count
+     FROM mechanic_documents
+     WHERE mechanic_id = $1
+       AND status = 'approved'`,
+    [mechanicId]
+  );
+  const approvedCount = Number(result.rows[0].count);
+
+  if (approvedCount >= 1) {
+    await pool.query(
+      `UPDATE mechanics
+       SET verification_badge = true
+       WHERE account_id = $1`,
+      [mechanicId]
+    );
+
+    logger.info('Mechanic verification badge granted from approved document', {
+      mechanicId,
+      approvedDocumentCount: approvedCount,
+    });
+  }
+}
+
 async function uploadDocument(mechanicId, docType, file) {
   if (!file) {
     logger.warn('Document upload rejected because file is missing', {
@@ -329,14 +355,69 @@ async function uploadDocument(mechanicId, docType, file) {
      RETURNING *`,
     [mechanicId, docType, `/uploads/documents/${file.filename}`]
   );
+  let document = result.rows[0];
+  let scanResult;
 
   logger.info('Mechanic document uploaded', {
     mechanicId,
-    documentId: result.rows[0].id,
+    documentId: document.id,
     docType,
   });
 
-  return sanitize(result.rows[0]);
+  try {
+    scanResult = await ocrService.scanDocument(file.path, docType);
+
+    logger.info('Mechanic document OCR result', {
+      mechanicId,
+      documentId: document.id,
+      docType,
+      passed: scanResult.passed,
+      matchedKeywords: scanResult.matchedKeywords,
+      confidence: scanResult.confidence,
+    });
+
+    if (scanResult.passed) {
+      const approval = await pool.query(
+        `UPDATE mechanic_documents
+         SET status = 'approved',
+             reviewed_at = NOW()
+         WHERE id = $1
+         RETURNING *`,
+        [document.id]
+      );
+      document = approval.rows[0] || document;
+      await checkAndGrantBadge(mechanicId);
+    } else {
+      const rejection = await pool.query(
+        `UPDATE mechanic_documents
+         SET status = 'rejected',
+             reviewed_at = NOW()
+         WHERE id = $1
+         RETURNING *`,
+        [document.id]
+      );
+      document = rejection.rows[0] || document;
+    }
+  } catch (error) {
+    logger.warn('Mechanic document OCR scan failed; leaving document pending', {
+      ...errorMeta(error),
+      mechanicId,
+      documentId: document.id,
+      docType,
+    });
+  }
+
+  const sanitized = sanitize(document);
+
+  if (scanResult) {
+    sanitized.scan = {
+      passed: scanResult.passed,
+      matchedKeywords: scanResult.matchedKeywords,
+      confidence: scanResult.confidence,
+    };
+  }
+
+  return sanitized;
 }
 
 async function deleteMechanic(accountId) {

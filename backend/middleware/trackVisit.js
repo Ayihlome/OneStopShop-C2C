@@ -10,7 +10,7 @@ async function trackVisit(req, res, next) {
     )
     .catch((error) => {
       logger.warn('Failed to track page visit', {
-        message: error.message,
+        errorMessage: error.message,
         path: req.originalUrl,
       });
     });
