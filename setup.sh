@@ -46,6 +46,6 @@ fi
 
 echo ""
 echo "✅ Setup complete!"
-echo "1. Edit your .env files with your actual values"
+echo "1. Edit your .env files with your actual values (passwords and secrets)."
 echo "2. Run: docker-compose up"
 echo "3. Run: ngrok http 5173"

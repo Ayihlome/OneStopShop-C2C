@@ -3,7 +3,7 @@ const pool = require('../db/pool');
 const logger = require('../utils/logger');
 
 async function seedAdmin() {
-  const email = 'admin@onestopshop.com';
+  const email = process.env.ADMIN_EMAIL || 'admin@onestopshop.com';
   const existing = await pool.query('SELECT id, username, email, role, created_at FROM admins WHERE email = $1', [
     email,
   ]);
@@ -20,7 +20,7 @@ async function seedAdmin() {
     };
   }
 
-  const passwordHash = await bcrypt.hash('Admin1234!', 12);
+  const passwordHash = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'Admin1234!', 12);
 
   const result = await pool.query(
     `INSERT INTO admins (username, email, password_hash, role)
