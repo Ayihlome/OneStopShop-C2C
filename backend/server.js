@@ -10,7 +10,6 @@ const errorHandler = require('./middleware/errorHandler');
 const trackVisit = require('./middleware/trackVisit');
 const logger = require('./utils/logger');
 const { execSync } = require('child_process');
-const path = require('path');
 
 const app = express();
 
