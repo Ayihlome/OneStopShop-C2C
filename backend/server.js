@@ -4,22 +4,19 @@ const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const config = require('./config');
-console.log('Allowed CORS origins:', config.cors.origins);
 const routes = require('./routes');
 const requestLogger = require('./middleware/requestLogger');
 const errorHandler = require('./middleware/errorHandler');
 const trackVisit = require('./middleware/trackVisit');
 const logger = require('./utils/logger');
+const { execSync } = require('child_process');
+const path = require('path');
 
 const app = express();
 
 app.set('trust proxy', 1);
 
 app.use(helmet());
-console.log("CLIENT_URL raw:", process.env.CLIENT_URL);
-console.log("FRONTEND_URL raw:", process.env.FRONTEND_URL);
-console.log("NODE_ENV:", process.env.NODE_ENV);
-console.log("CORS_ORIGIN:", process.env.CORS_ORIGINS);
 app.use(
   cors({
     origin(origin, callback) {
@@ -70,6 +67,33 @@ app.use((req, res) => {
 });
 
 app.use(errorHandler);
+
+async function bootstrap() {
+  if (process.env.DATABASE_URL) {
+    try {
+      console.log('Running migrations...');
+      execSync(
+        `psql "${process.env.DATABASE_URL}" -f "${path.resolve(__dirname, 'db/migrations/001_init.sql')}"`,
+        { stdio: 'inherit' }
+      );
+      console.log('Migrations complete.');
+    } catch (err) {
+      console.error('Migration failed:', err.message);
+      process.exit(1);
+    }
+  }
+}
+
+if (require.main === module) {
+  bootstrap().then(() => {
+    app.listen(config.port, () => {
+      logger.info('OneStopShop API listening', {
+        port: config.port,
+        env: config.env,
+      });
+    });
+  });
+}
 
 if (require.main === module) {
   app.listen(config.port, () => {
