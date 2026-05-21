@@ -20,7 +20,7 @@ const config = {
     max: Number(process.env.DB_POOL_MAX || 10),
   },
   cors: {
-    origins: ['http://localhost:3001', 'http://localhost:5173'],...( process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : []),
+    origins: ['http://localhost:3001', 'http://localhost:5173', 'https://onestopshop-frontend-production.up.railway.app/'],...( process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : []),
   },
 };
 

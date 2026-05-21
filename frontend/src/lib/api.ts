@@ -92,7 +92,7 @@ const buildUrl = (path: string, query?: RequestOptions["query"]) => {
   });
 
   return url.toString();
-};
+} ;
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const token = localStorage.getItem('token');
@@ -105,6 +105,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
+}
 
 export const api = {
   login: (payload: LoginPayload) =>
