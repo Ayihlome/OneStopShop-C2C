@@ -6,7 +6,7 @@ const logsDir = path.resolve(__dirname, '..', 'logs');
 fs.mkdirSync(logsDir, { recursive: true });
 
 const logger = winston.createLogger({
-  level: debug, //process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'warn' : 'info'),
+  level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'warn' : 'info'),
   format: winston.format.combine(
     winston.format.timestamp(),
     winston.format.errors({ stack: true }),
