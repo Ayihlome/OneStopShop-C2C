@@ -1,4 +1,5 @@
 export type UserRole = "driver" | "mechanic" | "admin";
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export type ApiResponse<T> = {
   data: T;
@@ -81,7 +82,8 @@ type RequestOptions = {
 };
 
 const buildUrl = (path: string, query?: RequestOptions["query"]) => {
-  const url = new URL(path, window.location.origin);
+  const base = API_BASE || window.location.origin;
+  const url = new URL(path, base);
 
   Object.entries(query ?? {}).forEach(([key, value]) => {
     if (value) {
@@ -89,35 +91,20 @@ const buildUrl = (path: string, query?: RequestOptions["query"]) => {
     }
   });
 
-  return `${url.pathname}${url.search}`;
+  return url.toString();
 };
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const token = localStorage.getItem('token');
+  
   const response = await fetch(buildUrl(path, options.query), {
     method: options.method ?? "GET",
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
-
-  if (!response.ok) {
-    const fallback = `Request failed with status ${response.status}`;
-    let message: string;
-
-    if (response.headers.get("content-type")?.includes("application/json")) {
-      const payload = (await response.json()) as { message?: string };
-      message = payload.message ?? fallback;
-    } else {
-      const text = await response.text();
-      message = text || fallback;
-    }
-
-    throw new Error(message);
-  }
-
-  return response.json() as Promise<T>;
-}
 
 export const api = {
   login: (payload: LoginPayload) =>
