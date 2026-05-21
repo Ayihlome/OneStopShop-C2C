@@ -8,7 +8,10 @@ const config = {
     secret: process.env.JWT_SECRET || 'change_this_secret_in_env',
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   },
-  db: {
+  db: process.env.DATABASE_URL ? {
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+  } : {
     host: process.env.DB_HOST || 'localhost',
     port: Number(process.env.DB_PORT || 5432),
     database: process.env.DB_NAME || 'onestopshop',
