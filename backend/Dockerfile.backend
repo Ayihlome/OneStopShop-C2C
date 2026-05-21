@@ -11,5 +11,5 @@ COPY . .
 
 EXPOSE 3000
 
-ENTRYPOINT ["sh", "./entrypoint.sh"]
+# ENTRYPOINT ["sh", "./entrypoint.sh"]
 CMD ["npm", "run", "dev"]
