@@ -1,5 +1,6 @@
 #!/bin/sh
 set -eu
+echo "========== ENTRYPOINT STARTED =========="
 
 DB_HOST="${DB_HOST:-db}"
 DB_PORT="${DB_PORT:-5432}"
