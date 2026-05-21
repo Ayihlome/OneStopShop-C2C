@@ -16,6 +16,10 @@ const app = express();
 app.set('trust proxy', 1);
 
 app.use(helmet());
+console.log("CLIENT_URL raw:", process.env.CLIENT_URL);
+console.log("FRONTEND_URL raw:", process.env.FRONTEND_URL);
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("CORS_ORIGIN:", process.env.CORS_ORIGINS);
 app.use(
   cors({
     origin(origin, callback) {
