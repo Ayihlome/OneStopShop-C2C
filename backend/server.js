@@ -67,32 +67,32 @@ app.use((req, res) => {
 
 app.use(errorHandler);
 
-async function bootstrap() {
-  if (process.env.DATABASE_URL) {
-    try {
-      console.log('Running migrations...');
-      execSync(
-        `psql "${process.env.DATABASE_URL}" -f "${path.resolve(__dirname, 'db/migrations/001_init.sql')}"`,
-        { stdio: 'inherit' }
-      );
-      console.log('Migrations complete.');
-    } catch (err) {
-      console.error('Migration failed:', err.message);
-      process.exit(1);
-    }
-  }
-}
+// async function bootstrap() {
+//   if (process.env.DATABASE_URL) {
+//     try {
+//       console.log('Running migrations...');
+//       execSync(
+//         `psql "${process.env.DATABASE_URL}" -f "${path.resolve(__dirname, 'db/migrations/001_init.sql')}"`,
+//         { stdio: 'inherit' }
+//       );
+//       console.log('Migrations complete.');
+//     } catch (err) {
+//       console.error('Migration failed:', err.message);
+//       process.exit(1);
+//     }
+//   }
+// }
 
-if (require.main === module) {
-  bootstrap().then(() => {
-    app.listen(config.port, () => {
-      logger.info('OneStopShop API listening', {
-        port: config.port,
-        env: config.env,
-      });
-    });
-  });
-}
+// if (require.main === module) {
+//   bootstrap().then(() => {
+//     app.listen(config.port, () => {
+//       logger.info('OneStopShop API listening', {
+//         port: config.port,
+//         env: config.env,
+//       });
+//     });
+//   });
+// }
 
 if (require.main === module) {
   app.listen(config.port, () => {
