@@ -2,87 +2,80 @@
 
 :root {
   --font-size: 16px;
-  /* Eco-Drive Palette Light Mode Configuration */
-  --background: #FFFFFF;                  /* Pure White */
-  --foreground: #111827;                  /* Off-Black / Dark Charcoal */
-  --card: #F8FAFC;                        /* Very Light Cool Gray */
-  --card-foreground: #111827;             /* Off-Black */
-  --popover: #FFFFFF;
-  --popover-foreground: #111827;
-  --primary: #475569;                     /* Steel Gray (Structure/Authority) */
-  --primary-foreground: #FFFFFF;
-  --secondary: #64748B;                   /* Muted Steel Gray */
-  --secondary-foreground: #FFFFFF;
-  --muted: #E2E8F0;                       /* Soft Slate Gray */
-  --muted-foreground: #64748B;
-  --accent: #10B981;                      /* Emerald / Mint Green (Action/CTAs) */
-  --accent-foreground: #FFFFFF;
-  --destructive: #EF4444;                 /* Standard Safety Red */
-  --destructive-foreground: #FFFFFF;
-  --border: #E2E8F0;                      /* Clean, subtle gray borders */
+  --background: #5B360B;
+  --foreground: #010813;
+  --card: #FAD775;
+  --card-foreground: #010813;
+  --popover: #FAD775;
+  --popover-foreground: #010813;
+  --primary: #010813;
+  --primary-foreground: oklch(1 0 0);
+  --secondary: #5B360B;
+  --secondary-foreground: #010813;
+  --muted: #5B360B;
+  --muted-foreground: #362007;
+  --accent: #362007;
+  --accent-foreground: #ffffff;
+  --destructive: #010813;
+  --destructive-foreground: #ffffff;
+  --border: rgba(1, 8, 19, 0.45);
   --input: transparent;
-  --input-background: #F1F5F9;
-  --switch-background: rgba(71, 85, 105, 0.2);
+  --input-background: #FAD775;
+  --switch-background: rgba(1, 8, 19, 0.35);
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: #10B981;                        /* Focus rings use the accent mint */
-  
-  /* Chart colors tuned to look modern and cohesive */
-  --chart-1: #10B981;
-  --chart-2: #475569;
-  --chart-3: #059669;
-  --chart-4: #94A3B8;
-  --chart-5: #34D399;
-  
+  --ring: #010813;
+  --chart-1: #362007;
+  --chart-2: #010813;
+  --chart-3: #5B360B;
+  --chart-4: rgba(250, 215, 117, 0.75);
+  --chart-5: rgba(1, 8, 19, 0.7);
   --radius: 0.625rem;
-  --sidebar: #F8FAFC;
-  --sidebar-foreground: #111827;
-  --sidebar-primary: #475569;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #10B981;
-  --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: #E2E8F0;
-  --sidebar-ring: #10B981;
+  --sidebar: #FAD775;
+  --sidebar-foreground: #010813;
+  --sidebar-primary: #010813;
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: #5B360B;
+  --sidebar-accent-foreground: #010813;
+  --sidebar-border: rgba(1, 8, 19, 0.45);
+  --sidebar-ring: #010813;
 }
 
 .dark {
-  /* Dark mode mappings using deep slate grays and emerald glows */
-  --background: #0F172A;                  /* Slate 900 */
-  --foreground: #F8FAFC;                  /* Slate 50 */
-  --card: #1E293B;                        /* Slate 800 */
-  --card-foreground: #F8FAFC;
-  --popover: #1E293B;
-  --popover-foreground: #F8FAFC;
-  --primary: #F8FAFC;
-  --primary-foreground: #0F172A;
-  --secondary: #334155;                   /* Slate 700 */
-  --secondary-foreground: #F8FAFC;
-  --muted: #334155;
-  --muted-foreground: #94A3B8;            /* Slate 400 */
-  --accent: #10B981;                      /* Emerald remains bright in dark mode */
-  --accent-foreground: #0F172A;
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.145 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.396 0.141 25.723);
   --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: #334155;
-  --input: #334155;
-  --ring: #10B981;
+  --border: oklch(0.269 0 0);
+  --input: oklch(0.269 0 0);
+  --ring: oklch(0.439 0 0);
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  
-  --chart-1: oklch(0.696 0.17 162.48);
-  --chart-2: oklch(0.488 0.243 264.376);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  
-  --sidebar: #1E293B;
-  --sidebar-foreground: #F8FAFC;
-  --sidebar-primary: #10B981;
-  --sidebar-primary-foreground: #0F172A;
-  --sidebar-accent: #334155;
-  --sidebar-accent-foreground: #F8FAFC;
-  --sidebar-border: #334155;
-  --sidebar-ring: #10B981;
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.269 0 0);
+  --sidebar-ring: oklch(0.439 0 0);
 }
 
 @theme inline {
@@ -135,6 +128,11 @@
     @apply bg-background text-foreground;
   }
 
+  /**
+  * Default typography styles for HTML elements (h1-h4, p, label, button, input).
+  * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.
+  */
+
   html {
     font-size: var(--font-size);
   }
@@ -182,5 +180,46 @@
   }
 }
 
-/* * Utility color overrides adapted for Style 3 
- * (Ensuring readable
+.bg-\[\#5B360B\] {
+  color: #FFF4D6;
+}
+
+.bg-\[\#5B360B\] .text-\[\#010813\] {
+  color: #FFF4D6;
+}
+
+.bg-\[\#5B360B\] .text-\[\#362007\] {
+  color: #FFE8A0;
+}
+
+.bg-\[\#010813\] .text-\[\#5B360B\],
+.bg-\[\#010813\] .text-\[\#362007\],
+.bg-\[\#010813\] .text-\[\#010813\] {
+  color: #FFF4D6;
+}
+
+.bg-\[\#5B360B\] .bg-\[\#FAD775\],
+.bg-\[\#5B360B\] .bg-\[\#FAD775\] .text-\[\#010813\] {
+  color: #010813;
+}
+
+.bg-\[\#5B360B\] .bg-\[\#FAD775\] .text-\[\#362007\] {
+  color: #362007;
+}
+
+.bg-\[\#5B360B\] [data-slot="card"] {
+  color: #010813;
+}
+
+.bg-\[\#5B360B\] [data-slot="card"] label,
+.bg-\[\#5B360B\] [data-slot="card"] input,
+.bg-\[\#5B360B\] [data-slot="card"] textarea,
+.bg-\[\#5B360B\] [data-slot="card"] select,
+.bg-\[\#5B360B\] [data-slot="card"] .text-\[\#010813\] {
+  color: #010813;
+}
+
+.bg-\[\#5B360B\] [data-slot="card"] [data-slot="card-description"],
+.bg-\[\#5B360B\] [data-slot="card"] .text-\[\#362007\] {
+  color: #362007;
+}
