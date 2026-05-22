@@ -2,14 +2,15 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# Needed if your migration scripts use psql
 RUN apk add --no-cache postgresql-client
 
-COPY package*.json ./
-RUN npm install
+COPY backend/package*.json ./
 
-COPY . .
+RUN npm ci --omit=dev
 
-EXPOSE 3000
+COPY backend ./
 
-# ENTRYPOINT ["sh", "./entrypoint.sh"]
-CMD ["npm", "run", "dev"]
+EXPOSE 8000
+
+CMD sh -c "npm run migrate && npm run seed:admin && npm start"
