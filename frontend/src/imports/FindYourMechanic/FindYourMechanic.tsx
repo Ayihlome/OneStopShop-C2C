@@ -162,17 +162,17 @@ export default function FindYourMechanic() {
   });
 
   return (
-    <Layout className="bg-[#5B360B]" variant="app">
+    <Layout className="bg-primary" variant="app">
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
           <div>
-            <Badge className="mb-4 bg-[#010813] text-white">
+            <Badge className="mb-4 bg-primary text-primary-foreground">
               Browse mechanics
             </Badge>
-            <h1 className="text-4xl font-semibold text-[#010813]">
+            <h1 className="text-4xl font-semibold text-primary-foreground">
               Find your mechanic
             </h1>
-            <p className="mt-3 max-w-2xl text-[#362007]">
+            <p className="mt-3 max-w-2xl text-primary-foreground/80">
               Filter trusted local providers by city and specialty, then open a
               public profile to review details.
             </p>
@@ -182,7 +182,7 @@ export default function FindYourMechanic() {
               <div className="space-y-2">
                 <Label htmlFor="location">Location</Label>
                 <div className="relative">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#362007]" />
+                  <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     className="pl-9"
                     id="location"
@@ -219,11 +219,11 @@ export default function FindYourMechanic() {
 
         <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {filteredMechanics.map((mechanic) => (
-            <Card className="rounded-lg bg-[#FAD775]" key={mechanic.id}>
+            <Card className="rounded-lg bg-card" key={mechanic.id}>
               <CardHeader>
                 <div className="flex items-start gap-4">
                   <Avatar className="size-12">
-                    <AvatarFallback className="bg-[#010813] text-white">
+                    <AvatarFallback className="bg-primary text-primary-foreground">
                       {mechanic.name
                         .split(" ")
                         .map((part) => part[0])
@@ -234,7 +234,7 @@ export default function FindYourMechanic() {
                     <CardTitle className="text-xl">
                       {mechanic.businessName}
                     </CardTitle>
-                    <p className="mt-1 text-sm text-[#362007]">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       {mechanic.name}
                     </p>
                   </div>
@@ -243,7 +243,7 @@ export default function FindYourMechanic() {
               <CardContent className="space-y-4">
                 <div className="flex flex-wrap gap-2">
                   {mechanic.verified && (
-                    <Badge className="bg-[#010813] text-white">Verified</Badge>
+                    <Badge className="bg-primary text-primary-foreground">Verified</Badge>
                   )}
                   {mechanic.specialties.slice(0, 3).map((item) => (
                     <Badge key={item} variant="secondary">
@@ -251,27 +251,27 @@ export default function FindYourMechanic() {
                     </Badge>
                   ))}
                 </div>
-                <p className="text-sm leading-6 text-[#362007]">
+                <p className="text-sm leading-6 text-muted-foreground">
                   {mechanic.bio}
                 </p>
-                <div className="grid gap-2 text-sm text-[#362007]">
+                <div className="grid gap-2 text-sm text-muted-foreground">
                   <span className="flex items-center gap-2">
-                    <MapPin className="size-4 text-[#010813]" />
+                    <MapPin className="size-4 text-foreground" />
                     {mechanic.location}
                   </span>
                   <span className="flex items-center gap-2">
-                    <Star className="size-4 fill-[#010813] text-[#010813]" />
+                    <Star className="size-4 fill-foreground text-foreground" />
                     {mechanic.rating} ({mechanic.reviewCount} reviews)
                   </span>
                   <span className="flex items-center gap-2">
-                    <Wrench className="size-4 text-[#010813]" />
+                    <Wrench className="size-4 text-foreground" />
                     {mechanic.responseTime}
                   </span>
                 </div>
               </CardContent>
               <CardFooter>
                 <Button
-                  className="w-full bg-[#010813] text-white hover:bg-[#362007]"
+                  className="w-full"
                   onClick={() => navigate(`/mechanic/${mechanic.id}`)}
                 >
                   View profile
@@ -282,10 +282,10 @@ export default function FindYourMechanic() {
         </div>
 
         {filteredMechanics.length === 0 && (
-          <Card className="mt-8 rounded-lg bg-[#FAD775]">
+          <Card className="mt-8 rounded-lg bg-card">
             <CardContent className="py-10 text-center">
-              <p className="font-medium text-[#010813]">No mechanics found</p>
-              <p className="mt-2 text-sm text-[#362007]">
+              <p className="font-medium text-foreground">No mechanics found</p>
+              <p className="mt-2 text-sm text-muted-foreground">
                 Try another city or specialty.
               </p>
             </CardContent>

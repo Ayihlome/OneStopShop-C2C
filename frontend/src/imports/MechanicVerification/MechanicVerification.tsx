@@ -58,11 +58,11 @@ export default function MechanicVerification() {
   };
 
   return (
-    <Layout className="bg-[#5B360B]" variant="onboarding">
+    <Layout className="bg-primary" variant="onboarding">
       <section className="mx-auto max-w-4xl px-4 py-14 sm:px-6 lg:px-8">
-        <Card className="rounded-lg bg-[#FAD775] shadow-sm">
+        <Card className="rounded-lg bg-card shadow-sm">
           <CardHeader>
-            <Badge className="mb-4 w-fit bg-[#010813] text-white">
+            <Badge className="mb-4 w-fit bg-primary text-primary-foreground">
               Mechanic verification
             </Badge>
             <CardTitle className="text-3xl">Review your verification status</CardTitle>
@@ -72,12 +72,12 @@ export default function MechanicVerification() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-8">
-            <div className="rounded-md bg-[#5B360B] p-5">
+            <div className="rounded-md bg-primary p-5">
               <div className="mb-3 flex items-center justify-between gap-4">
-                <span className="font-medium text-[#010813]">
+                <span className="font-medium text-primary-foreground">
                   Profile readiness
                 </span>
-                <span className="text-sm text-[#362007]">75%</span>
+                <span className="text-sm text-primary-foreground/70">75%</span>
               </div>
               <Progress value={75} />
             </div>
@@ -85,7 +85,7 @@ export default function MechanicVerification() {
             <div className="grid gap-4 md:grid-cols-3">
               {checklist.map((item) => (
                 <div className="rounded-md border p-4" key={item}>
-                  <CheckCircle2 className="mb-3 size-5 text-[#010813]" />
+                  <CheckCircle2 className="mb-3 size-5 text-foreground" />
                   <p className="text-sm font-medium">{item}</p>
                 </div>
               ))}
@@ -93,10 +93,10 @@ export default function MechanicVerification() {
 
             <div className="rounded-md border p-5">
               <div className="flex items-start gap-4">
-                <ShieldCheck className="size-6 text-[#010813]" />
+                <ShieldCheck className="size-6 text-foreground" />
                 <div>
                   <h2 className="font-semibold">Next verification step</h2>
-                  <p className="mt-2 text-sm leading-6 text-[#362007]">
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
                     Upload and review controls will connect here. For now, use
                     the local action below to continue to your editable profile.
                   </p>
@@ -111,7 +111,7 @@ export default function MechanicVerification() {
                 <div className="space-y-2">
                   <Label htmlFor="docType">Document type</Label>
                   <select
-                    className="flex h-9 w-full rounded-md border border-[#010813]/60 bg-input-background px-3 py-1 text-sm text-[#010813] outline-none"
+                    className="flex h-9 w-full rounded-md border border-border bg-input-background px-3 py-1 text-sm text-foreground outline-none"
                     id="docType"
                     onChange={(event) => setDocType(event.target.value)}
                     value={docType}
@@ -132,7 +132,7 @@ export default function MechanicVerification() {
                 </div>
               </div>
               <Button
-                className="mt-4 bg-[#010813] text-white hover:bg-[#362007]"
+                className="mt-4"
                 disabled={isSubmitting}
                 type="submit"
               >
@@ -149,7 +149,6 @@ export default function MechanicVerification() {
                 Refresh status
               </Button>
               <Button
-                className="bg-[#010813] text-white hover:bg-[#362007]"
                 onClick={() => navigate("/mechanic/profile")}
               >
                 Continue to profile

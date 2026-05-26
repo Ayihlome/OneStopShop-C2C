@@ -41,17 +41,17 @@ export default function Main() {
 
   return (
     <Layout variant="public">
-      <section className="bg-[#5B360B]">
+      <section className="bg-primary">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-20">
           <div className="flex flex-col justify-center gap-7">
-            <Badge className="w-fit bg-[#010813] text-white">
+            <Badge className="w-fit bg-primary text-primary-foreground">
               Drivers and mechanics, one platform
             </Badge>
             <div className="space-y-5">
-              <h1 className="max-w-3xl text-4xl font-semibold text-[#010813] sm:text-5xl lg:text-6xl">
+              <h1 className="max-w-3xl text-4xl font-semibold text-primary-foreground sm:text-5xl lg:text-6xl">
                 OneStopShop
               </h1>
-              <p className="max-w-2xl text-lg text-[#362007]">
+              <p className="max-w-2xl text-lg text-primary-foreground/80">
                 Find trusted vehicle repair professionals, set up useful
                 service profiles, and keep the whole mechanic discovery flow in
                 one practical place.
@@ -59,7 +59,6 @@ export default function Main() {
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button
-                className="bg-[#010813] text-white hover:bg-[#362007]"
                 onClick={() => navigate("/find-mechanic")}
                 size="lg"
               >
@@ -75,7 +74,7 @@ export default function Main() {
               </Button>
             </div>
           </div>
-          <div className="rounded-lg border bg-[#FAD775] p-4 shadow-sm">
+          <div className="rounded-lg border bg-card p-4 shadow-sm">
             <img
               alt="Mechanic workshop"
               className="h-full min-h-80 w-full rounded-md object-cover"
@@ -93,13 +92,13 @@ export default function Main() {
             return (
               <Card className="rounded-lg" key={feature.title}>
                 <CardHeader>
-                  <span className="mb-3 flex size-11 items-center justify-center rounded-md bg-[#5B360B] text-[#010813]">
+                  <span className="mb-3 flex size-11 items-center justify-center rounded-md bg-primary text-primary-foreground">
                     <Icon className="size-5" />
                   </span>
                   <CardTitle>{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm leading-6 text-[#362007]">
+                  <p className="text-sm leading-6 text-muted-foreground">
                     {feature.copy}
                   </p>
                 </CardContent>
@@ -109,17 +108,17 @@ export default function Main() {
         </div>
       </section>
 
-      <section className="bg-[#010813]">
-        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-12 text-white sm:px-6 md:grid-cols-2 lg:px-8">
+      <section className="bg-primary">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-12 text-primary-foreground sm:px-6 md:grid-cols-2 lg:px-8">
           <div className="rounded-lg border border-white/20 p-6">
             <Car className="mb-5 size-8" />
             <h2 className="text-2xl font-semibold">For drivers</h2>
-            <p className="mt-3 text-[#5B360B]">
+            <p className="mt-3 text-primary-foreground/70">
               Build your profile, describe your vehicle, and browse mechanics
               by specialty and location.
             </p>
             <Button
-              className="mt-6 bg-[#FAD775] text-[#010813] hover:bg-[#5B360B]"
+              className="mt-6 bg-accent text-accent-foreground hover:bg-accent/90"
               onClick={() => navigate("/signup")}
             >
               Start as driver
@@ -128,12 +127,12 @@ export default function Main() {
           <div className="rounded-lg border border-white/20 p-6">
             <Wrench className="mb-5 size-8" />
             <h2 className="text-2xl font-semibold">For mechanics</h2>
-            <p className="mt-3 text-[#5B360B]">
+            <p className="mt-3 text-primary-foreground/70">
               Create a service profile, highlight specialties, and prepare for
               platform verification.
             </p>
             <Button
-              className="mt-6 bg-[#FAD775] text-[#010813] hover:bg-[#5B360B]"
+              className="mt-6 bg-accent text-accent-foreground hover:bg-accent/90"
               onClick={() => navigate("/signup")}
             >
               Start as mechanic

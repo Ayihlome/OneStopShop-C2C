@@ -18,7 +18,7 @@ export default function Layout({
   variant = "public",
 }: LayoutProps) {
   return (
-    <div className="min-h-screen bg-[#FAD775] text-[#010813]">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar variant={variant} />
       <main className={cn("min-h-[calc(100vh-9rem)]", className)}>
         {children}

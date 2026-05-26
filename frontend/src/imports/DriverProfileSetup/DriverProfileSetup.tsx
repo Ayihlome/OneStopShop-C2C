@@ -143,23 +143,23 @@ export default function DriverProfileSetup() {
   );
 
   return (
-    <Layout className="bg-[#5B360B]" variant="onboarding">
+    <Layout className="bg-primary" variant="onboarding">
       <section className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[0.85fr_1.15fr] lg:px-8 lg:py-14">
         <aside className="space-y-5">
           <Button
-            className="px-0 text-[#010813]"
+            className="px-0 text-primary-foreground"
             onClick={() => navigate("/signup")}
             variant="link"
           >
             <ArrowLeft className="size-4" />
             Back to signup
           </Button>
-          <div className="rounded-lg bg-[#010813] p-6 text-white">
+          <div className="rounded-lg bg-primary p-6 text-primary-foreground">
             <UserRound className="mb-6 size-10" />
             <h1 className="text-3xl font-semibold">
               Set up your driver profile
             </h1>
-            <p className="mt-3 text-sm text-[#5B360B]">
+            <p className="mt-3 text-sm text-primary-foreground/70">
               Tell mechanics who you are, where you are, and what you drive so
               service requests start with useful context.
             </p>
@@ -168,13 +168,13 @@ export default function DriverProfileSetup() {
             {["Profile details", "Vehicle basics", "Email verification"].map(
               (step, index) => (
                 <div
-                  className="flex items-center gap-3 rounded-md border bg-[#FAD775] p-4"
+                  className="flex items-center gap-3 rounded-md border bg-accent p-4"
                   key={step}
                 >
-                  <span className="flex size-8 items-center justify-center rounded-full bg-[#5B360B] text-sm font-semibold text-[#010813]">
+                  <span className="flex size-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
                     {index + 1}
                   </span>
-                  <span className="text-sm font-medium text-[#010813]">
+                  <span className="text-sm font-medium text-foreground">
                     {step}
                   </span>
                 </div>
@@ -186,7 +186,7 @@ export default function DriverProfileSetup() {
         <Card className="rounded-lg shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-2xl">
-              <Car className="size-5 text-[#010813]" />
+              <Car className="size-5 text-foreground" />
               Driver details
             </CardTitle>
             <CardDescription>
@@ -235,7 +235,6 @@ export default function DriverProfileSetup() {
                   Back
                 </Button>
                 <Button
-                  className="bg-[#010813] text-white hover:bg-[#362007]"
                   disabled={isSubmitting}
                   type="submit"
                 >

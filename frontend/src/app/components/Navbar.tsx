@@ -32,21 +32,21 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-[#FAD775]/95 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         <button
           className="flex items-center gap-2 text-left"
           onClick={() => goTo("/")}
           type="button"
         >
-          <span className="flex size-10 items-center justify-center rounded-md bg-[#010813] text-white">
+          <span className="flex size-10 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <Wrench className="size-5" />
           </span>
           <span>
-            <span className="block text-lg font-semibold text-[#010813]">
+            <span className="block text-lg font-semibold text-foreground">
               OneStopShop
             </span>
-            <span className="block text-xs text-[#362007]">
+            <span className="block text-xs text-muted-foreground">
               Vehicle care made simpler
             </span>
           </span>
@@ -57,8 +57,8 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
             {links.map((link) => (
               <Button
                 className={cn(
-                  "text-[#010813]",
-                  location.pathname === link.path && "text-[#010813]",
+                  "text-foreground",
+                  location.pathname === link.path && "text-foreground",
                 )}
                 key={link.path}
                 onClick={() => goTo(link.path)}
@@ -81,7 +81,7 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
                 Log in
               </Button>
               <Button
-                className="bg-[#010813] text-white hover:bg-[#362007]"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
                 onClick={() => goTo("/signup")}
               >
                 Get started
@@ -102,7 +102,7 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
       </div>
 
       {open && (
-        <div className="border-t bg-[#FAD775] px-4 py-4 md:hidden">
+        <div className="border-t bg-background px-4 py-4 md:hidden">
           <div className="flex flex-col gap-2">
             {showNavLinks &&
               links.map((link) => (
@@ -123,7 +123,7 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
               Log in
             </Button>
             <Button
-              className="bg-[#010813] text-white hover:bg-[#362007]"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
               onClick={() => goTo(variant === "admin" ? "/" : "/signup")}
             >
               {variant === "admin" ? "Exit admin" : "Get started"}

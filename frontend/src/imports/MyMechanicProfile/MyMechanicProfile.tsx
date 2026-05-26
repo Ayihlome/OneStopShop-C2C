@@ -205,17 +205,17 @@ export default function MyMechanicProfile() {
     .filter(Boolean);
 
   return (
-    <Layout className="bg-[#5B360B]" variant="app">
+    <Layout className="bg-primary" variant="app">
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <Badge className="mb-4 bg-[#010813] text-white">
+            <Badge className="mb-4 bg-primary text-primary-foreground">
               Mechanic workspace
             </Badge>
-            <h1 className="text-4xl font-semibold text-[#010813]">
+            <h1 className="text-4xl font-semibold text-primary-foreground">
               My mechanic profile
             </h1>
-            <p className="mt-3 max-w-2xl text-[#362007]">
+            <p className="mt-3 max-w-2xl text-primary-foreground/80">
               Edit the public details drivers will see when they review your
               service profile.
             </p>
@@ -236,7 +236,7 @@ export default function MyMechanicProfile() {
           </TabsList>
 
           <TabsContent value="edit">
-            <Card className="rounded-lg bg-[#FAD775]">
+            <Card className="rounded-lg bg-card">
               <CardHeader>
                 <CardTitle>Profile details</CardTitle>
                 <CardDescription>
@@ -288,7 +288,6 @@ export default function MyMechanicProfile() {
                   {status && <StatusMessage message={status} />}
 
                   <Button
-                    className="bg-[#010813] text-white hover:bg-[#362007]"
                     disabled={isSubmitting}
                     type="submit"
                   >
@@ -301,11 +300,11 @@ export default function MyMechanicProfile() {
           </TabsContent>
 
           <TabsContent value="preview">
-            <Card className="rounded-lg bg-[#FAD775]">
+            <Card className="rounded-lg bg-card">
               <CardHeader>
                 <div className="flex items-start gap-4">
                   <Avatar className="size-16">
-                    <AvatarFallback className="bg-[#010813] text-white">
+                    <AvatarFallback className="bg-primary text-primary-foreground">
                       RD
                     </AvatarFallback>
                   </Avatar>
@@ -319,25 +318,25 @@ export default function MyMechanicProfile() {
               </CardHeader>
               <CardContent className="space-y-5">
                 <div className="flex flex-wrap gap-2">
-                  <Badge className="bg-[#010813] text-white">Verified</Badge>
+                  <Badge className="bg-primary text-primary-foreground">Verified</Badge>
                   {specialties.map((specialty) => (
                     <Badge key={specialty} variant="secondary">
                       {specialty}
                     </Badge>
                   ))}
                 </div>
-                <p className="leading-7 text-[#362007]">{profile.bio}</p>
+                <p className="leading-7 text-muted-foreground">{profile.bio}</p>
                 <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="rounded-md bg-[#5B360B] p-4">
-                    <p className="text-sm text-[#362007]">Location</p>
+                  <div className="rounded-md bg-primary p-4">
+                    <p className="text-sm text-primary-foreground/70">Location</p>
                     <p className="font-medium">{profile.location}</p>
                   </div>
-                  <div className="rounded-md bg-[#5B360B] p-4">
-                    <p className="text-sm text-[#362007]">Availability</p>
+                  <div className="rounded-md bg-primary p-4">
+                    <p className="text-sm text-primary-foreground/70">Availability</p>
                     <p className="font-medium">{profile.availability}</p>
                   </div>
-                  <div className="rounded-md bg-[#5B360B] p-4">
-                    <Star className="mb-2 size-4 fill-[#010813] text-[#010813]" />
+                  <div className="rounded-md bg-primary p-4">
+                    <Star className="mb-2 size-4 fill-primary-foreground text-primary-foreground" />
                     <p className="font-medium">4.9 rating</p>
                   </div>
                 </div>
@@ -346,15 +345,15 @@ export default function MyMechanicProfile() {
           </TabsContent>
         </Tabs>
 
-        <Card className="mt-6 rounded-lg bg-[#FAD775]">
+        <Card className="mt-6 rounded-lg bg-card">
           <CardContent className="flex flex-col gap-3 py-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <span className="flex size-10 items-center justify-center rounded-md bg-[#5B360B] text-[#010813]">
+              <span className="flex size-10 items-center justify-center rounded-md bg-primary text-primary-foreground">
                 <Wrench className="size-5" />
               </span>
               <div>
                 <p className="font-medium">Profile completion</p>
-                <p className="text-sm text-[#362007]">
+                <p className="text-sm text-muted-foreground">
                   Complete profiles receive better driver context.
                 </p>
               </div>
