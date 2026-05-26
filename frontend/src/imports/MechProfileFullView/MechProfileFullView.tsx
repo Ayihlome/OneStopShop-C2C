@@ -223,10 +223,10 @@ export default function MechProfileFullView() {
   };
 
   return (
-    <Layout className="bg-[#5B360B]" variant="app">
+    <Layout className="bg-primary" variant="app">
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <Button
-          className="mb-6 px-0 text-[#010813]"
+          className="mb-6 px-0 text-foreground"
           onClick={() => navigate("/find-mechanic")}
           variant="link"
         >
@@ -235,11 +235,11 @@ export default function MechProfileFullView() {
         </Button>
 
         <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <Card className="rounded-lg bg-[#FAD775]">
+          <Card className="rounded-lg bg-card">
             <CardHeader>
               <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
                 <Avatar className="size-20">
-                  <AvatarFallback className="bg-[#010813] text-xl text-white">
+                  <AvatarFallback className="bg-primary text-xl text-primary-foreground">
                     {mechanic.name
                       .split(" ")
                       .map((part) => part[0])
@@ -249,7 +249,7 @@ export default function MechProfileFullView() {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     {mechanic.verified && (
-                      <Badge className="bg-[#010813] text-white">
+                      <Badge className="bg-primary text-primary-foreground">
                         <CheckCircle2 className="size-3" />
                         Verified
                       </Badge>
@@ -267,22 +267,22 @@ export default function MechProfileFullView() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid gap-4 sm:grid-cols-3">
-                <div className="rounded-md bg-[#5B360B] p-4">
-                  <MapPin className="mb-2 size-4 text-[#010813]" />
-                  <p className="text-sm text-[#362007]">Location</p>
-                  <p className="font-medium">{mechanic.location}</p>
+                <div className="rounded-md bg-primary p-4">
+                  <MapPin className="mb-2 size-4 text-primary-foreground" />
+                  <p className="text-sm text-primary-foreground/80">Location</p>
+                  <p className="font-medium text-primary-foreground">{mechanic.location}</p>
                 </div>
-                <div className="rounded-md bg-[#5B360B] p-4">
-                  <Star className="mb-2 size-4 fill-[#010813] text-[#010813]" />
-                  <p className="text-sm text-[#362007]">Rating</p>
-                  <p className="font-medium">
+                <div className="rounded-md bg-primary p-4">
+                  <Star className="mb-2 size-4 fill-primary-foreground text-primary-foreground" />
+                  <p className="text-sm text-primary-foreground/80">Rating</p>
+                  <p className="font-medium text-primary-foreground">
                     {mechanic.rating} ({mechanic.reviewCount})
                   </p>
                 </div>
-                <div className="rounded-md bg-[#5B360B] p-4">
-                  <CalendarPlus className="mb-2 size-4 text-[#010813]" />
-                  <p className="text-sm text-[#362007]">Availability</p>
-                  <p className="font-medium">Weekdays</p>
+                <div className="rounded-md bg-primary p-4">
+                  <CalendarPlus className="mb-2 size-4 text-primary-foreground" />
+                  <p className="text-sm text-primary-foreground/80">Availability</p>
+                  <p className="font-medium text-primary-foreground">Weekdays</p>
                 </div>
               </div>
 
@@ -290,7 +290,7 @@ export default function MechProfileFullView() {
 
               <div>
                 <h2 className="text-xl font-semibold">About</h2>
-                <p className="mt-3 leading-7 text-[#362007]">{mechanic.bio}</p>
+                <p className="mt-3 leading-7 text-muted-foreground">{mechanic.bio}</p>
               </div>
 
               <div>
@@ -307,7 +307,7 @@ export default function MechProfileFullView() {
           </Card>
 
           <div className="space-y-6">
-            <Card className="rounded-lg bg-[#FAD775]">
+            <Card className="rounded-lg bg-card">
               <CardHeader>
                 <CardTitle>Request service</CardTitle>
                 <CardDescription>
@@ -319,7 +319,7 @@ export default function MechProfileFullView() {
                   <div className="space-y-2">
                     <Label htmlFor="vehicleId">Vehicle</Label>
                     <select
-                      className="flex h-9 w-full rounded-md border border-[#010813]/60 bg-input-background px-3 py-1 text-sm text-[#010813] outline-none"
+                      className="flex h-9 w-full rounded-md border border-border bg-input-background px-3 py-1 text-sm text-foreground outline-none"
                       id="vehicleId"
                       onChange={(event) =>
                         setBookingForm((current) => ({
@@ -367,7 +367,6 @@ export default function MechProfileFullView() {
                     />
                   </div>
                   <Button
-                    className="w-full bg-[#010813] text-white hover:bg-[#362007]"
                     disabled={isSubmitting}
                     type="submit"
                   >
@@ -387,14 +386,14 @@ export default function MechProfileFullView() {
               </CardContent>
             </Card>
 
-            <Card className="rounded-lg bg-[#FAD775]">
+            <Card className="rounded-lg bg-card">
               <CardHeader>
                 <CardTitle>Recent reviews</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {(backendReviews.length ? backendReviews : reviews).map((review) => (
                   <div className="rounded-md border p-4" key={review.name}>
-                    <div className="mb-2 flex gap-1 text-[#010813]">
+                    <div className="mb-2 flex gap-1 text-foreground">
                       {Array.from({ length: 5 }).map((_, index) => (
                         <Star
                           className="size-4 fill-current"
@@ -402,7 +401,7 @@ export default function MechProfileFullView() {
                         />
                       ))}
                     </div>
-                    <p className="text-sm text-[#362007]">{review.text}</p>
+                    <p className="text-sm text-muted-foreground">{review.text}</p>
                     <p className="mt-2 text-sm font-medium">{review.name}</p>
                   </div>
                 ))}

@@ -17,11 +17,11 @@ export default function DriverEmailVerification() {
   const navigate = useNavigate();
 
   return (
-    <Layout className="bg-[#5B360B]" variant="onboarding">
+    <Layout className="bg-primary" variant="onboarding">
       <section className="mx-auto flex max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
-        <Card className="w-full rounded-lg bg-[#FAD775] text-center shadow-sm">
+        <Card className="w-full rounded-lg bg-card text-center shadow-sm">
           <CardHeader>
-            <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-[#010813] text-white">
+            <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
               <Mail className="size-7" />
             </div>
             <CardTitle className="text-3xl">Verify your email</CardTitle>
@@ -30,12 +30,11 @@ export default function DriverEmailVerification() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="rounded-md bg-[#5B360B] p-4 text-sm text-[#362007]">
+            <div className="rounded-md bg-muted p-4 text-sm text-muted-foreground">
               {status}
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <Button
-                className="bg-[#010813] text-white hover:bg-[#362007]"
                 onClick={() => setStatus("The backend does not expose email resend yet. Continue once your profile is saved.")}
               >
                 <RefreshCw className="size-4" />

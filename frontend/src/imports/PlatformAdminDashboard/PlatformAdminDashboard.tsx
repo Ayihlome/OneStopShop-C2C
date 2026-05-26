@@ -32,7 +32,7 @@ const stats = [
     label: "Total users",
     value: "1,284",
     icon: UsersRound,
-    tone: "bg-[#5B360B] text-[#010813]",
+    tone: "bg-card text-foreground",
   },
   {
     label: "Verified mechanics",
@@ -44,13 +44,13 @@ const stats = [
     label: "Active jobs",
     value: "79",
     icon: Wrench,
-    tone: "bg-[#5B360B] text-[#010813]",
+    tone: "bg-card text-foreground",
   },
   {
     label: "Open disputes",
     value: "4",
     icon: AlertTriangle,
-    tone: "bg-[#5B360B] text-[#010813]",
+    tone: "bg-card text-foreground",
   },
 ];
 
@@ -117,7 +117,7 @@ export default function PlatformAdminDashboard() {
               label: "Total users",
               value: String(data.total_users ?? 0),
               icon: UsersRound,
-              tone: "bg-[#5B360B] text-[#010813]",
+              tone: "bg-card text-foreground",
             },
             {
               label: "Verified mechanics",
@@ -129,13 +129,13 @@ export default function PlatformAdminDashboard() {
               label: "Active jobs",
               value: String(data.active_bookings ?? 0),
               icon: Wrench,
-              tone: "bg-[#5B360B] text-[#010813]",
+              tone: "bg-card text-foreground",
             },
             {
               label: "Pending documents",
               value: String(data.pending_verifications ?? documents.length),
               icon: AlertTriangle,
-              tone: "bg-[#5B360B] text-[#010813]",
+              tone: "bg-card text-foreground",
             },
           ]);
           setActivityRows(
@@ -175,17 +175,17 @@ export default function PlatformAdminDashboard() {
   }, []);
 
   return (
-    <Layout className="bg-[#5B360B]" variant="admin">
+    <Layout className="bg-primary" variant="admin">
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <Badge className="mb-4 bg-[#010813] text-white">
+            <Badge className="mb-4 bg-primary text-primary-foreground">
               Platform admin
             </Badge>
-            <h1 className="text-4xl font-semibold text-[#010813]">
+            <h1 className="text-4xl font-semibold text-foreground">
               Dashboard
             </h1>
-            <p className="mt-3 max-w-2xl text-[#362007]">
+            <p className="mt-3 max-w-2xl text-muted-foreground">
               Monitor platform health, verification flow, and recent user
               activity from backend dashboard endpoints.
             </p>
@@ -198,9 +198,9 @@ export default function PlatformAdminDashboard() {
             const Icon = stat.icon;
 
             return (
-              <Card className="rounded-lg bg-[#FAD775]" key={stat.label}>
+              <Card className="rounded-lg bg-card" key={stat.label}>
                 <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-sm font-medium text-[#362007]">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
                     {stat.label}
                   </CardTitle>
                   <span className={`rounded-md p-2 ${stat.tone}`}>
@@ -208,7 +208,7 @@ export default function PlatformAdminDashboard() {
                   </span>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-semibold text-[#010813]">
+                  <p className="text-3xl font-semibold text-foreground">
                     {stat.value}
                   </p>
                 </CardContent>
@@ -218,10 +218,10 @@ export default function PlatformAdminDashboard() {
         </div>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <Card className="rounded-lg bg-[#FAD775]">
+          <Card className="rounded-lg bg-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Activity className="size-5 text-[#010813]" />
+                <Activity className="size-5 text-foreground" />
                 Recent activity
               </CardTitle>
               <CardDescription>
@@ -252,8 +252,8 @@ export default function PlatformAdminDashboard() {
                             item.status === "Complete"
                               ? "bg-emerald-600 text-white"
                               : item.status === "Pending"
-                                ? "bg-[#362007] text-white"
-                                : "bg-[#010813] text-white"
+                                ? "bg-muted text-muted-foreground"
+                                : "bg-primary text-primary-foreground"
                           }
                         >
                           {item.status}
@@ -267,7 +267,7 @@ export default function PlatformAdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-lg bg-[#FAD775]">
+          <Card className="rounded-lg bg-card">
             <CardHeader>
               <CardTitle>Admin focus</CardTitle>
               <CardDescription>
@@ -281,8 +281,8 @@ export default function PlatformAdminDashboard() {
                 "Watch driver signup completion",
               ].map((item) => (
                 <div className="rounded-md border p-4" key={item}>
-                  <p className="font-medium text-[#010813]">{item}</p>
-                  <p className="mt-1 text-sm text-[#362007]">
+                  <p className="font-medium text-foreground">{item}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
                     Ready for backend metrics and workflow actions.
                   </p>
                 </div>

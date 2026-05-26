@@ -117,16 +117,16 @@ export default function SignUp() {
   };
 
   return (
-    <Layout className="bg-[#5B360B]" variant="public">
+    <Layout className="bg-primary" variant="public">
       <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <div className="mx-auto max-w-3xl text-center">
-          <Badge className="mb-4 bg-[#010813] text-white">
+          <Badge className="mb-4 bg-primary text-primary-foreground">
             One account, two paths
           </Badge>
-          <h1 className="text-4xl font-semibold text-[#010813] sm:text-5xl">
+          <h1 className="text-4xl font-semibold text-foreground sm:text-5xl">
             Join OneStopShop
           </h1>
-          <p className="mt-4 text-lg text-[#362007]">
+          <p className="mt-4 text-lg text-muted-foreground">
             Create your account, choose how you will use the platform, and we
             will route you into the right setup flow.
           </p>
@@ -153,24 +153,24 @@ export default function SignUp() {
 
               return (
                 <button
-                  className={`rounded-lg border bg-[#FAD775] p-5 text-left transition ${
+                  className={`rounded-lg border bg-card p-5 text-left transition ${
                     active
-                      ? "border-[#010813] ring-2 ring-[#010813]/20"
-                      : "hover:border-[#362007]"
+                      ? "border-border ring-2 ring-ring/20"
+                      : "hover:border-border"
                   }`}
                   key={option.role}
                   onClick={() => updateField("role", option.role)}
                   type="button"
                 >
                   <div className="flex items-start gap-4">
-                    <span className="flex size-11 items-center justify-center rounded-md bg-[#5B360B] text-[#010813]">
+                    <span className="flex size-11 items-center justify-center rounded-md bg-primary text-primary-foreground">
                       <Icon className="size-5" />
                     </span>
                     <span>
-                      <span className="block font-semibold text-[#010813]">
+                      <span className="block font-semibold text-foreground">
                         {option.title}
                       </span>
-                      <span className="mt-1 block text-sm text-[#362007]">
+                      <span className="mt-1 block text-sm text-muted-foreground">
                         {option.copy}
                       </span>
                     </span>
@@ -178,8 +178,8 @@ export default function SignUp() {
                 </button>
               );
             })}
-            <div className="rounded-lg border bg-[#FAD775] p-5 text-sm text-[#362007]">
-              <ShieldCheck className="mb-3 size-5 text-[#010813]" />
+            <div className="rounded-lg border bg-muted p-5 text-sm text-muted-foreground">
+              <ShieldCheck className="mb-3 size-5 text-foreground" />
               Account creation now syncs with the backend before setup begins.
             </div>
           </div>
@@ -264,7 +264,6 @@ export default function SignUp() {
                 </div>
 
                 <Button
-                  className="bg-[#010813] text-white hover:bg-[#362007]"
                   disabled={isSubmitting}
                   type="submit"
                 >
@@ -276,10 +275,10 @@ export default function SignUp() {
                 {status && <StatusMessage message={status} />}
               </form>
 
-              <div className="mt-6 text-center text-sm text-[#5B360B]">
+              <div className="mt-6 text-center text-sm text-muted-foreground">
                 Already have an account?{" "}
                 <Button
-                  className="h-auto p-0 text-[#5B360B]"
+                  className="h-auto p-0 text-muted-foreground"
                   onClick={() => navigate("/login")}
                   variant="link"
                 >
