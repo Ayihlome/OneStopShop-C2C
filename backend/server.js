@@ -23,7 +23,11 @@ app.use(
         return callback(null, true);
       }
 
-      logger.warn('CORS origin rejected', { origin });
+      logger.warn('CORS origin rejected', {
+        origin,
+        allowed: config.cors.origins,
+        hint: `Add "${origin}" to the CORS_ORIGINS env var, or verify the frontend VITE_API_URL points to this backend`,
+      });
       return callback(new Error('Not allowed by CORS'));
     },
     credentials: true,

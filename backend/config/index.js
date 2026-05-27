@@ -20,7 +20,10 @@ const config = {
     max: Number(process.env.DB_POOL_MAX || 10),
   },
   cors: {
-    origins: ['http://localhost:3001', 'http://localhost:5173', ...( process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : []),],
+    origins: (process.env.CORS_ORIGINS || 'http://localhost:3001,http://localhost:5173')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
   },
   payfast: {
     merchantId: process.env.PAYFAST_MERCHANT_ID || '',
