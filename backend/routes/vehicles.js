@@ -30,7 +30,7 @@ const updateVehicleValidators = [
     .withMessage('License plate cannot be empty'),
 ];
 
-router.use(authenticate, requireRole('user'));
+router.use(authenticate, requireRole('user', 'provider'));
 router.get('/', asyncHandler(vehicleController.listVehicles));
 router.get('/:id', asyncHandler(vehicleController.getVehicle));
 router.post('/', createVehicleValidators, validate, asyncHandler(vehicleController.createVehicle));

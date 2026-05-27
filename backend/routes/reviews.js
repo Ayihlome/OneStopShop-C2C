@@ -10,7 +10,7 @@ const router = express.Router();
 router.post(
   '/',
   authenticate,
-  requireRole('user'),
+  requireRole('user', 'provider'),
   [
     body('bookingId').isInt({ min: 1 }).withMessage('Valid bookingId is required'),
     body('rating').isInt({ min: 1, max: 5 }).withMessage('Rating must be between 1 and 5'),
@@ -21,6 +21,6 @@ router.post(
 );
 
 router.get('/mechanic/:id', asyncHandler(reviewController.getMechanicReviews));
-router.get('/user', authenticate, requireRole('user'), asyncHandler(reviewController.getMyReviews));
+router.get('/user', authenticate, requireRole('user', 'provider'), asyncHandler(reviewController.getMyReviews));
 
 module.exports = router;

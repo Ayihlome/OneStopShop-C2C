@@ -9,7 +9,7 @@ async function createReview(userId, input) {
     `SELECT *
      FROM bookings
      WHERE id = $1
-       AND user_id = $2`,
+       AND customer_user_id = $2`,
     [input.bookingId, userId]
   );
   const booking = bookingResult.rows[0];
@@ -22,24 +22,24 @@ async function createReview(userId, input) {
     throw createError(400, 'Booking not found for this user');
   }
 
-  if (booking.status !== 'completed') {
+  if (booking.booking_status !== 'completed') {
     logger.warn('Review creation failed because booking is not completed', {
       bookingId: input.bookingId,
       userId,
-      status: booking.status,
+      status: booking.booking_status,
     });
     throw createError(400, 'Only completed bookings can be reviewed');
   }
 
   try {
     const result = await pool.query(
-      `INSERT INTO reviews (booking_id, user_id, mechanic_id, rating, comment)
+      `INSERT INTO reviews (booking_id, reviewer_user_id, service_provider_id, rating, comment)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
       [
         input.bookingId,
         userId,
-        booking.mechanic_id,
+        booking.service_provider_id,
         input.rating,
         input.comment,
       ]
@@ -49,7 +49,7 @@ async function createReview(userId, input) {
       reviewId: result.rows[0].id,
       bookingId: input.bookingId,
       userId,
-      mechanicId: booking.mechanic_id,
+      serviceProviderId: booking.service_provider_id,
       rating: input.rating,
     });
 
@@ -68,27 +68,28 @@ async function createReview(userId, input) {
       ...errorMeta(error, { includeStack: true }),
       bookingId: input.bookingId,
       userId,
-      mechanicId: booking.mechanic_id,
+      serviceProviderId: booking.service_provider_id,
     });
     throw error;
   }
 }
 
-async function getMechanicReviews(mechanicId) {
+async function getMechanicReviews(accountId) {
   const result = await pool.query(
     `SELECT
        r.*,
        a.first_name AS user_first_name,
        a.last_name AS user_last_name
      FROM reviews r
-     INNER JOIN accounts a ON a.id = r.user_id
-     WHERE r.mechanic_id = $1
+     INNER JOIN service_provider_profiles sp ON sp.id = r.service_provider_id
+     INNER JOIN accounts a ON a.id = r.reviewer_user_id
+     WHERE sp.account_id = $1
      ORDER BY r.created_at DESC`,
-    [mechanicId]
+    [accountId]
   );
 
-  logger.debug('Mechanic reviews listed', {
-    mechanicId,
+  logger.debug('Provider reviews listed', {
+    accountId,
     count: result.rowCount,
   });
 
@@ -99,11 +100,13 @@ async function getUserReviews(userId) {
   const result = await pool.query(
     `SELECT
        r.*,
-       a.first_name AS mechanic_first_name,
-       a.last_name AS mechanic_last_name
+       a.first_name AS provider_first_name,
+       a.last_name AS provider_last_name,
+       sp.business_name
      FROM reviews r
-     INNER JOIN accounts a ON a.id = r.mechanic_id
-     WHERE r.user_id = $1
+     INNER JOIN service_provider_profiles sp ON sp.id = r.service_provider_id
+     INNER JOIN accounts a ON a.id = sp.account_id
+     WHERE r.reviewer_user_id = $1
      ORDER BY r.created_at DESC`,
     [userId]
   );

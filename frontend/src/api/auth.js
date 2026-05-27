@@ -11,7 +11,3 @@ export async function loginUser(data) {
 export async function loginAdmin(data) {
   return client.post('/auth/login/admin', data);
 }
-
-export async function becomeProvider(data) {
-  return client.post('/mechanics/become-provider', data);
-}

@@ -19,13 +19,11 @@ import { loginUser, loginAdmin } from "@/api/auth";
 type LoginForm = {
   email: string;
   password: string;
-  role: "user" | "admin";
 };
 
 const initialForm: LoginForm = {
   email: "",
   password: "",
-  role: "user",
 };
 
 export default function Login() {
@@ -47,8 +45,8 @@ export default function Login() {
       nextErrors.email = "Enter a valid email address.";
     }
 
-    if (form.password.length < 8) {
-      nextErrors.password = "Password must be at least 8 characters.";
+    if (!form.password) {
+      nextErrors.password = "Password is required.";
     }
 
     setErrors(nextErrors);
@@ -63,11 +61,11 @@ export default function Login() {
     }
 
     setIsSubmitting(true);
-    setStatus("Signing in with the backend API...");
+    setStatus("Signing in...");
 
     try {
-      const apiFn = form.role === "admin" ? loginAdmin : loginUser;
-      const response = await apiFn({
+      // Try user login first (handles both regular users and providers)
+      const response = await loginUser({
         email: form.email,
         password: form.password,
       });
@@ -75,21 +73,27 @@ export default function Login() {
 
       localStorage.setItem("oss_token", auth.token);
       localStorage.setItem("oss_user", JSON.stringify(auth.user));
-      setStatus("Login successful. Redirecting...");
 
-      if (form.role === "admin") {
-        navigate("/admin/dashboard");
-      } else if (auth.user.isProvider) {
+      if (auth.user.isProvider) {
         navigate("/mechanic/profile");
       } else {
         navigate("/find-mechanic");
       }
-    } catch (error) {
-      setStatus(
-        error instanceof Error
-          ? error.message
-          : "Login failed. Please check your details and try again.",
-      );
+    } catch {
+      // If user login fails, try admin login
+      try {
+        const adminResponse = await loginAdmin({
+          email: form.email,
+          password: form.password,
+        });
+        const adminAuth = adminResponse.data;
+
+        localStorage.setItem("oss_token", adminAuth.token);
+        localStorage.setItem("oss_user", JSON.stringify(adminAuth.user));
+        navigate("/admin/dashboard");
+      } catch {
+        setStatus("Invalid email or password. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -133,21 +137,6 @@ export default function Login() {
           <CardContent>
             <form className="space-y-5" onSubmit={handleSubmit}>
               <div className="space-y-2">
-                <Label htmlFor="role">Account type</Label>
-                <select
-                  className="flex h-9 w-full rounded-md border border-border bg-input-background px-3 py-1 text-sm text-foreground outline-none focus-visible:border-border focus-visible:ring-[3px] focus-visible:ring-ring/30"
-                  id="role"
-                  onChange={(event) =>
-                    updateField("role", event.target.value as LoginForm["role"])
-                  }
-                  value={form.role}
-                >
-                  <option value="user">User</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="email">Email address</Label>
                 <div className="relative">
                   <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -176,7 +165,7 @@ export default function Login() {
                   onChange={(event) =>
                     updateField("password", event.target.value)
                   }
-                  placeholder="At least 8 characters"
+                  placeholder="Enter your password"
                   type="password"
                   value={form.password}
                 />
