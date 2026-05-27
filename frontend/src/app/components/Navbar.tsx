@@ -11,7 +11,7 @@ type NavbarProps = {
 
 const publicLinks = [
   { label: "Find a mechanic", path: "/find-mechanic" },
-  { label: "For mechanics", path: "/signup" },
+  { label: "Become a provider", path: "/mechanic/setup" },
 ];
 
 const appLinks = [

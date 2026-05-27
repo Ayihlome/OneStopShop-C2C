@@ -1,4 +1,4 @@
-import { ArrowRight, Car, ShieldCheck, Wrench } from "lucide-react";
+import { ArrowRight, Car, ShieldCheck } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router";
 
@@ -15,16 +15,13 @@ import {
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { StatusMessage } from "@/app/components/ui/status-message";
-import { signupMechanic, signupUser } from "@/api/auth";
-
-type Role = "driver" | "mechanic";
+import { signupUser } from "@/api/auth";
 
 type SignupForm = {
   name: string;
   email: string;
   password: string;
   confirmPassword: string;
-  role: Role;
 };
 
 const initialForm: SignupForm = {
@@ -32,12 +29,11 @@ const initialForm: SignupForm = {
   email: "",
   password: "",
   confirmPassword: "",
-  role: "driver",
 };
 
 export default function SignUp() {
   const [form, setForm] = useState(initialForm);
-  const [errors, setErrors] = useState<Partial<SignupForm>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof SignupForm, string>>>({});
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
@@ -48,7 +44,7 @@ export default function SignUp() {
   };
 
   const validate = () => {
-    const nextErrors: Partial<SignupForm> = {};
+    const nextErrors: Partial<Record<keyof SignupForm, string>> = {};
 
     if (!form.name.trim()) {
       nextErrors.name = "Enter your full name.";
@@ -86,7 +82,7 @@ export default function SignUp() {
     }
 
     setIsSubmitting(true);
-    setStatus("Creating account with the backend API...");
+    setStatus("Creating account...");
 
     try {
       const name = splitName();
@@ -95,16 +91,13 @@ export default function SignUp() {
         email: form.email,
         password: form.password,
       };
-      const response =
-        form.role === "driver"
-          ? await signupUser(payload)
-          : await signupMechanic(payload);
+      const response = await signupUser(payload);
       const auth = response.data;
 
       localStorage.setItem("oss_token", auth.token);
       localStorage.setItem("oss_user", JSON.stringify(auth.user));
       setStatus("Account created. Continue setup to sync profile details.");
-      navigate(form.role === "driver" ? "/driver/setup" : "/mechanic/setup");
+      navigate("/driver/setup");
     } catch (error) {
       setStatus(
         error instanceof Error
@@ -121,66 +114,39 @@ export default function SignUp() {
       <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <div className="mx-auto max-w-3xl text-center">
           <Badge className="mb-4 bg-primary text-primary-foreground">
-            One account, two paths
+            One account, all access
           </Badge>
           <h1 className="text-4xl font-semibold text-foreground sm:text-5xl">
             Join OneStopShop
           </h1>
           <p className="mt-4 text-lg text-muted-foreground">
-            Create your account, choose how you will use the platform, and we
-            will route you into the right setup flow.
+            Create your account. You can become a service provider at any time
+            after signing up.
           </p>
         </div>
 
         <div className="mt-10 grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="grid gap-4">
-            {[
-              {
-                role: "driver" as Role,
-                icon: Car,
-                title: "I need a mechanic",
-                copy: "Build a driver profile and find trusted local service providers.",
-              },
-              {
-                role: "mechanic" as Role,
-                icon: Wrench,
-                title: "I provide repairs",
-                copy: "Create a mechanic profile and prepare for verification.",
-              },
-            ].map((option) => {
-              const Icon = option.icon;
-              const active = form.role === option.role;
-
-              return (
-                <button
-                  className={`rounded-lg border bg-card p-5 text-left transition ${
-                    active
-                      ? "border-border ring-2 ring-ring/20"
-                      : "hover:border-border"
-                  }`}
-                  key={option.role}
-                  onClick={() => updateField("role", option.role)}
-                  type="button"
-                >
-                  <div className="flex items-start gap-4">
-                    <span className="flex size-11 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                      <Icon className="size-5" />
-                    </span>
-                    <span>
-                      <span className="block font-semibold text-foreground">
-                        {option.title}
-                      </span>
-                      <span className="mt-1 block text-sm text-muted-foreground">
-                        {option.copy}
-                      </span>
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
+            <div className="rounded-lg border bg-card p-5">
+              <div className="flex items-start gap-4">
+                <span className="flex size-11 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                  <Car className="size-5" />
+                </span>
+                <span>
+                  <span className="block font-semibold text-foreground">
+                    Register your account
+                  </span>
+                  <span className="mt-1 block text-sm text-muted-foreground">
+                    Sign up once — then optionally upgrade to a provider profile
+                    with PayFast payment details.
+                  </span>
+                </span>
+              </div>
+            </div>
             <div className="rounded-lg border bg-muted p-5 text-sm text-muted-foreground">
               <ShieldCheck className="mb-3 size-5 text-foreground" />
-              Account creation now syncs with the backend before setup begins.
+              Account creation syncs with the backend before setup begins.
+              No separate mechanic signup — upgrade from within your account.
             </div>
           </div>
 
@@ -188,9 +154,7 @@ export default function SignUp() {
             <CardHeader>
               <CardTitle className="text-2xl">Create account</CardTitle>
               <CardDescription>
-                We will send you to{" "}
-                {form.role === "driver" ? "driver setup" : "mechanic setup"}{" "}
-                after validation.
+                We will send you to driver setup after validation.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -263,13 +227,8 @@ export default function SignUp() {
                   </div>
                 </div>
 
-                <Button
-                  disabled={isSubmitting}
-                  type="submit"
-                >
-                  {isSubmitting
-                    ? "Creating account..."
-                    : `Continue as ${form.role === "driver" ? "driver" : "mechanic"}`}
+                <Button disabled={isSubmitting} type="submit">
+                  {isSubmitting ? "Creating account..." : "Create account"}
                   <ArrowRight className="size-4" />
                 </Button>
                 {status && <StatusMessage message={status} />}

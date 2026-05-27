@@ -16,16 +16,15 @@ import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { StatusMessage } from "@/app/components/ui/status-message";
 import { Textarea } from "@/app/components/ui/textarea";
-import { updateMechanic } from "@/api/mechanics";
+import { becomeProvider } from "@/api/mechanics";
 
-type MechanicForm = {
+type ProviderForm = {
   businessName: string;
-  ownerName: string;
-  email: string;
-  phone: string;
-  location: string;
-  bio: string;
-  availability: string;
+  whatsappNumber: string;
+  serviceDescription: string;
+  yearsOfExperience: string;
+  payfastMerchantId: string;
+  payfastMerchantKey: string;
   specialties: string[];
 };
 
@@ -40,32 +39,29 @@ const specialtyOptions = [
   "Mobile service",
 ];
 
-const initialForm: MechanicForm = {
+const initialForm: ProviderForm = {
   businessName: "",
-  ownerName: "",
-  email: "",
-  phone: "",
-  location: "",
-  bio: "",
-  availability: "",
+  whatsappNumber: "",
+  serviceDescription: "",
+  yearsOfExperience: "",
+  payfastMerchantId: "",
+  payfastMerchantKey: "",
   specialties: [],
 };
 
 export default function MechanicProfileSetup() {
   const [form, setForm] = useState(initialForm);
-  const [errors, setErrors] = useState<Partial<Record<keyof MechanicForm, string>>>(
-    {},
-  );
+  const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const updateField = (field: keyof MechanicForm, value: string) => {
+  const updateField = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
   };
 
-  const toggleSpecialty = (specialty: string) => {
+  const toggleSpecialty = (specialty) => {
     setForm((current) => ({
       ...current,
       specialties: current.specialties.includes(specialty)
@@ -76,26 +72,14 @@ export default function MechanicProfileSetup() {
   };
 
   const validate = () => {
-    const nextErrors: Partial<Record<keyof MechanicForm, string>> = {};
-    const required: Array<keyof MechanicForm> = [
-      "businessName",
-      "ownerName",
-      "email",
-      "phone",
-      "location",
-      "bio",
-      "availability",
-    ];
+    const nextErrors = {};
 
-    required.forEach((field) => {
-      const value = form[field];
-      if (typeof value === "string" && !value.trim()) {
-        nextErrors[field] = "This field is required.";
-      }
-    });
+    if (!form.businessName.trim()) {
+      nextErrors.businessName = "Business name is required.";
+    }
 
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) {
-      nextErrors.email = "Enter a valid email address.";
+    if (!form.whatsappNumber.trim()) {
+      nextErrors.whatsappNumber = "WhatsApp business number is required.";
     }
 
     if (form.specialties.length === 0) {
@@ -106,64 +90,43 @@ export default function MechanicProfileSetup() {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const currentUser = () => {
-    try {
-      return JSON.parse(localStorage.getItem("oss_user") || "{}") as {
-        id?: number | string;
-      };
-    } catch {
-      return {};
-    }
-  };
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!validate()) {
       return;
     }
 
-    const user = currentUser();
-    if (!user.id) {
-      setStatus("Please sign in as a mechanic before saving this profile.");
-      return;
-    }
-
     setIsSubmitting(true);
-    setStatus("Saving mechanic profile to the backend...");
+    setStatus("Creating provider profile...");
 
     try {
-      const ownerParts = form.ownerName.trim().split(/\s+/);
-      await updateMechanic(user.id, {
-        first_name: ownerParts[0] || form.ownerName,
-        last_name: ownerParts.slice(1).join(" ") || ownerParts[0] || "",
-        phone_number: form.phone,
-        city: form.location,
-        bio: form.bio,
-        whatsapp_number: form.phone,
-        is_available: true,
+      await becomeProvider({
+        business_name: form.businessName,
+        business_whatsapp_number: form.whatsappNumber,
+        service_description: form.serviceDescription || null,
+        years_of_experience: form.yearsOfExperience
+          ? Number(form.yearsOfExperience)
+          : null,
+        payfast_merchant_id: form.payfastMerchantId || null,
+        payfast_merchant_key: form.payfastMerchantKey || null,
         specialities: form.specialties,
       });
 
-      setStatus("Mechanic profile saved.");
+      setStatus("Provider profile created.");
       navigate("/mechanic/verify");
     } catch (error) {
       setStatus(
         error instanceof Error
           ? error.message
-          : "Could not save mechanic profile. Please try again.",
+          : "Could not create provider profile. Please try again.",
       );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const renderInput = (
-    field: keyof MechanicForm,
-    label: string,
-    placeholder: string,
-    type = "text",
-  ) => (
+  const renderInput = (field, label, placeholder, type = "text") => (
     <div className="space-y-2">
       <Label htmlFor={field}>{label}</Label>
       <Input
@@ -184,20 +147,20 @@ export default function MechanicProfileSetup() {
         <aside className="space-y-5">
           <Button
             className="px-0 text-primary-foreground"
-            onClick={() => navigate("/signup")}
+            onClick={() => navigate("/find-mechanic")}
             variant="link"
           >
             <ArrowLeft className="size-4" />
-            Back to signup
+            Back to search
           </Button>
           <div className="rounded-lg bg-primary p-6 text-primary-foreground">
             <Wrench className="mb-6 size-10" />
             <h1 className="text-3xl font-semibold">
-              Build your mechanic profile
+              Become a service provider
             </h1>
             <p className="mt-3 text-sm text-primary-foreground/70">
-              Set up the business details drivers will use to evaluate your
-              services before verification.
+              Upgrade your account to offer services. Set up your business
+              details, WhatsApp number, and PayFast payment credentials.
             </p>
           </div>
           <Card className="rounded-lg bg-card">
@@ -206,8 +169,10 @@ export default function MechanicProfileSetup() {
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
               <p>Business details</p>
-              <p>Specialties and bio</p>
-              <p>Verification review</p>
+              <p>WhatsApp number (required)</p>
+              <p>Specialties and description</p>
+              <p>PayFast merchant credentials</p>
+              <p>Verification &amp; document upload</p>
             </CardContent>
           </Card>
         </aside>
@@ -216,21 +181,21 @@ export default function MechanicProfileSetup() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-2xl">
               <BriefcaseBusiness className="size-5 text-foreground" />
-              Mechanic details
+              Provider details
             </CardTitle>
             <CardDescription>
-              These details sync to your backend mechanic profile.
+              After creating your provider profile, you can manage it from your
+              profile page.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form className="space-y-8" onSubmit={handleSubmit}>
               <div className="grid gap-4 sm:grid-cols-2">
                 {renderInput("businessName", "Business name", "Robert's Auto Clinic")}
-                {renderInput("ownerName", "Owner name", "Robert Daniels")}
-                {renderInput("email", "Email", "service@example.com", "email")}
-                {renderInput("phone", "Phone", "+27 82 123 4567", "tel")}
-                {renderInput("location", "Location", "Johannesburg")}
-                {renderInput("availability", "Availability", "Weekdays, 08:00-17:00")}
+                {renderInput("whatsappNumber", "WhatsApp number", "+27 82 123 4567", "tel")}
+                {renderInput("yearsOfExperience", "Years of experience", "10", "number")}
+                {renderInput("payfastMerchantId", "PayFast Merchant ID (optional)", "")}
+                {renderInput("payfastMerchantKey", "PayFast Merchant Key (optional)", "")}
               </div>
 
               <div className="space-y-3">
@@ -238,7 +203,6 @@ export default function MechanicProfileSetup() {
                 <div className="flex flex-wrap gap-2">
                   {specialtyOptions.map((specialty) => {
                     const active = form.specialties.includes(specialty);
-
                     return (
                       <button
                         className={`rounded-md border px-3 py-2 text-sm transition ${
@@ -261,17 +225,15 @@ export default function MechanicProfileSetup() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="bio">Professional bio</Label>
+                <Label htmlFor="serviceDescription">Service description</Label>
                 <Textarea
-                  aria-invalid={Boolean(errors.bio)}
-                  id="bio"
-                  onChange={(event) => updateField("bio", event.target.value)}
+                  id="serviceDescription"
+                  onChange={(event) =>
+                    updateField("serviceDescription", event.target.value)
+                  }
                   placeholder="Describe your experience, service approach, and workshop strengths."
-                  value={form.bio}
+                  value={form.serviceDescription}
                 />
-                {errors.bio && (
-                  <p className="text-sm text-red-600">{errors.bio}</p>
-                )}
               </div>
 
               <div className="flex flex-wrap gap-2">
@@ -284,17 +246,14 @@ export default function MechanicProfileSetup() {
 
               <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                 <Button
-                  onClick={() => navigate("/signup")}
+                  onClick={() => navigate("/find-mechanic")}
                   type="button"
                   variant="outline"
                 >
                   Back
                 </Button>
-                <Button
-                  disabled={isSubmitting}
-                  type="submit"
-                >
-                  {isSubmitting ? "Saving..." : "Continue to verification"}
+                <Button disabled={isSubmitting} type="submit">
+                  {isSubmitting ? "Creating..." : "Create provider profile"}
                   <ArrowRight className="size-4" />
                 </Button>
               </div>

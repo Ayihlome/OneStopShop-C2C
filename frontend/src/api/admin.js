@@ -47,3 +47,7 @@ export async function listReports() {
 export async function deleteReport(id) {
   return client.delete(`/admin/reports/${id}`);
 }
+
+export async function listPayments() {
+  return client.get('/admin/payments');
+}

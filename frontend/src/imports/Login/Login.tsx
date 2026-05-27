@@ -14,12 +14,12 @@ import {
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { StatusMessage } from "@/app/components/ui/status-message";
-import { loginAdmin, loginMechanic, loginUser } from "@/api/auth";
+import { loginUser, loginAdmin } from "@/api/auth";
 
 type LoginForm = {
   email: string;
   password: string;
-  role: "user" | "mechanic" | "admin";
+  role: "user" | "admin";
 };
 
 const initialForm: LoginForm = {
@@ -55,12 +55,6 @@ export default function Login() {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const apiForRole = {
-    user: loginUser,
-    mechanic: loginMechanic,
-    admin: loginAdmin,
-  };
-
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -72,7 +66,8 @@ export default function Login() {
     setStatus("Signing in with the backend API...");
 
     try {
-      const response = await apiForRole[form.role]({
+      const apiFn = form.role === "admin" ? loginAdmin : loginUser;
+      const response = await apiFn({
         email: form.email,
         password: form.password,
       });
@@ -82,13 +77,13 @@ export default function Login() {
       localStorage.setItem("oss_user", JSON.stringify(auth.user));
       setStatus("Login successful. Redirecting...");
 
-      navigate(
-        form.role === "admin"
-          ? "/admin/dashboard"
-          : form.role === "mechanic"
-            ? "/mechanic/profile"
-            : "/find-mechanic",
-      );
+      if (form.role === "admin") {
+        navigate("/admin/dashboard");
+      } else if (auth.user.isProvider) {
+        navigate("/mechanic/profile");
+      } else {
+        navigate("/find-mechanic");
+      }
     } catch (error) {
       setStatus(
         error instanceof Error
@@ -113,8 +108,8 @@ export default function Login() {
               Get back to managing vehicle care with less friction.
             </h1>
             <p className="max-w-xl text-lg text-primary-foreground/80">
-              Sign in to browse mechanics, manage your profile, and continue
-              the service flow from one clear dashboard.
+              Sign in to browse mechanics, manage your provider profile, and
+              continue the service flow from one clear dashboard.
             </p>
           </div>
           <div className="grid gap-3 text-sm text-primary-foreground/80 sm:grid-cols-3">
@@ -147,8 +142,7 @@ export default function Login() {
                   }
                   value={form.role}
                 >
-                  <option value="user">Driver</option>
-                  <option value="mechanic">Mechanic</option>
+                  <option value="user">User</option>
                   <option value="admin">Admin</option>
                 </select>
               </div>
@@ -193,11 +187,7 @@ export default function Login() {
 
               {status && <StatusMessage message={status} />}
 
-              <Button
-                className="w-full"
-                disabled={isSubmitting}
-                type="submit"
-              >
+              <Button className="w-full" disabled={isSubmitting} type="submit">
                 {isSubmitting ? "Logging in..." : "Log in to account"}
                 <ArrowRight className="size-4" />
               </Button>

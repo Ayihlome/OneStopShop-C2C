@@ -85,7 +85,7 @@ type BackendMechanic = {
   review_count?: number | string;
   reviewCount?: number | string;
   is_available?: boolean;
-  bio?: string;
+  service_description?: string;
   verification_badge?: boolean;
   verified?: boolean;
 };
@@ -107,7 +107,7 @@ function normalizeMechanic(mechanic: BackendMechanic) {
     responseTime: mechanic.is_available
       ? "Available for requests"
       : "Availability on request",
-    bio: mechanic.bio || "No bio provided yet.",
+    bio: mechanic.service_description || "No description provided yet.",
     verified: Boolean(mechanic.verification_badge ?? mechanic.verified),
   };
 }

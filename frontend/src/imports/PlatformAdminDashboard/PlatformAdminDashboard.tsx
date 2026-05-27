@@ -25,7 +25,7 @@ import {
   TableRow,
 } from "@/app/components/ui/table";
 import { StatusMessage } from "@/app/components/ui/status-message";
-import { getDashboard, listPendingDocuments } from "@/api/admin";
+import { getDashboard, listPendingDocuments, listPayments } from "@/api/admin";
 
 const stats = [
   {
@@ -97,6 +97,7 @@ type PendingDocument = {
 export default function PlatformAdminDashboard() {
   const [dashboardStats, setDashboardStats] = useState(stats);
   const [activityRows, setActivityRows] = useState(activity);
+  const [paymentCount, setPaymentCount] = useState(0);
   const [status, setStatus] = useState("Loading admin dashboard from backend...");
 
   useEffect(() => {
@@ -104,12 +105,14 @@ export default function PlatformAdminDashboard() {
 
     async function loadAdminDashboard() {
       try {
-        const [dashboardResponse, documentsResponse] = await Promise.all([
+        const [dashboardResponse, documentsResponse, paymentsResponse] = await Promise.all([
           getDashboard(),
           listPendingDocuments(),
+          listPayments().catch(() => ({ data: [] })),
         ]);
         const data = dashboardResponse.data;
         const documents = documentsResponse.data || [];
+        const payments = paymentsResponse.data || [];
 
         if (!ignore) {
           setDashboardStats([
@@ -137,6 +140,12 @@ export default function PlatformAdminDashboard() {
               icon: AlertTriangle,
               tone: "bg-card text-foreground",
             },
+            {
+              label: "Total payments",
+              value: String(data.total_payments ?? paymentCount),
+              icon: Activity,
+              tone: "bg-card text-foreground",
+            },
           ]);
           setActivityRows(
             documents.length
@@ -154,6 +163,7 @@ export default function PlatformAdminDashboard() {
                 }))
               : activity,
           );
+          setPaymentCount(payments.length);
           setStatus("Admin dashboard loaded from backend.");
         }
       } catch (error) {
