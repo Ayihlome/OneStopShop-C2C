@@ -10,9 +10,9 @@ const router = express.Router();
 router.post(
   '/',
   authenticate,
-  requireRole('user'),
+  requireRole('user', 'provider'),
   [
-    body('mechanicId').isInt({ min: 1 }).withMessage('Valid mechanicId is required'),
+    body('providerId').isInt({ min: 1 }).withMessage('Valid providerId is required'),
     body('vehicleId').isInt({ min: 1 }).withMessage('Valid vehicleId is required'),
     body('description').trim().notEmpty().withMessage('Description is required'),
     body('preferredSchedule')
@@ -23,11 +23,11 @@ router.post(
   asyncHandler(bookingController.createBooking)
 );
 
-router.get('/user', authenticate, requireRole('user'), asyncHandler(bookingController.listMyBookings));
+router.get('/user', authenticate, asyncHandler(bookingController.listMyBookings));
 router.get(
   '/mechanic',
   authenticate,
-  requireRole('mechanic'),
+  requireRole('provider'),
   asyncHandler(bookingController.listMechanicBookings)
 );
 router.get('/:id', authenticate, asyncHandler(bookingController.getBooking));
@@ -37,7 +37,7 @@ router.patch(
   authenticate,
   [
     body('status')
-      .isIn(['pending', 'accepted', 'in_progress', 'completed', 'cancelled', 'rejected'])
+      .isIn(['in_progress', 'completed', 'cancelled', 'rejected'])
       .withMessage('Invalid booking status'),
   ],
   validate,

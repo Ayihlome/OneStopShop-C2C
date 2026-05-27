@@ -50,6 +50,11 @@ async function rejectDocument(req, res) {
   return res.status(200).json({ data, message: 'Success' });
 }
 
+async function listPayments(req, res) {
+  const data = await adminService.listPayments();
+  return res.status(200).json({ data });
+}
+
 module.exports = {
   getDashboard,
   listUsers,
@@ -61,4 +66,5 @@ module.exports = {
   listPendingDocuments,
   approveDocument,
   rejectDocument,
+  listPayments,
 };

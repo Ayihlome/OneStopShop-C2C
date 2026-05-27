@@ -5,18 +5,8 @@ async function signupUser(req, res) {
   return res.status(201).json({ data, message: 'Success' });
 }
 
-async function signupMechanic(req, res) {
-  const data = await authService.signupMechanic(req.body);
-  return res.status(201).json({ data, message: 'Success' });
-}
-
 async function loginUser(req, res) {
-  const data = await authService.loginAccount(req.body.email, req.body.password, 'user');
-  return res.status(200).json({ data, message: 'Success' });
-}
-
-async function loginMechanic(req, res) {
-  const data = await authService.loginAccount(req.body.email, req.body.password, 'mechanic');
+  const data = await authService.loginAccount(req.body.email, req.body.password);
   return res.status(200).json({ data, message: 'Success' });
 }
 
@@ -27,8 +17,6 @@ async function loginAdmin(req, res) {
 
 module.exports = {
   signupUser,
-  signupMechanic,
   loginUser,
-  loginMechanic,
   loginAdmin,
 };

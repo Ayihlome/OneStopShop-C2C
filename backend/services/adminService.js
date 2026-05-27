@@ -1,6 +1,7 @@
 const pool = require('../db/pool');
 const userService = require('./userService');
 const mechanicService = require('./mechanicService');
+const paymentService = require('./paymentService');
 const logger = require('../utils/logger');
 const { errorMeta } = require('../utils/logging');
 const { sanitize } = require('../utils/sanitize');
@@ -23,10 +24,12 @@ async function getDashboardStats() {
     visitsThisWeek,
     pendingVerifications,
     activeBookings,
+    totalPayments,
+    successfulPayments,
   ] = await Promise.all([
     countOne(`SELECT COUNT(*) FROM users`),
-    countOne(`SELECT COUNT(*) FROM mechanics`),
-    countOne(`SELECT COUNT(*) FROM mechanics WHERE verification_badge = true`),
+    countOne(`SELECT COUNT(*) FROM service_provider_profiles`),
+    countOne(`SELECT COUNT(*) FROM service_provider_profiles WHERE verification_badge = true`),
     countOne(`SELECT COUNT(*) FROM bookings`),
     countOne(`SELECT COUNT(*) FROM reviews`),
     countOne(`SELECT COUNT(*) FROM page_visits`),
@@ -40,8 +43,10 @@ async function getDashboardStats() {
     countOne(
       `SELECT COUNT(*)
        FROM bookings
-       WHERE status IN ('pending', 'accepted', 'in_progress')`
+       WHERE booking_status IN ('payment_pending', 'paid', 'whatsapp_redirected', 'in_progress')`
     ),
+    countOne(`SELECT COUNT(*) FROM payments`),
+    countOne(`SELECT COUNT(*) FROM payments WHERE payment_status = 'successful'`),
   ]);
 
   logger.debug('Admin dashboard stats loaded', {
@@ -62,6 +67,8 @@ async function getDashboardStats() {
     visits_this_week: visitsThisWeek,
     pending_verifications: pendingVerifications,
     active_bookings: activeBookings,
+    total_payments: totalPayments,
+    successful_payments: successfulPayments,
   };
 }
 
@@ -73,7 +80,8 @@ async function listPendingDocuments() {
        a.last_name,
        a.email
      FROM mechanic_documents md
-     INNER JOIN accounts a ON a.id = md.mechanic_id
+     INNER JOIN service_provider_profiles sp ON sp.id = md.provider_id
+     INNER JOIN accounts a ON a.id = sp.account_id
      WHERE md.status = 'pending'
      ORDER BY md.created_at ASC`
   );
@@ -111,16 +119,16 @@ async function approveDocument(id, adminId) {
     }
 
     await client.query(
-      `UPDATE mechanics
-       SET verification_badge = true
-       WHERE account_id = $1`,
-      [document.mechanic_id]
+      `UPDATE service_provider_profiles
+       SET verification_badge = true, verification_status = 'verified'
+       WHERE id = $1`,
+      [document.provider_id]
     );
 
     await client.query('COMMIT');
     logger.info('Mechanic document approved', {
       documentId: id,
-      mechanicId: document.mechanic_id,
+      providerId: document.provider_id,
       adminId,
     });
 
@@ -206,6 +214,10 @@ async function suspendAccount(id) {
   return suspended;
 }
 
+async function listPayments() {
+  return paymentService.listAllPayments();
+}
+
 module.exports = {
   getDashboardStats,
   listUsers,
@@ -217,4 +229,5 @@ module.exports = {
   listPendingDocuments,
   approveDocument,
   rejectDocument,
+  listPayments,
 };

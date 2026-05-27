@@ -7,16 +7,19 @@ const { createError } = require('../utils/errors');
 const BOOKING_SELECT = `
   SELECT
     b.*,
-    ua.first_name AS user_first_name,
-    ua.last_name AS user_last_name,
-    ma.first_name AS mechanic_first_name,
-    ma.last_name AS mechanic_last_name,
+    ua.first_name AS customer_first_name,
+    ua.last_name AS customer_last_name,
+    pa.first_name AS provider_first_name,
+    pa.last_name AS provider_last_name,
+    sp.business_name,
+    sp.id AS provider_profile_id,
     v.make AS vehicle_make,
     v.model AS vehicle_model,
     v.license_plate
   FROM bookings b
-  INNER JOIN accounts ua ON ua.id = b.user_id
-  INNER JOIN accounts ma ON ma.id = b.mechanic_id
+  INNER JOIN accounts ua ON ua.id = b.customer_user_id
+  INNER JOIN service_provider_profiles sp ON sp.id = b.service_provider_id
+  INNER JOIN accounts pa ON pa.id = sp.account_id
   INNER JOIN vehicles v ON v.id = b.vehicle_id
 `;
 
@@ -38,25 +41,23 @@ async function ensureVehicleBelongsToUser(vehicleId, userId) {
   }
 }
 
-async function ensureMechanicExists(mechanicId) {
+async function ensureProviderExists(providerId) {
   const result = await pool.query(
-    `SELECT account_id
-     FROM mechanics
-     WHERE account_id = $1`,
-    [mechanicId]
+    `SELECT id FROM service_provider_profiles WHERE id = $1 AND provider_status = 'active'`,
+    [providerId]
   );
 
   if (!result.rows[0]) {
-    logger.warn('Booking validation failed because mechanic was not found', {
-      mechanicId,
+    logger.warn('Booking validation failed because provider was not found', {
+      providerId,
     });
-    throw createError(400, 'Mechanic not found');
+    throw createError(400, 'Service provider not found or unavailable');
   }
 }
 
 async function createBooking(userId, input) {
   await ensureVehicleBelongsToUser(input.vehicleId, userId);
-  await ensureMechanicExists(input.mechanicId);
+  await ensureProviderExists(input.providerId);
 
   const client = await pool.connect();
 
@@ -65,24 +66,29 @@ async function createBooking(userId, input) {
 
     const booking = await client.query(
       `INSERT INTO bookings (
-         user_id, mechanic_id, vehicle_id, description, preferred_schedule
+         customer_user_id, service_provider_id, vehicle_id, description, preferred_schedule
        )
        VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
       [
         userId,
-        input.mechanicId,
+        input.providerId,
         input.vehicleId,
         input.description,
         input.preferredSchedule,
       ]
     );
 
+    // Notify the provider's account
     await client.query(
       `INSERT INTO notifications (recipient_id, recipient_type, message)
-       VALUES ($1, 'mechanic', $2)`,
+       VALUES (
+         (SELECT account_id FROM service_provider_profiles WHERE id = $1),
+         'mechanic',
+         $2
+       )`,
       [
-        input.mechanicId,
+        input.providerId,
         `New booking request #${booking.rows[0].id}`,
       ]
     );
@@ -91,9 +97,9 @@ async function createBooking(userId, input) {
     logger.info('Booking created', {
       bookingId: booking.rows[0].id,
       userId,
-      mechanicId: input.mechanicId,
+      providerId: input.providerId,
       vehicleId: input.vehicleId,
-      status: booking.rows[0].status,
+      status: booking.rows[0].booking_status,
     });
 
     return sanitize(booking.rows[0]);
@@ -102,7 +108,7 @@ async function createBooking(userId, input) {
     logger.error('Booking creation rolled back', {
       ...errorMeta(error, { includeStack: true }),
       userId,
-      mechanicId: input.mechanicId,
+      providerId: input.providerId,
       vehicleId: input.vehicleId,
     });
     throw error;
@@ -128,11 +134,18 @@ async function getBooking(id, requester) {
     throw createError(404, 'Booking not found');
   }
 
-  const isOwner = Number(booking.user_id) === Number(requester.id);
-  const isMechanic = Number(booking.mechanic_id) === Number(requester.id);
+  const isOwner = Number(booking.customer_user_id) === Number(requester.id);
+
+  // Check if the requester is the provider linked to this booking
+  const providerResult = await pool.query(
+    `SELECT id FROM service_provider_profiles WHERE id = $1 AND account_id = $2`,
+    [booking.service_provider_id, requester.id]
+  );
+  const isProvider = providerResult.rows.length > 0;
+
   const isAdmin = ['moderator', 'superadmin'].includes(requester.role);
 
-  if (!isOwner && !isMechanic && !isAdmin) {
+  if (!isOwner && !isProvider && !isAdmin) {
     logger.warn('Booking access forbidden', {
       bookingId: id,
       requesterId: requester.id,
@@ -141,13 +154,30 @@ async function getBooking(id, requester) {
     throw createError(403, 'Forbidden');
   }
 
+  // Include WhatsApp URL only if owner and payment confirmed
+  if (isOwner) {
+    const paymentInfo = await pool.query(
+      `SELECT p.payment_status, sp.business_whatsapp_number
+       FROM bookings b2
+       INNER JOIN payments p ON p.booking_id = b2.id
+       INNER JOIN service_provider_profiles sp ON sp.id = b2.service_provider_id
+       WHERE b2.id = $1`,
+      [id]
+    );
+
+    if (paymentInfo.rows[0] && paymentInfo.rows[0].payment_status === 'successful') {
+      const cleaned = String(paymentInfo.rows[0].business_whatsapp_number).replace(/\D/g, '');
+      booking.whatsapp_url = `https://wa.me/${cleaned}`;
+    }
+  }
+
   return sanitize(booking);
 }
 
 async function listUserBookings(userId) {
   const result = await pool.query(
     `${BOOKING_SELECT}
-     WHERE b.user_id = $1
+     WHERE b.customer_user_id = $1
      ORDER BY b.created_at DESC`,
     [userId]
   );
@@ -158,7 +188,9 @@ async function listUserBookings(userId) {
 async function listMechanicBookings(mechanicId) {
   const result = await pool.query(
     `${BOOKING_SELECT}
-     WHERE b.mechanic_id = $1
+     WHERE b.service_provider_id = (
+       SELECT id FROM service_provider_profiles WHERE account_id = $1
+     )
      ORDER BY b.created_at DESC`,
     [mechanicId]
   );
@@ -185,12 +217,23 @@ async function updateBookingStatus(id, status, requester) {
     throw createError(404, 'Booking not found');
   }
 
-  const isMechanic = Number(booking.mechanic_id) === Number(requester.id);
+  // Guards: paid and whatsapp_redirected are set by the payment system only
+  if (status === 'paid' || status === 'whatsapp_redirected') {
+    throw createError(400, 'This status is set automatically by the payment system');
+  }
+
+  // Check if the requester is the provider for this booking
+  const providerResult = await pool.query(
+    `SELECT id FROM service_provider_profiles WHERE id = $1 AND account_id = $2`,
+    [booking.service_provider_id, requester.id]
+  );
+  const isProvider = providerResult.rows.length > 0;
+
   const isUserCancelling =
-    Number(booking.user_id) === Number(requester.id) && status === 'cancelled';
+    Number(booking.customer_user_id) === Number(requester.id) && status === 'cancelled';
   const isAdmin = ['moderator', 'superadmin'].includes(requester.role);
 
-  if (!isMechanic && !isUserCancelling && !isAdmin) {
+  if (!isProvider && !isUserCancelling && !isAdmin) {
     logger.warn('Booking status update forbidden', {
       bookingId: id,
       requestedStatus: status,
@@ -205,7 +248,7 @@ async function updateBookingStatus(id, status, requester) {
   try {
     result = await pool.query(
       `UPDATE bookings
-       SET status = $2
+       SET booking_status = $2
        WHERE id = $1
        RETURNING *`,
       [id, status]
@@ -223,8 +266,8 @@ async function updateBookingStatus(id, status, requester) {
 
   logger.info('Booking status updated', {
     bookingId: id,
-    status: result.rows[0].status,
-    previousStatus: booking.status,
+    status: result.rows[0].booking_status,
+    previousStatus: booking.booking_status,
     requesterId: requester.id,
     role: requester.role,
   });
