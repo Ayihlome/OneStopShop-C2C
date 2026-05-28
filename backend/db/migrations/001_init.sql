@@ -209,6 +209,83 @@ BEGIN
     ALTER TABLE bookings ADD CONSTRAINT fk_bookings_service_provider
       FOREIGN KEY (service_provider_id) REFERENCES service_provider_profiles(id) ON DELETE CASCADE;
   END IF;
+
+  -- ===============================================================
+  -- MECHANIC_AVAILABILITY: old had 'mechanic_id' (BIGINT FK→accounts),
+  --   new expects 'provider_id' (INT FK→service_provider_profiles)
+  -- ===============================================================
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'mechanic_availability' AND column_name = 'provider_id'
+  ) THEN
+    ALTER TABLE mechanic_availability ADD COLUMN provider_id INT;
+    IF EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'mechanic_availability' AND column_name = 'mechanic_id'
+    ) THEN
+      UPDATE mechanic_availability SET provider_id = mechanic_id;
+    END IF;
+    ALTER TABLE mechanic_availability ALTER COLUMN provider_id SET NOT NULL;
+    ALTER TABLE mechanic_availability ADD CONSTRAINT fk_avail_provider
+      FOREIGN KEY (provider_id) REFERENCES service_provider_profiles(id) ON DELETE CASCADE;
+  END IF;
+
+  -- ===============================================================
+  -- MECHANIC_DOCUMENTS: old had 'mechanic_id' (BIGINT FK→accounts),
+  --   new expects 'provider_id' (INT FK→service_provider_profiles)
+  -- ===============================================================
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'mechanic_documents' AND column_name = 'provider_id'
+  ) THEN
+    ALTER TABLE mechanic_documents ADD COLUMN provider_id INT;
+    IF EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'mechanic_documents' AND column_name = 'mechanic_id'
+    ) THEN
+      UPDATE mechanic_documents SET provider_id = mechanic_id;
+    END IF;
+    ALTER TABLE mechanic_documents ALTER COLUMN provider_id SET NOT NULL;
+    ALTER TABLE mechanic_documents ADD CONSTRAINT fk_docs_provider
+      FOREIGN KEY (provider_id) REFERENCES service_provider_profiles(id) ON DELETE CASCADE;
+  END IF;
+
+  -- ===============================================================
+  -- REVIEWS: old had 'user_id' (BIGINT) and 'mechanic_id' (BIGINT),
+  --   new expects 'reviewer_user_id' (BIGINT) and
+  --   'service_provider_id' (INT FK→service_provider_profiles)
+  -- ===============================================================
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'reviews' AND column_name = 'reviewer_user_id'
+  ) THEN
+    ALTER TABLE reviews ADD COLUMN reviewer_user_id BIGINT;
+    IF EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'reviews' AND column_name = 'user_id'
+    ) THEN
+      UPDATE reviews SET reviewer_user_id = user_id;
+    END IF;
+    ALTER TABLE reviews ALTER COLUMN reviewer_user_id SET NOT NULL;
+    ALTER TABLE reviews ADD CONSTRAINT fk_reviews_reviewer
+      FOREIGN KEY (reviewer_user_id) REFERENCES accounts(id) ON DELETE CASCADE;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'reviews' AND column_name = 'service_provider_id'
+  ) THEN
+    ALTER TABLE reviews ADD COLUMN service_provider_id INT;
+    IF EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'reviews' AND column_name = 'mechanic_id'
+    ) THEN
+      UPDATE reviews SET service_provider_id = mechanic_id;
+    END IF;
+    ALTER TABLE reviews ALTER COLUMN service_provider_id SET NOT NULL;
+    ALTER TABLE reviews ADD CONSTRAINT fk_reviews_provider
+      FOREIGN KEY (service_provider_id) REFERENCES service_provider_profiles(id) ON DELETE CASCADE;
+  END IF;
 END;
 $$;
 
@@ -216,6 +293,9 @@ $$;
 DROP INDEX IF EXISTS idx_bookings_user_id;
 DROP INDEX IF EXISTS idx_bookings_mechanic_id;
 DROP INDEX IF EXISTS idx_bookings_status;
+DROP INDEX IF EXISTS idx_reviews_mechanic_id;
+DROP INDEX IF EXISTS idx_mechanic_availability_mechanic_id;
+DROP INDEX IF EXISTS idx_mechanic_specialities_mechanic_id;
 
 -- Partial unique index: only one active job per provider at a time
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_active_job
