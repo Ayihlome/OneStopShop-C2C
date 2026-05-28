@@ -92,7 +92,7 @@ export default function SignUp() {
         password: form.password,
       };
       const response = await signupUser(payload);
-      const auth = response.data;
+      const auth = response.data || response;
 
       localStorage.setItem("oss_token", auth.token);
       localStorage.setItem("oss_user", JSON.stringify(auth.user));

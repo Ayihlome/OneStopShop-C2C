@@ -69,7 +69,7 @@ export default function Login() {
         email: form.email,
         password: form.password,
       });
-      const auth = response.data;
+      const auth = response.data || response;
 
       localStorage.setItem("oss_token", auth.token);
       localStorage.setItem("oss_user", JSON.stringify(auth.user));
@@ -86,7 +86,7 @@ export default function Login() {
           email: form.email,
           password: form.password,
         });
-        const adminAuth = adminResponse.data;
+        const adminAuth = adminResponse.data || adminResponse;
 
         localStorage.setItem("oss_token", adminAuth.token);
         localStorage.setItem("oss_user", JSON.stringify(adminAuth.user));
