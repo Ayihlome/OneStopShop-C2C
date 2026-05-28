@@ -144,6 +144,79 @@ CREATE TABLE IF NOT EXISTS bookings (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- =================================================================
+-- MIGRATION: handle pre-existing bookings table (old schema had
+--   'status' instead of 'booking_status', 'user_id' instead of
+--   'customer_user_id', 'mechanic_id' instead of 'service_provider_id')
+--   Must run BEFORE any indexes reference the new column names.
+-- =================================================================
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'bookings' AND column_name = 'booking_status'
+  ) THEN
+    ALTER TABLE bookings ADD COLUMN booking_status VARCHAR(30);
+    IF EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'bookings' AND column_name = 'status'
+    ) THEN
+      UPDATE bookings SET booking_status =
+        CASE status
+          WHEN 'pending'  THEN 'payment_pending'
+          WHEN 'accepted' THEN 'paid'
+          WHEN 'rejected' THEN 'cancelled'
+          ELSE status
+        END;
+    END IF;
+    ALTER TABLE bookings ALTER COLUMN booking_status SET NOT NULL;
+    ALTER TABLE bookings ALTER COLUMN booking_status SET DEFAULT 'payment_pending';
+    ALTER TABLE bookings ADD CONSTRAINT bookings_booking_status_check
+      CHECK (booking_status IN (
+        'payment_pending', 'paid', 'whatsapp_redirected',
+        'in_progress', 'completed', 'cancelled', 'refunded'
+      ));
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'bookings' AND column_name = 'customer_user_id'
+  ) THEN
+    ALTER TABLE bookings ADD COLUMN customer_user_id BIGINT;
+    IF EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'bookings' AND column_name = 'user_id'
+    ) THEN
+      UPDATE bookings SET customer_user_id = user_id;
+    END IF;
+    ALTER TABLE bookings ALTER COLUMN customer_user_id SET NOT NULL;
+    ALTER TABLE bookings ADD CONSTRAINT fk_bookings_customer
+      FOREIGN KEY (customer_user_id) REFERENCES accounts(id) ON DELETE CASCADE;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'bookings' AND column_name = 'service_provider_id'
+  ) THEN
+    ALTER TABLE bookings ADD COLUMN service_provider_id INT;
+    IF EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'bookings' AND column_name = 'mechanic_id'
+    ) THEN
+      UPDATE bookings SET service_provider_id = mechanic_id;
+    END IF;
+    ALTER TABLE bookings ALTER COLUMN service_provider_id SET NOT NULL;
+    ALTER TABLE bookings ADD CONSTRAINT fk_bookings_service_provider
+      FOREIGN KEY (service_provider_id) REFERENCES service_provider_profiles(id) ON DELETE CASCADE;
+  END IF;
+END;
+$$;
+
+-- Drop old-column indexes before creating new ones
+DROP INDEX IF EXISTS idx_bookings_user_id;
+DROP INDEX IF EXISTS idx_bookings_mechanic_id;
+DROP INDEX IF EXISTS idx_bookings_status;
+
 -- Partial unique index: only one active job per provider at a time
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_active_job
   ON bookings (service_provider_id)
@@ -250,87 +323,5 @@ CREATE INDEX IF NOT EXISTS idx_reviews_service_provider_id ON reviews(service_pr
 CREATE INDEX IF NOT EXISTS idx_notifications_recipient ON notifications(recipient_id, recipient_type, is_read);
 CREATE INDEX IF NOT EXISTS idx_mechanic_documents_status ON mechanic_documents(status);
 CREATE INDEX IF NOT EXISTS idx_page_visits_created_at ON page_visits(created_at);
-
--- =================================================================
--- MIGRATION: handle pre-existing bookings table (old schema had
---   'status' instead of 'booking_status', 'user_id' instead of
---   'customer_user_id', 'mechanic_id' instead of 'service_provider_id')
--- =================================================================
-DO $$
-BEGIN
-  -- Add booking_status column if missing (old table had just 'status')
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'bookings' AND column_name = 'booking_status'
-  ) THEN
-    ALTER TABLE bookings ADD COLUMN booking_status VARCHAR(30);
-
-    -- Migrate data from old 'status' column
-    IF EXISTS (
-      SELECT 1 FROM information_schema.columns
-      WHERE table_name = 'bookings' AND column_name = 'status'
-    ) THEN
-      UPDATE bookings SET booking_status =
-        CASE status
-          WHEN 'pending'  THEN 'payment_pending'
-          WHEN 'accepted' THEN 'paid'
-          WHEN 'rejected' THEN 'cancelled'
-          ELSE status
-        END;
-    END IF;
-
-    -- Set default and not-null after data migration
-    ALTER TABLE bookings ALTER COLUMN booking_status
-      SET NOT NULL;
-    ALTER TABLE bookings ALTER COLUMN booking_status
-      SET DEFAULT 'payment_pending';
-    ALTER TABLE bookings ADD CONSTRAINT bookings_booking_status_check
-      CHECK (booking_status IN (
-        'payment_pending', 'paid', 'whatsapp_redirected',
-        'in_progress', 'completed', 'cancelled', 'refunded'
-      ));
-  END IF;
-
-  -- Add customer_user_id column if missing (old table had user_id)
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'bookings' AND column_name = 'customer_user_id'
-  ) THEN
-    ALTER TABLE bookings ADD COLUMN customer_user_id BIGINT;
-    IF EXISTS (
-      SELECT 1 FROM information_schema.columns
-      WHERE table_name = 'bookings' AND column_name = 'user_id'
-    ) THEN
-      UPDATE bookings SET customer_user_id = user_id;
-    END IF;
-    ALTER TABLE bookings ALTER COLUMN customer_user_id SET NOT NULL;
-    ALTER TABLE bookings ADD CONSTRAINT fk_bookings_customer
-      FOREIGN KEY (customer_user_id) REFERENCES accounts(id) ON DELETE CASCADE;
-  END IF;
-
-  -- Add service_provider_id column if missing (old table had mechanic_id)
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'bookings' AND column_name = 'service_provider_id'
-  ) THEN
-    ALTER TABLE bookings ADD COLUMN service_provider_id INT;
-    IF EXISTS (
-      SELECT 1 FROM information_schema.columns
-      WHERE table_name = 'bookings' AND column_name = 'mechanic_id'
-    ) THEN
-      UPDATE bookings SET service_provider_id = mechanic_id;
-    END IF;
-    ALTER TABLE bookings ALTER COLUMN service_provider_id SET NOT NULL;
-    ALTER TABLE bookings ADD CONSTRAINT fk_bookings_service_provider
-      FOREIGN KEY (service_provider_id) REFERENCES service_provider_profiles(id) ON DELETE CASCADE;
-  END IF;
-END;
-$$;
-
--- Drop old-column indexes (IF they exist) so CREATE IF NOT EXISTS on new names works
-DROP INDEX IF EXISTS idx_bookings_user_id;
-DROP INDEX IF EXISTS idx_bookings_mechanic_id;
-DROP INDEX IF EXISTS idx_bookings_status;
-DROP INDEX IF EXISTS idx_unique_active_job;
 
 COMMIT;
