@@ -1,6 +1,6 @@
 import { ArrowRight, LockKeyhole, Mail } from "lucide-react";
 import { FormEvent, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 
 import Layout from "@/app/components/Layout";
 import { Button } from "@/app/components/ui/button";
@@ -32,6 +32,8 @@ export default function Login() {
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || null;
 
   const updateField = (field: keyof LoginForm, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -75,9 +77,9 @@ export default function Login() {
       localStorage.setItem("oss_user", JSON.stringify(auth.user));
 
       if (auth.user.isProvider) {
-        navigate("/mechanic/profile");
+        navigate(redirectTo || "/mechanic/profile");
       } else {
-        navigate("/find-mechanic");
+        navigate(redirectTo || "/find-mechanic");
       }
     } catch {
       // If user login fails, try admin login
@@ -90,7 +92,7 @@ export default function Login() {
 
         localStorage.setItem("oss_token", adminAuth.token);
         localStorage.setItem("oss_user", JSON.stringify(adminAuth.user));
-        navigate("/admin/dashboard");
+        navigate(redirectTo || "/admin/dashboard");
       } catch {
         setStatus("Invalid email or password. Please try again.");
       }
