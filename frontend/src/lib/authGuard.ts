@@ -1,5 +1,15 @@
 import { redirect } from 'react-router';
 
+const ADMIN_ROLES = ['admin', 'moderator', 'superadmin'];
+
+function getStoredUser() {
+  try {
+    return JSON.parse(localStorage.getItem('oss_user') || '{}');
+  } catch {
+    return {};
+  }
+}
+
 /**
  * Loader that blocks unauthenticated access.
  * Redirects to /login?redirect=<return_path> if no token is found.
@@ -18,6 +28,25 @@ export function requireAuth() {
 }
 
 /**
+ * Loader that blocks non-admin access.
+ * Must be used AFTER requireAuth (or on routes already behind requireAuth).
+ */
+export function requireAdmin() {
+  const token = typeof window !== 'undefined' && localStorage.getItem('oss_token');
+
+  if (!token) {
+    throw redirect('/login');
+  }
+
+  const user = getStoredUser();
+  if (!user.role || !ADMIN_ROLES.includes(user.role)) {
+    throw redirect('/');
+  }
+
+  return null;
+}
+
+/**
  * Loader that redirects already-authenticated users away from
  * login/signup pages to a more useful destination.
  */
@@ -28,19 +57,18 @@ export function redirectIfAuth() {
     return null;
   }
 
-  // Check what kind of user they are for a smarter redirect
-  try {
-    const user = JSON.parse(localStorage.getItem('oss_user') || '{}');
-    if (user.isProvider) {
-      throw redirect('/mechanic/profile');
-    }
-    // Admin can go to admin dashboard
-    if (user.role === 'admin') {
-      throw redirect('/admin/dashboard');
-    }
-  } catch {
-    // If we can't parse the user, just redirect to find-mechanic
+  const user = getStoredUser();
+
+  // Admin goes to dashboard
+  if (user.role && ADMIN_ROLES.includes(user.role)) {
+    throw redirect('/admin/dashboard');
   }
 
+  // Provider goes to their profile
+  if (user.isProvider) {
+    throw redirect('/mechanic/profile');
+  }
+
+  // Everyone else goes to find-mechanic
   throw redirect('/find-mechanic');
 }

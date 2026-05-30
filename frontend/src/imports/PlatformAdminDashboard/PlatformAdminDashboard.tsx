@@ -228,7 +228,7 @@ export default function PlatformAdminDashboard() {
         </div>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <Card className="rounded-lg bg-card">
+          <Card className="rounded-lg bg-card overflow-x-auto">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Activity className="size-5 text-foreground" />

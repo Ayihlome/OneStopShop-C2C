@@ -29,6 +29,7 @@ type ProfileForm = {
   specialties: string;
   serviceDescription: string;
   availability: string;
+  photoUrl: string;
 };
 
 const emptyProfile: ProfileForm = {
@@ -40,6 +41,7 @@ const emptyProfile: ProfileForm = {
   specialties: "",
   serviceDescription: "",
   availability: "",
+  photoUrl: "",
 };
 
 export default function MyMechanicProfile() {
@@ -86,6 +88,7 @@ export default function MyMechanicProfile() {
             specialties: (provider.specialities || []).join(", "),
             serviceDescription: provider.service_description || "",
             availability: provider.is_available ? "Available" : "Unavailable",
+            photoUrl: provider.profile_photo_url || "",
           });
           setBackendLoaded(true);
           setStatus("Profile loaded from backend.");
@@ -169,6 +172,7 @@ export default function MyMechanicProfile() {
         service_description: profile.serviceDescription,
         is_available: profile.availability.toLowerCase() !== "unavailable",
         specialities: specialties,
+        profile_photo_url: profile.photoUrl || null,
       });
 
       setStatus("Profile saved to backend.");
@@ -205,7 +209,7 @@ export default function MyMechanicProfile() {
             </p>
           </div>
           <Button
-            onClick={() => navigate(`/mechanic/${currentUser().id}`)}
+            onClick={() => navigate(`/mechanic/${currentUser().id}?from=profile`)}
             variant="outline"
           >
             <Eye className="size-4" />
@@ -300,6 +304,18 @@ export default function MyMechanicProfile() {
                   </div>
 
                   <div className="space-y-2">
+                    <Label htmlFor="photoUrl">Profile photo URL (optional)</Label>
+                    <Input
+                      id="photoUrl"
+                      onChange={(event) =>
+                        updateField("photoUrl", event.target.value)
+                      }
+                      placeholder="https://example.com/photo.jpg"
+                      value={profile.photoUrl}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
                     <Label htmlFor="specialties">Specialties</Label>
                     <Input
                       id="specialties"
@@ -339,12 +355,20 @@ export default function MyMechanicProfile() {
               <CardHeader>
                 <div className="flex items-start gap-4">
                   <Avatar className="size-16">
-                    <AvatarFallback className="bg-primary text-primary-foreground">
-                      {profile.businessName
-                        .split(" ")
-                        .map((part) => part[0])
-                        .join("") || "?"}
-                    </AvatarFallback>
+                    {profile.photoUrl ? (
+                      <img
+                        alt={profile.ownerName || "Profile"}
+                        className="size-full rounded-full object-cover"
+                        src={profile.photoUrl}
+                      />
+                    ) : (
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        {profile.businessName
+                          .split(" ")
+                          .map((part) => part[0])
+                          .join("") || "?"}
+                      </AvatarFallback>
+                    )}
                   </Avatar>
                   <div>
                     <CardTitle className="text-2xl">

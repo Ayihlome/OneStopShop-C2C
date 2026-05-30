@@ -8,7 +8,7 @@ import {
   Star,
 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 
 import Layout from "@/app/components/Layout";
 import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
@@ -70,6 +70,8 @@ export default function MechProfileFullView() {
   const [whatsappUrl, setWhatsappUrl] = useState("");
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const fromProfile = searchParams.get("from") === "profile";
 
   useEffect(() => {
     let ignore = false;
@@ -101,6 +103,7 @@ export default function MechProfileFullView() {
               : "Availability on request",
             bio: profile.service_description || "No description provided yet.",
             verified: Boolean(profile.verification_badge),
+            photoUrl: profile.profile_photo_url || "",
           });
           setBackendReviews(
             (reviewResponse.data || []).map((review) => ({
@@ -220,7 +223,7 @@ export default function MechProfileFullView() {
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <Button
           className="mb-6 px-0 text-foreground"
-          onClick={() => navigate("/find-mechanic")}
+          onClick={() => navigate(fromProfile ? "/mechanic/profile" : "/find-mechanic")}
           variant="link"
         >
           <ArrowLeft className="size-4" />
@@ -232,12 +235,20 @@ export default function MechProfileFullView() {
             <CardHeader>
               <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
                 <Avatar className="size-20">
-                  <AvatarFallback className="bg-primary text-xl text-primary-foreground">
-                    {mechanic.name
-                      .split(" ")
-                      .map((part) => part[0])
-                      .join("")}
-                  </AvatarFallback>
+                  {mechanic.photoUrl ? (
+                    <img
+                      alt={mechanic.name}
+                      className="size-full rounded-full object-cover"
+                      src={mechanic.photoUrl}
+                    />
+                  ) : (
+                    <AvatarFallback className="bg-primary text-xl text-primary-foreground">
+                      {mechanic.name
+                        .split(" ")
+                        .map((part) => part[0])
+                        .join("")}
+                    </AvatarFallback>
+                  )}
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">

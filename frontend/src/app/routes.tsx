@@ -1,5 +1,5 @@
 import { createBrowserRouter } from "react-router";
-import { requireAuth, redirectIfAuth } from "../lib/authGuard";
+import { requireAuth, requireAdmin, redirectIfAuth } from "../lib/authGuard";
 
 // Import all pages
 import Main from "../imports/Main/Main";
@@ -12,6 +12,7 @@ import MechanicVerification from "../imports/MechanicVerification/MechanicVerifi
 import FindYourMechanic from "../imports/FindYourMechanic/FindYourMechanic";
 import MyMechanicProfile from "../imports/MyMechanicProfile/MyMechanicProfile";
 import MechProfileFullView from "../imports/MechProfileFullView/MechProfileFullView";
+import MyVehicles from "../imports/MyVehicles/MyVehicles";
 import PlatformAdminDashboard from "../imports/PlatformAdminDashboard/PlatformAdminDashboard";
 
 export const router = createBrowserRouter([
@@ -66,8 +67,13 @@ export const router = createBrowserRouter([
   },
   {
     path: "/admin/dashboard",
-    loader: requireAuth,
+    loader: requireAdmin,
     Component: PlatformAdminDashboard,
+  },
+  {
+    path: "/my-vehicles",
+    loader: requireAuth,
+    Component: MyVehicles,
   },
   {
     path: "*",

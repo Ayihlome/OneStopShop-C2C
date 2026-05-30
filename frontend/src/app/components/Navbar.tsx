@@ -29,6 +29,7 @@ const publicLinks = [
 
 const appLinks = [
   { label: "Find mechanics", path: "/find-mechanic" },
+  { label: "My vehicles", path: "/my-vehicles" },
   { label: "My profile", path: "/mechanic/profile" },
 ];
 
@@ -36,11 +37,12 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { authenticated } = getAuthState();
+  const { authenticated, user } = getAuthState();
 
   const links = variant === "app" ? appLinks : publicLinks;
   const showNavLinks = variant !== "onboarding" && variant !== "admin";
   const isPublic = variant === "public";
+  const userName = user?.first_name || user?.email?.split("@")[0] || "My";
 
   const goTo = useCallback(
     (path: string) => {
@@ -82,12 +84,11 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
       );
     }
 
-    // Authenticated user — show profile + logout
     return (
       <>
         <Button variant="ghost" onClick={() => goTo("/mechanic/profile")}>
           <User className="size-4" />
-          My profile
+          {userName}'s profile
         </Button>
         <Button variant="outline" onClick={handleLogout}>
           <LogOut className="size-4" />
@@ -137,7 +138,7 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
           variant="ghost"
         >
           <User className="size-4" />
-          My profile
+          {userName}'s profile
         </Button>
         <Button
           className="justify-start"
