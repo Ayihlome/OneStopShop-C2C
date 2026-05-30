@@ -19,7 +19,7 @@ import { StatusMessage } from "@/app/components/ui/status-message";
 import { uploadDocument } from "@/api/mechanics";
 
 const checklist = [
-  "Business profile submitted",
+  "Service profile submitted",
   "Identity details queued",
   "Service categories selected",
 ];

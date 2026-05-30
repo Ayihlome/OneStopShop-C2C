@@ -188,7 +188,7 @@ export default function Login() {
               <span>New to OneStopShop?</span>
               <Button
                 className="h-auto p-0 text-foreground"
-                onClick={() => navigate("/signup")}
+                onClick={() => navigate(redirectTo ? `/signup?redirect=${encodeURIComponent(redirectTo)}` : "/signup")}
                 variant="link"
               >
                 Create an account

@@ -31,20 +31,20 @@ type ProfileForm = {
   availability: string;
 };
 
-const initialProfile: ProfileForm = {
-  businessName: "Robert's Auto Clinic",
-  ownerName: "Robert Daniels",
-  email: "service@robertsauto.example",
-  phone: "+27 82 123 4567",
-  location: "Johannesburg",
-  specialties: "Diagnostics, Engine repair, Electrical",
-  serviceDescription:
-    "Independent workshop focused on reliable diagnostics, transparent estimates, and practical repairs for everyday drivers.",
-  availability: "Weekdays, 08:00-17:00",
+const emptyProfile: ProfileForm = {
+  businessName: "",
+  ownerName: "",
+  email: "",
+  phone: "",
+  location: "",
+  specialties: "",
+  serviceDescription: "",
+  availability: "",
 };
 
 export default function MyMechanicProfile() {
-  const [profile, setProfile] = useState(initialProfile);
+  const [profile, setProfile] = useState(emptyProfile);
+  const [backendLoaded, setBackendLoaded] = useState(false);
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("Loading profile from backend...");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -78,8 +78,8 @@ export default function MyMechanicProfile() {
 
         if (!ignore) {
           setProfile({
-            businessName: provider.business_name || provider.first_name || "",
-            ownerName: fullName || initialProfile.ownerName,
+            businessName: provider.business_name || "",
+            ownerName: fullName || "",
             email: provider.email || "",
             phone: provider.phone_number || "",
             location: provider.city || provider.town || "",
@@ -87,14 +87,16 @@ export default function MyMechanicProfile() {
             serviceDescription: provider.service_description || "",
             availability: provider.is_available ? "Available" : "Unavailable",
           });
+          setBackendLoaded(true);
           setStatus("Profile loaded from backend.");
         }
       } catch (error) {
         if (!ignore) {
+          setBackendLoaded(false);
           setStatus(
             error instanceof Error
               ? error.message
-              : "Could not load backend profile.",
+              : "Could not load backend profile. Fill in your details and save them.",
           );
         }
       }
@@ -116,13 +118,9 @@ export default function MyMechanicProfile() {
     const nextErrors = {};
     const required = [
       "businessName",
-      "ownerName",
       "email",
       "phone",
       "location",
-      "specialties",
-      "serviceDescription",
-      "availability",
     ];
 
     required.forEach((field) => {
@@ -131,7 +129,7 @@ export default function MyMechanicProfile() {
       }
     });
 
-    if (!/^\S+@\S+\.\S+$/.test(profile.email)) {
+    if (profile.email && !/^\S+@\S+\.\S+$/.test(profile.email)) {
       nextErrors.email = "Enter a valid email address.";
     }
 
@@ -234,22 +232,24 @@ export default function MyMechanicProfile() {
                 <form className="space-y-6" onSubmit={handleSubmit}>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="businessName">Business name</Label>
+                      <Label htmlFor="businessName">Service name</Label>
                       <Input
                         id="businessName"
                         onChange={(event) =>
                           updateField("businessName", event.target.value)
                         }
+                        placeholder="e.g. Brake & oil specialist"
                         value={profile.businessName}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="ownerName">Owner name</Label>
+                      <Label htmlFor="ownerName">Your name</Label>
                       <Input
                         id="ownerName"
                         onChange={(event) =>
                           updateField("ownerName", event.target.value)
                         }
+                        placeholder="Your full name"
                         value={profile.ownerName}
                       />
                     </div>
@@ -282,6 +282,7 @@ export default function MyMechanicProfile() {
                         onChange={(event) =>
                           updateField("location", event.target.value)
                         }
+                        placeholder="City or town"
                         value={profile.location}
                       />
                     </div>
@@ -292,6 +293,7 @@ export default function MyMechanicProfile() {
                         onChange={(event) =>
                           updateField("availability", event.target.value)
                         }
+                        placeholder="Available / Unavailable"
                         value={profile.availability}
                       />
                     </div>
@@ -304,6 +306,7 @@ export default function MyMechanicProfile() {
                       onChange={(event) =>
                         updateField("specialties", event.target.value)
                       }
+                      placeholder="Diagnostics, Engine repair, Electrical"
                       value={profile.specialties}
                     />
                   </div>
@@ -315,6 +318,7 @@ export default function MyMechanicProfile() {
                       onChange={(event) =>
                         updateField("serviceDescription", event.target.value)
                       }
+                      placeholder="Describe your experience and service approach"
                       value={profile.serviceDescription}
                     />
                   </div>
@@ -339,43 +343,40 @@ export default function MyMechanicProfile() {
                       {profile.businessName
                         .split(" ")
                         .map((part) => part[0])
-                        .join("")}
+                        .join("") || "?"}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <CardTitle className="text-2xl">
-                      {profile.businessName}
+                      {profile.businessName || "Your service name"}
                     </CardTitle>
-                    <CardDescription>{profile.ownerName}</CardDescription>
+                    <CardDescription>{profile.ownerName || "Your name"}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-5">
                 <div className="flex flex-wrap gap-2">
-                  <Badge className="bg-primary text-primary-foreground">
-                    Verified
-                  </Badge>
-                  {specialties.map((specialty) => (
+                  {specialties.length > 0 && specialties.map((specialty) => (
                     <Badge key={specialty} variant="secondary">
                       {specialty}
                     </Badge>
                   ))}
                 </div>
                 <p className="leading-7 text-muted-foreground">
-                  {profile.serviceDescription}
+                  {profile.serviceDescription || "No description yet."}
                 </p>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="rounded-md bg-primary p-4">
                     <p className="text-sm text-primary-foreground/70">
                       Location
                     </p>
-                    <p className="font-medium">{profile.location}</p>
+                    <p className="font-medium">{profile.location || "Not set"}</p>
                   </div>
                   <div className="rounded-md bg-primary p-4">
                     <p className="text-sm text-primary-foreground/70">
                       Availability
                     </p>
-                    <p className="font-medium">{profile.availability}</p>
+                    <p className="font-medium">{profile.availability || "Not set"}</p>
                   </div>
                   <div className="rounded-md bg-primary p-4">
                     <Star className="mb-2 size-4 fill-primary-foreground text-primary-foreground" />

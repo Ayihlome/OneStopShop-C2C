@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, BriefcaseBusiness, Wrench } from "lucide-react";
+import { ArrowLeft, ArrowRight, UserRound, Wrench } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router";
 
@@ -75,11 +75,11 @@ export default function MechanicProfileSetup() {
     const nextErrors = {};
 
     if (!form.businessName.trim()) {
-      nextErrors.businessName = "Business name is required.";
+      nextErrors.businessName = "Service name is required.";
     }
 
     if (!form.whatsappNumber.trim()) {
-      nextErrors.whatsappNumber = "WhatsApp business number is required.";
+      nextErrors.whatsappNumber = "WhatsApp number is required.";
     }
 
     if (form.specialties.length === 0) {
@@ -147,11 +147,11 @@ export default function MechanicProfileSetup() {
         <aside className="space-y-5">
           <Button
             className="px-0 text-primary-foreground"
-            onClick={() => navigate("/find-mechanic")}
+            onClick={() => navigate("/signup")}
             variant="link"
           >
             <ArrowLeft className="size-4" />
-            Back to search
+            Back to signup
           </Button>
           <div className="rounded-lg bg-primary p-6 text-primary-foreground">
             <Wrench className="mb-6 size-10" />
@@ -159,7 +159,7 @@ export default function MechanicProfileSetup() {
               Become a service provider
             </h1>
             <p className="mt-3 text-sm text-primary-foreground/70">
-              Upgrade your account to offer services. Set up your business
+              Upgrade your account to offer services. Set up your profile
               details, WhatsApp number, and PayFast payment credentials.
             </p>
           </div>
@@ -168,7 +168,7 @@ export default function MechanicProfileSetup() {
               <CardTitle className="text-lg">Setup checklist</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
-              <p>Business details</p>
+              <p>Profile details</p>
               <p>WhatsApp number (required)</p>
               <p>Specialties and description</p>
               <p>PayFast merchant credentials</p>
@@ -180,8 +180,8 @@ export default function MechanicProfileSetup() {
         <Card className="rounded-lg shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-2xl">
-              <BriefcaseBusiness className="size-5 text-foreground" />
-              Provider details
+              <UserRound className="size-5 text-foreground" />
+              Service details
             </CardTitle>
             <CardDescription>
               After creating your provider profile, you can manage it from your
@@ -191,7 +191,7 @@ export default function MechanicProfileSetup() {
           <CardContent>
             <form className="space-y-8" onSubmit={handleSubmit}>
               <div className="grid gap-4 sm:grid-cols-2">
-                {renderInput("businessName", "Business name", "Robert's Auto Clinic")}
+                {renderInput("businessName", "Service name", "Brake & oil specialist")}
                 {renderInput("whatsappNumber", "WhatsApp number", "+27 82 123 4567", "tel")}
                 {renderInput("yearsOfExperience", "Years of experience", "10", "number")}
                 {renderInput("payfastMerchantId", "PayFast Merchant ID (optional)", "")}
@@ -246,7 +246,7 @@ export default function MechanicProfileSetup() {
 
               <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                 <Button
-                  onClick={() => navigate("/find-mechanic")}
+                  onClick={() => navigate("/signup")}
                   type="button"
                   variant="outline"
                 >

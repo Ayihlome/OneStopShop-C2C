@@ -1,6 +1,6 @@
 import { ArrowRight, Car, ShieldCheck } from "lucide-react";
 import { FormEvent, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 
 import Layout from "@/app/components/Layout";
 import { Badge } from "@/app/components/ui/badge";
@@ -37,6 +37,8 @@ export default function SignUp() {
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || null;
 
   const updateField = (field: keyof SignupForm, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -97,7 +99,13 @@ export default function SignUp() {
       localStorage.setItem("oss_token", auth.token);
       localStorage.setItem("oss_user", JSON.stringify(auth.user));
       setStatus("Account created. Continue setup to sync profile details.");
-      navigate("/driver/setup");
+
+      // Respect ?redirect param — if it points to mechanic setup, go there
+      if (redirectTo && redirectTo.includes("/mechanic/")) {
+        navigate(redirectTo);
+      } else {
+        navigate("/driver/setup");
+      }
     } catch (error) {
       setStatus(
         error instanceof Error
@@ -238,7 +246,7 @@ export default function SignUp() {
                 Already have an account?{" "}
                 <Button
                   className="h-auto p-0 text-muted-foreground"
-                  onClick={() => navigate("/login")}
+                  onClick={() => navigate(redirectTo ? `/login?redirect=${encodeURIComponent(redirectTo)}` : "/login")}
                   variant="link"
                 >
                   Log in

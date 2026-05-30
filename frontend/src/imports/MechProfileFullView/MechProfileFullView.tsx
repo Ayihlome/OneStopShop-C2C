@@ -34,7 +34,7 @@ import { listVehicles } from "@/api/vehicles";
 const fallbackProfile = {
   id: "robert-auto",
   name: "Robert Daniels",
-  businessName: "Robert's Auto Clinic",
+  serviceName: "Robert's Auto Clinic",
   location: "Johannesburg",
   specialties: ["Diagnostics", "Engine repair", "Electrical"],
   rating: 4.9,
@@ -91,7 +91,7 @@ export default function MechProfileFullView() {
           setMechanicData({
             id: String(profile.id),
             name,
-            businessName: profile.business_name || name,
+            serviceName: profile.business_name || name,
             location: profile.city || profile.town || "Unknown",
             specialties: profile.specialities || [],
             rating: Number(profile.average_rating || 0),
@@ -203,6 +203,18 @@ export default function MechProfileFullView() {
     }
   };
 
+  const handleContact = () => {
+    if (mechanicData?.phone) {
+      const cleaned = mechanicData.phone.replace(/[^0-9]/g, "");
+      window.open(
+        `https://wa.me/${cleaned}?text=${encodeURIComponent("Hi, I'm interested in your services from OneStopShop.")}`,
+        "_blank",
+      );
+    } else {
+      setStatus("WhatsApp number not available for this provider yet. Check back after they update their profile.");
+    }
+  };
+
   return (
     <Layout className="bg-primary" variant="app">
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -238,10 +250,10 @@ export default function MechProfileFullView() {
                     <Badge variant="secondary">{mechanic.responseTime}</Badge>
                   </div>
                   <CardTitle className="mt-4 text-3xl">
-                    {mechanic.businessName}
+                    {mechanic.serviceName}
                   </CardTitle>
                   <CardDescription className="mt-2">
-                    Owned by {mechanic.name}
+                    {mechanic.name}
                   </CardDescription>
                 </div>
               </div>
@@ -372,11 +384,7 @@ export default function MechProfileFullView() {
 
                 <Button
                   className="mt-3 w-full"
-                  onClick={() =>
-                    setStatus(
-                      "Messaging is not exposed by the backend yet. Booking requests are connected.",
-                    )
-                  }
+                  onClick={handleContact}
                   variant="outline"
                 >
                   <MessageSquare className="size-4" />
