@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS provider_specialities (
 -- =================================================================
 CREATE TABLE IF NOT EXISTS mechanic_availability (
   id BIGSERIAL PRIMARY KEY,
-  provider_id INT REFERENCES service_provider_profiles(id) ON DELETE CASCADE,
+  provider_id INT NOT NULL REFERENCES service_provider_profiles(id) ON DELETE CASCADE,
   day_of_week INT NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
   start_time TIME NOT NULL,
   end_time TIME NOT NULL,
@@ -203,7 +203,14 @@ BEGIN
       SELECT 1 FROM information_schema.columns
       WHERE table_name = 'bookings' AND column_name = 'mechanic_id'
     ) THEN
-      UPDATE bookings SET service_provider_id = mechanic_id;
+      UPDATE bookings b SET service_provider_id = (
+      SELECT sp.id FROM service_provider_profiles sp
+      WHERE sp.account_id = b.mechanic_id
+    )
+    WHERE EXISTS (
+      SELECT 1 FROM service_provider_profiles sp
+      WHERE sp.account_id = b.mechanic_id
+    );
     END IF;
     ALTER TABLE bookings ALTER COLUMN service_provider_id SET NOT NULL;
     ALTER TABLE bookings ADD CONSTRAINT fk_bookings_service_provider
@@ -223,7 +230,14 @@ BEGIN
       SELECT 1 FROM information_schema.columns
       WHERE table_name = 'mechanic_availability' AND column_name = 'mechanic_id'
     ) THEN
-      UPDATE mechanic_availability SET provider_id = mechanic_id;
+      UPDATE mechanic_availability ma SET provider_id = (
+      SELECT sp.id FROM service_provider_profiles sp
+      WHERE sp.account_id = ma.mechanic_id
+    )
+    WHERE EXISTS (
+      SELECT 1 FROM service_provider_profiles sp
+      WHERE sp.account_id = ma.mechanic_id
+    );
     END IF;
     ALTER TABLE mechanic_availability ALTER COLUMN provider_id SET NOT NULL;
     ALTER TABLE mechanic_availability ADD CONSTRAINT fk_avail_provider
@@ -243,7 +257,14 @@ BEGIN
       SELECT 1 FROM information_schema.columns
       WHERE table_name = 'mechanic_documents' AND column_name = 'mechanic_id'
     ) THEN
-      UPDATE mechanic_documents SET provider_id = mechanic_id;
+      UPDATE mechanic_documents md SET provider_id = (
+      SELECT sp.id FROM service_provider_profiles sp
+      WHERE sp.account_id = md.mechanic_id
+    )
+    WHERE EXISTS (
+      SELECT 1 FROM service_provider_profiles sp
+      WHERE sp.account_id = md.mechanic_id
+    );
     END IF;
     ALTER TABLE mechanic_documents ALTER COLUMN provider_id SET NOT NULL;
     ALTER TABLE mechanic_documents ADD CONSTRAINT fk_docs_provider
@@ -280,7 +301,14 @@ BEGIN
       SELECT 1 FROM information_schema.columns
       WHERE table_name = 'reviews' AND column_name = 'mechanic_id'
     ) THEN
-      UPDATE reviews SET service_provider_id = mechanic_id;
+      UPDATE reviews r SET service_provider_id = (
+      SELECT sp.id FROM service_provider_profiles sp
+      WHERE sp.account_id = r.mechanic_id
+    )
+    WHERE EXISTS (
+      SELECT 1 FROM service_provider_profiles sp
+      WHERE sp.account_id = r.mechanic_id
+    );
     END IF;
     ALTER TABLE reviews ALTER COLUMN service_provider_id SET NOT NULL;
     ALTER TABLE reviews ADD CONSTRAINT fk_reviews_provider
