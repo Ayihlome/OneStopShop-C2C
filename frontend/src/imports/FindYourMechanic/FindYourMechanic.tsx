@@ -29,7 +29,7 @@ const fallbackMechanics = [
   {
     id: "robert-auto",
     name: "Robert Daniels",
-    businessName: "Robert's Auto Clinic",
+    serviceName: "Robert's Auto Clinic",
     location: "Johannesburg",
     specialties: ["Diagnostics", "Engine repair", "Electrical"],
     rating: 4.9,
@@ -41,7 +41,7 @@ const fallbackMechanics = [
   {
     id: "marcus-mobile",
     name: "Marcus Mokoena",
-    businessName: "Marcus Mobile Mechanics",
+    serviceName: "Marcus Mobile Mechanics",
     location: "Pretoria",
     specialties: ["Mobile service", "Brakes", "Battery"],
     rating: 4.7,
@@ -53,7 +53,7 @@ const fallbackMechanics = [
   {
     id: "jordan-performance",
     name: "Jordan Pillay",
-    businessName: "JP Performance Garage",
+    serviceName: "JP Performance Garage",
     location: "Cape Town",
     specialties: ["Performance", "Suspension", "Servicing"],
     rating: 4.8,
@@ -85,7 +85,7 @@ type BackendMechanic = {
   review_count?: number | string;
   reviewCount?: number | string;
   is_available?: boolean;
-  bio?: string;
+  service_description?: string;
   verification_badge?: boolean;
   verified?: boolean;
 };
@@ -99,7 +99,7 @@ function normalizeMechanic(mechanic: BackendMechanic) {
   return {
     id: String(mechanic.id),
     name,
-    businessName: mechanic.businessName || mechanic.business_name || name,
+    serviceName: mechanic.businessName || mechanic.business_name || name,
     location: mechanic.city || mechanic.town || mechanic.location || "Unknown",
     specialties: mechanic.specialities || mechanic.specialties || [],
     rating: Number(mechanic.average_rating || mechanic.rating || 0),
@@ -107,7 +107,7 @@ function normalizeMechanic(mechanic: BackendMechanic) {
     responseTime: mechanic.is_available
       ? "Available for requests"
       : "Availability on request",
-    bio: mechanic.bio || "No bio provided yet.",
+    bio: mechanic.service_description || "No description provided yet.",
     verified: Boolean(mechanic.verification_badge ?? mechanic.verified),
   };
 }
@@ -232,7 +232,7 @@ export default function FindYourMechanic() {
                   </Avatar>
                   <div className="min-w-0">
                     <CardTitle className="text-xl">
-                      {mechanic.businessName}
+                      {mechanic.serviceName}
                     </CardTitle>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {mechanic.name}

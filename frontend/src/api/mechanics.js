@@ -34,6 +34,10 @@ export async function updateMechanic(id, data) {
   return client.put(`/mechanics/${id}`, data);
 }
 
+export async function becomeProvider(data) {
+  return client.post('/mechanics/become-provider', data);
+}
+
 export async function uploadDocument(file, docType) {
   const formData = new FormData();
   formData.append('document', file);

@@ -2,12 +2,13 @@ import {
   ArrowLeft,
   CalendarPlus,
   CheckCircle2,
+  ExternalLink,
   MapPin,
   MessageSquare,
   Star,
 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 
 import Layout from "@/app/components/Layout";
 import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
@@ -25,51 +26,25 @@ import { Label } from "@/app/components/ui/label";
 import { Separator } from "@/app/components/ui/separator";
 import { StatusMessage } from "@/app/components/ui/status-message";
 import { Textarea } from "@/app/components/ui/textarea";
-import { createBooking } from "@/api/bookings";
+import { createBooking, initiatePayment, getPaymentStatus } from "@/api/bookings";
 import { getMechanicProfile } from "@/api/mechanics";
 import { getMechanicReviews } from "@/api/reviews";
 import { listVehicles } from "@/api/vehicles";
 
-const mechanics = [
-  {
-    id: "robert-auto",
-    name: "Robert Daniels",
-    businessName: "Robert's Auto Clinic",
-    location: "Johannesburg",
-    specialties: ["Diagnostics", "Engine repair", "Electrical"],
-    rating: 4.9,
-    reviewCount: 128,
-    responseTime: "Usually responds within 1 hour",
-    bio: "Independent workshop focused on reliable diagnostics, transparent estimates, and practical repairs for everyday drivers.",
-    verified: true,
-  },
-  {
-    id: "marcus-mobile",
-    name: "Marcus Mokoena",
-    businessName: "Marcus Mobile Mechanics",
-    location: "Pretoria",
-    specialties: ["Mobile service", "Brakes", "Battery"],
-    rating: 4.7,
-    reviewCount: 86,
-    responseTime: "Usually responds same day",
-    bio: "Mobile mechanic helping drivers with common roadside and driveway repairs across Pretoria.",
-    verified: true,
-  },
-  {
-    id: "jordan-performance",
-    name: "Jordan Pillay",
-    businessName: "JP Performance Garage",
-    location: "Cape Town",
-    specialties: ["Performance", "Suspension", "Servicing"],
-    rating: 4.8,
-    reviewCount: 74,
-    responseTime: "Usually responds within 2 hours",
-    bio: "Performance-minded service garage with clear estimates and careful workmanship.",
-    verified: false,
-  },
-];
+const fallbackProfile = {
+  id: "robert-auto",
+  name: "Robert Daniels",
+  serviceName: "Robert's Auto Clinic",
+  location: "Johannesburg",
+  specialties: ["Diagnostics", "Engine repair", "Electrical"],
+  rating: 4.9,
+  reviewCount: 128,
+  responseTime: "Usually responds within 1 hour",
+  bio: "Independent workshop focused on reliable diagnostics, transparent estimates, and practical repairs for everyday drivers.",
+  verified: true,
+};
 
-const reviews = [
+const fallbackReviews = [
   {
     name: "Avery J.",
     text: "Clear diagnosis, fair estimate, and the car was ready when promised.",
@@ -80,39 +55,29 @@ const reviews = [
   },
 ];
 
-type BackendReview = {
-  user_first_name?: string;
-  user_last_name?: string;
-  comment?: string;
-};
-
-type BackendVehicle = {
-  id: number | string;
-  make?: string;
-  model?: string;
-};
-
 export default function MechProfileFullView() {
   const [status, setStatus] = useState("Loading mechanic from backend...");
-  const [mechanicData, setMechanicData] = useState<(typeof mechanics)[number] | null>(null);
-  const [backendReviews, setBackendReviews] = useState(reviews);
-  const [vehicles, setVehicles] = useState<BackendVehicle[]>([]);
+  const [mechanicData, setMechanicData] = useState(null);
+  const [backendReviews, setBackendReviews] = useState(fallbackReviews);
+  const [vehicles, setVehicles] = useState([]);
   const [bookingForm, setBookingForm] = useState({
     vehicleId: "",
     description: "",
     preferredSchedule: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentUrl, setPaymentUrl] = useState("");
+  const [whatsappUrl, setWhatsappUrl] = useState("");
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const fromProfile = searchParams.get("from") === "profile";
 
   useEffect(() => {
     let ignore = false;
 
     async function loadProfile() {
-      if (!id) {
-        return;
-      }
+      if (!id) return;
 
       try {
         const [profileResponse, reviewResponse] = await Promise.all([
@@ -128,7 +93,7 @@ export default function MechProfileFullView() {
           setMechanicData({
             id: String(profile.id),
             name,
-            businessName: profile.business_name || name,
+            serviceName: profile.business_name || name,
             location: profile.city || profile.town || "Unknown",
             specialties: profile.specialities || [],
             rating: Number(profile.average_rating || 0),
@@ -136,11 +101,12 @@ export default function MechProfileFullView() {
             responseTime: profile.is_available
               ? "Available for requests"
               : "Availability on request",
-            bio: profile.bio || "No bio provided yet.",
+            bio: profile.service_description || "No description provided yet.",
             verified: Boolean(profile.verification_badge),
+            photoUrl: profile.profile_photo_url || "",
           });
           setBackendReviews(
-            (reviewResponse.data || []).map((review: BackendReview) => ({
+            (reviewResponse.data || []).map((review) => ({
               name:
                 [review.user_first_name, review.user_last_name]
                   .filter(Boolean)
@@ -169,9 +135,7 @@ export default function MechProfileFullView() {
           setVehicles(response.data || []);
         }
       } catch {
-        if (!ignore) {
-          setVehicles([]);
-        }
+        if (!ignore) setVehicles([]);
       }
     }
 
@@ -184,14 +148,11 @@ export default function MechProfileFullView() {
   }, [id]);
 
   const mechanic = useMemo(
-    () =>
-      mechanicData ||
-      mechanics.find((item) => item.id === id) ||
-      mechanics[0],
-    [id, mechanicData],
+    () => mechanicData || fallbackProfile,
+    [mechanicData],
   );
 
-  const submitBooking = async (event: FormEvent<HTMLFormElement>) => {
+  const submitBooking = async (event) => {
     event.preventDefault();
 
     if (!bookingForm.vehicleId || !bookingForm.description || !bookingForm.preferredSchedule) {
@@ -200,25 +161,60 @@ export default function MechProfileFullView() {
     }
 
     setIsSubmitting(true);
-    setStatus("Sending booking request to backend...");
+    setStatus("Creating booking...");
 
     try {
-      await createBooking({
-        mechanicId: Number(mechanic.id),
+      const bookingResp = await createBooking({
+        providerId: Number(id),
         vehicleId: Number(bookingForm.vehicleId),
         description: bookingForm.description,
         preferredSchedule: new Date(bookingForm.preferredSchedule).toISOString(),
       });
-      setStatus("Booking request created in backend.");
+      const booking = bookingResp.data;
+      setStatus("Booking created. Initiating payment...");
+
+      // Initiate PayFast payment
+      const paymentResp = await initiatePayment(booking.id);
+      const payment = paymentResp.data;
+      setPaymentUrl(payment.redirectUrl);
+      setStatus(
+        "Booking created. Click the payment button to complete via PayFast sandbox.",
+      );
       setBookingForm({ vehicleId: "", description: "", preferredSchedule: "" });
     } catch (error) {
       setStatus(
         error instanceof Error
           ? error.message
-          : "Could not create booking. Please sign in as a driver and try again.",
+          : "Could not create booking. Please sign in and try again.",
       );
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const checkPaymentStatus = async (bookingId) => {
+    try {
+      const resp = await getPaymentStatus(bookingId);
+      const data = resp.data;
+      if (data.whatsapp_url) {
+        setWhatsappUrl(data.whatsapp_url);
+      } else {
+        setStatus("Payment not yet confirmed. Check back after paying.");
+      }
+    } catch {
+      setStatus("Could not fetch payment status.");
+    }
+  };
+
+  const handleContact = () => {
+    if (mechanicData?.phone) {
+      const cleaned = mechanicData.phone.replace(/[^0-9]/g, "");
+      window.open(
+        `https://wa.me/${cleaned}?text=${encodeURIComponent("Hi, I'm interested in your services from OneStopShop.")}`,
+        "_blank",
+      );
+    } else {
+      setStatus("WhatsApp number not available for this provider yet. Check back after they update their profile.");
     }
   };
 
@@ -227,7 +223,7 @@ export default function MechProfileFullView() {
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <Button
           className="mb-6 px-0 text-foreground"
-          onClick={() => navigate("/find-mechanic")}
+          onClick={() => navigate(fromProfile ? "/mechanic/profile" : "/find-mechanic")}
           variant="link"
         >
           <ArrowLeft className="size-4" />
@@ -239,12 +235,20 @@ export default function MechProfileFullView() {
             <CardHeader>
               <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
                 <Avatar className="size-20">
-                  <AvatarFallback className="bg-primary text-xl text-primary-foreground">
-                    {mechanic.name
-                      .split(" ")
-                      .map((part) => part[0])
-                      .join("")}
-                  </AvatarFallback>
+                  {mechanic.photoUrl ? (
+                    <img
+                      alt={mechanic.name}
+                      className="size-full rounded-full object-cover"
+                      src={mechanic.photoUrl}
+                    />
+                  ) : (
+                    <AvatarFallback className="bg-primary text-xl text-primary-foreground">
+                      {mechanic.name
+                        .split(" ")
+                        .map((part) => part[0])
+                        .join("")}
+                    </AvatarFallback>
+                  )}
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -257,10 +261,10 @@ export default function MechProfileFullView() {
                     <Badge variant="secondary">{mechanic.responseTime}</Badge>
                   </div>
                   <CardTitle className="mt-4 text-3xl">
-                    {mechanic.businessName}
+                    {mechanic.serviceName}
                   </CardTitle>
                   <CardDescription className="mt-2">
-                    Owned by {mechanic.name}
+                    {mechanic.name}
                   </CardDescription>
                 </div>
               </div>
@@ -311,7 +315,8 @@ export default function MechProfileFullView() {
               <CardHeader>
                 <CardTitle>Request service</CardTitle>
                 <CardDescription>
-                  Submit a booking request to the backend.
+                  Submit a booking request. Payment is handled via PayFast
+                  sandbox after creation.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -366,22 +371,53 @@ export default function MechProfileFullView() {
                       value={bookingForm.description}
                     />
                   </div>
-                  <Button
-                    disabled={isSubmitting}
-                    type="submit"
-                  >
+                  <Button disabled={isSubmitting} type="submit">
                     <CalendarPlus className="size-4" />
                     {isSubmitting ? "Sending..." : "Request booking"}
                   </Button>
                 </form>
+
+                {paymentUrl && (
+                  <div className="mt-4 space-y-2">
+                    <Button
+                      className="w-full"
+                      onClick={() => window.open(paymentUrl, "_blank")}
+                      variant="default"
+                    >
+                      <ExternalLink className="size-4" />
+                      Pay via PayFast (Sandbox)
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      After paying, come back and check payment status below.
+                    </p>
+                  </div>
+                )}
+
                 <Button
-                  className="w-full"
-                  onClick={() => setStatus("Messaging is not exposed by the backend yet. Booking requests are connected.")}
+                  className="mt-3 w-full"
+                  onClick={handleContact}
                   variant="outline"
                 >
                   <MessageSquare className="size-4" />
                   Contact mechanic
                 </Button>
+
+                {whatsappUrl && (
+                  <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-4">
+                    <p className="mb-2 text-sm font-medium text-emerald-800">
+                      Payment confirmed! Contact the provider:
+                    </p>
+                    <Button
+                      className="w-full"
+                      onClick={() => window.open(whatsappUrl, "_blank")}
+                      variant="default"
+                    >
+                      <MessageSquare className="size-4" />
+                      Open WhatsApp
+                    </Button>
+                  </div>
+                )}
+
                 {status && <StatusMessage className="mt-3" message={status} />}
               </CardContent>
             </Card>
@@ -391,7 +427,7 @@ export default function MechProfileFullView() {
                 <CardTitle>Recent reviews</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {(backendReviews.length ? backendReviews : reviews).map((review) => (
+                {(backendReviews.length ? backendReviews : fallbackReviews).map((review) => (
                   <div className="rounded-md border p-4" key={review.name}>
                     <div className="mb-2 flex gap-1 text-foreground">
                       {Array.from({ length: 5 }).map((_, index) => (

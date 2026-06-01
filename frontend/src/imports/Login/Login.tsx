@@ -1,6 +1,6 @@
 import { ArrowRight, LockKeyhole, Mail } from "lucide-react";
 import { FormEvent, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 
 import Layout from "@/app/components/Layout";
 import { Button } from "@/app/components/ui/button";
@@ -14,18 +14,16 @@ import {
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { StatusMessage } from "@/app/components/ui/status-message";
-import { loginAdmin, loginMechanic, loginUser } from "@/api/auth";
+import { loginUser, loginAdmin } from "@/api/auth";
 
 type LoginForm = {
   email: string;
   password: string;
-  role: "user" | "mechanic" | "admin";
 };
 
 const initialForm: LoginForm = {
   email: "",
   password: "",
-  role: "user",
 };
 
 export default function Login() {
@@ -34,6 +32,8 @@ export default function Login() {
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || null;
 
   const updateField = (field: keyof LoginForm, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -47,18 +47,12 @@ export default function Login() {
       nextErrors.email = "Enter a valid email address.";
     }
 
-    if (form.password.length < 8) {
-      nextErrors.password = "Password must be at least 8 characters.";
+    if (!form.password) {
+      nextErrors.password = "Password is required.";
     }
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
-  };
-
-  const apiForRole = {
-    user: loginUser,
-    mechanic: loginMechanic,
-    admin: loginAdmin,
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -69,32 +63,39 @@ export default function Login() {
     }
 
     setIsSubmitting(true);
-    setStatus("Signing in with the backend API...");
+    setStatus("Signing in...");
 
     try {
-      const response = await apiForRole[form.role]({
+      // Try user login first (handles both regular users and providers)
+      const response = await loginUser({
         email: form.email,
         password: form.password,
       });
-      const auth = response.data;
+      const auth = response.data || response;
 
       localStorage.setItem("oss_token", auth.token);
       localStorage.setItem("oss_user", JSON.stringify(auth.user));
-      setStatus("Login successful. Redirecting...");
 
-      navigate(
-        form.role === "admin"
-          ? "/admin/dashboard"
-          : form.role === "mechanic"
-            ? "/mechanic/profile"
-            : "/find-mechanic",
-      );
-    } catch (error) {
-      setStatus(
-        error instanceof Error
-          ? error.message
-          : "Login failed. Please check your details and try again.",
-      );
+      if (auth.user.isProvider) {
+        navigate(redirectTo || "/mechanic/profile");
+      } else {
+        navigate(redirectTo || "/find-mechanic");
+      }
+    } catch {
+      // If user login fails, try admin login
+      try {
+        const adminResponse = await loginAdmin({
+          email: form.email,
+          password: form.password,
+        });
+        const adminAuth = adminResponse.data || adminResponse;
+
+        localStorage.setItem("oss_token", adminAuth.token);
+        localStorage.setItem("oss_user", JSON.stringify(adminAuth.user));
+        navigate(redirectTo || "/admin/dashboard");
+      } catch {
+        setStatus("Invalid email or password. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -113,8 +114,8 @@ export default function Login() {
               Get back to managing vehicle care with less friction.
             </h1>
             <p className="max-w-xl text-lg text-primary-foreground/80">
-              Sign in to browse mechanics, manage your profile, and continue
-              the service flow from one clear dashboard.
+              Sign in to browse mechanics, manage your provider profile, and
+              continue the service flow from one clear dashboard.
             </p>
           </div>
           <div className="grid gap-3 text-sm text-primary-foreground/80 sm:grid-cols-3">
@@ -137,22 +138,6 @@ export default function Login() {
           </CardHeader>
           <CardContent>
             <form className="space-y-5" onSubmit={handleSubmit}>
-              <div className="space-y-2">
-                <Label htmlFor="role">Account type</Label>
-                <select
-                  className="flex h-9 w-full rounded-md border border-border bg-input-background px-3 py-1 text-sm text-foreground outline-none focus-visible:border-border focus-visible:ring-[3px] focus-visible:ring-ring/30"
-                  id="role"
-                  onChange={(event) =>
-                    updateField("role", event.target.value as LoginForm["role"])
-                  }
-                  value={form.role}
-                >
-                  <option value="user">Driver</option>
-                  <option value="mechanic">Mechanic</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
-
               <div className="space-y-2">
                 <Label htmlFor="email">Email address</Label>
                 <div className="relative">
@@ -182,7 +167,7 @@ export default function Login() {
                   onChange={(event) =>
                     updateField("password", event.target.value)
                   }
-                  placeholder="At least 8 characters"
+                  placeholder="Enter your password"
                   type="password"
                   value={form.password}
                 />
@@ -193,11 +178,7 @@ export default function Login() {
 
               {status && <StatusMessage message={status} />}
 
-              <Button
-                className="w-full"
-                disabled={isSubmitting}
-                type="submit"
-              >
+              <Button className="w-full" disabled={isSubmitting} type="submit">
                 {isSubmitting ? "Logging in..." : "Log in to account"}
                 <ArrowRight className="size-4" />
               </Button>
@@ -207,7 +188,7 @@ export default function Login() {
               <span>New to OneStopShop?</span>
               <Button
                 className="h-auto p-0 text-foreground"
-                onClick={() => navigate("/signup")}
+                onClick={() => navigate(redirectTo ? `/signup?redirect=${encodeURIComponent(redirectTo)}` : "/signup")}
                 variant="link"
               >
                 Create an account

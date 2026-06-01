@@ -12,10 +12,18 @@ export async function listMyBookings() {
   return client.get('/bookings/user');
 }
 
-export async function listMechanicBookings() {
+export async function listProviderBookings() {
   return client.get('/bookings/mechanic');
 }
 
 export async function updateBookingStatus(id, status) {
   return client.patch(`/bookings/${id}/status`, { status });
+}
+
+export async function initiatePayment(bookingId) {
+  return client.post(`/payments/booking/${bookingId}/initiate`);
+}
+
+export async function getPaymentStatus(bookingId) {
+  return client.get(`/payments/booking/${bookingId}/status`);
 }

@@ -34,9 +34,9 @@ psql \
   -v ON_ERROR_STOP=1 \
   -f db/migrations/001_init.sql
 
-echo "Seeding admin account..."
+echo "Seeding accounts (admin + user)..."
 if ! node scripts/seedAdmin.js; then
-  echo "Admin seed failed."
+  echo "Seed failed."
   exit 1
 fi
 

@@ -22,9 +22,31 @@ router.get(
 );
 
 router.post(
+  '/become-provider',
+  authenticate,
+  [
+    body('business_whatsapp_number')
+      .isMobilePhone('any')
+      .withMessage('A valid WhatsApp business number is required'),
+    body('business_name').optional({ nullable: true, checkFalsy: true }).trim(),
+    body('service_description').optional({ nullable: true, checkFalsy: true }).trim(),
+    body('years_of_experience')
+      .optional({ nullable: true, checkFalsy: true })
+      .isInt({ min: 0 })
+      .withMessage('Years of experience must be a non-negative integer'),
+    body('payfast_merchant_id').optional({ nullable: true, checkFalsy: true }).trim(),
+    body('payfast_merchant_key').optional({ nullable: true, checkFalsy: true }).trim(),
+    body('specialities').optional({ nullable: true }).isArray(),
+    body('availability').optional({ nullable: true }).isArray(),
+  ],
+  validate,
+  asyncHandler(mechanicController.createProviderProfile)
+);
+
+router.post(
   '/documents',
   authenticate,
-  requireRole('mechanic'),
+  requireRole('provider'),
   upload.single('document'),
   [
     body('doc_type')
@@ -42,10 +64,8 @@ router.put(
   '/:id',
   authenticate,
   [
-    body('whatsapp_number')
-      .optional({ nullable: true, checkFalsy: true })
-      .isMobilePhone('any')
-      .withMessage('WhatsApp number must be valid'),
+    body('business_name').optional({ nullable: true, checkFalsy: true }).trim(),
+    body('service_description').optional({ nullable: true, checkFalsy: true }).trim(),
   ],
   validate,
   asyncHandler(mechanicController.updateMechanic)

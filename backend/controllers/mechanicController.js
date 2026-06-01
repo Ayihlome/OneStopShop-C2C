@@ -34,11 +34,11 @@ async function updateMechanic(req, res) {
   const targetId = Number(req.params.id);
   const isAdmin = ['moderator', 'superadmin'].includes(req.user.role);
 
-  if (req.user.role === 'mechanic' && Number(req.user.id) !== targetId) {
+  if (req.user.role === 'provider' && Number(req.user.id) !== targetId) {
     return res.status(403).json({ error: 'Forbidden' });
   }
 
-  if (!isAdmin && req.user.role !== 'mechanic') {
+  if (!isAdmin && req.user.role !== 'provider') {
     return res.status(403).json({ error: 'Forbidden' });
   }
 
@@ -55,6 +55,11 @@ async function uploadDocument(req, res) {
   return res.status(201).json({ data, message: 'Success' });
 }
 
+async function createProviderProfile(req, res) {
+  const data = await mechanicService.createProviderProfile(req.user.id, req.body);
+  return res.status(201).json({ data, message: 'Success' });
+}
+
 module.exports = {
   listMechanics,
   getMechanic,
@@ -64,4 +69,5 @@ module.exports = {
   findNearby,
   updateMechanic,
   uploadDocument,
+  createProviderProfile,
 };

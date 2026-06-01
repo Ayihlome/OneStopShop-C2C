@@ -15,6 +15,7 @@ function signToken(user) {
       id: Number(user.id),
       email: user.email,
       role: user.role,
+      isProvider: user.role === 'provider',
     },
     config.jwt.secret,
     { expiresIn: config.jwt.expiresIn }
@@ -93,61 +94,17 @@ async function signupUser(input) {
   }
 }
 
-async function signupMechanic(input) {
-  const client = await pool.connect();
-
-  try {
-    await client.query('BEGIN');
-    const account = await createAccount(client, input);
-
-    await client.query(
-      `INSERT INTO mechanics (
-         account_id, bio, years_experience, whatsapp_number, lat, lng
-       )
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [
-        account.id,
-        toNullable(input.bio),
-        toNullable(input.years_experience),
-        toNullable(input.whatsapp_number),
-        toNullable(input.lat),
-        toNullable(input.lng),
-      ]
-    );
-
-    await client.query('COMMIT');
-
-    const mechanic = sanitize({ ...account, role: 'mechanic' });
-    logger.info('Mechanic signup completed', {
-      userId: mechanic.id,
-      mechanicId: mechanic.id,
-      role: mechanic.role,
-    });
-
-    return {
-      user: mechanic,
-      token: signToken(mechanic),
-    };
-  } catch (error) {
-    await client.query('ROLLBACK');
-    handleUniqueEmail(error);
-  } finally {
-    client.release();
-  }
-}
-
 async function findAccountByEmail(email) {
   const result = await pool.query(
     `SELECT
        a.*,
        CASE
-         WHEN u.account_id IS NOT NULL THEN 'user'
-         WHEN m.account_id IS NOT NULL THEN 'mechanic'
-         ELSE NULL
+         WHEN sp.account_id IS NOT NULL THEN 'provider'
+         ELSE 'user'
        END AS role
      FROM accounts a
      LEFT JOIN users u ON u.account_id = a.id
-     LEFT JOIN mechanics m ON m.account_id = a.id
+     LEFT JOIN service_provider_profiles sp ON sp.account_id = a.id
      WHERE a.email = $1`,
     [email]
   );
@@ -155,14 +112,11 @@ async function findAccountByEmail(email) {
   return result.rows[0] || null;
 }
 
-async function loginAccount(email, password, expectedRole) {
+async function loginAccount(email, password) {
   const account = await findAccountByEmail(email);
 
-  if (!account || account.role !== expectedRole) {
-    logger.warn('Login rejected because credentials or role were invalid', {
-      expectedRole,
-      actualRole: account?.role || null,
-    });
+  if (!account) {
+    logger.warn('Login rejected because credentials were invalid', {});
     throw createError(401, 'Invalid email or password');
   }
 
@@ -237,7 +191,6 @@ async function loginAdmin(email, password) {
 
 module.exports = {
   signupUser,
-  signupMechanic,
   loginAccount,
   loginAdmin,
 };

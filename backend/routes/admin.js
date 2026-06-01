@@ -15,5 +15,6 @@ router.patch('/accounts/:id/suspend', ...isSuperAdmin, asyncHandler(adminControl
 router.get('/documents', ...isMod, asyncHandler(adminController.listPendingDocuments));
 router.patch('/documents/:id/approve', ...isSuperAdmin, asyncHandler(adminController.approveDocument));
 router.patch('/documents/:id/reject', ...isSuperAdmin, asyncHandler(adminController.rejectDocument));
+router.get('/payments', ...isMod, asyncHandler(adminController.listPayments));
 
 module.exports = router;

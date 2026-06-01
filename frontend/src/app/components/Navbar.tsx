@@ -1,5 +1,5 @@
-import { Menu, Wrench, X } from "lucide-react";
-import { useState } from "react";
+import { LogOut, Menu, User, Wrench, X } from "lucide-react";
+import { useCallback, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 
 import { Button } from "./ui/button";
@@ -9,13 +9,27 @@ type NavbarProps = {
   variant?: "public" | "app" | "admin" | "onboarding";
 };
 
+function getAuthState() {
+  const token =
+    typeof window !== "undefined" && localStorage.getItem("oss_token");
+  if (!token) return { authenticated: false, user: null } as const;
+
+  try {
+    const user = JSON.parse(localStorage.getItem("oss_user") || "{}");
+    return { authenticated: true, user } as const;
+  } catch {
+    return { authenticated: true, user: null } as const;
+  }
+}
+
 const publicLinks = [
   { label: "Find a mechanic", path: "/find-mechanic" },
-  { label: "For mechanics", path: "/signup" },
+  { label: "Become a provider", path: "/mechanic/setup" },
 ];
 
 const appLinks = [
   { label: "Find mechanics", path: "/find-mechanic" },
+  { label: "My vehicles", path: "/my-vehicles" },
   { label: "My profile", path: "/mechanic/profile" },
 ];
 
@@ -23,12 +37,119 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const links = variant === "app" ? appLinks : publicLinks;
-  const showNavLinks = variant !== "onboarding";
+  const { authenticated, user } = getAuthState();
 
-  const goTo = (path: string) => {
+  const links = variant === "app" ? appLinks : publicLinks;
+  const showNavLinks = variant !== "onboarding" && variant !== "admin";
+  const isPublic = variant === "public";
+  const userName = user?.first_name || user?.email?.split("@")[0] || "My";
+
+  const goTo = useCallback(
+    (path: string) => {
+      setOpen(false);
+      navigate(path);
+    },
+    [navigate],
+  );
+
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem("oss_token");
+    localStorage.removeItem("oss_user");
     setOpen(false);
-    navigate(path);
+    navigate("/");
+  }, [navigate]);
+
+  const desktopButtons = () => {
+    if (variant === "admin") {
+      return (
+        <Button variant="outline" onClick={() => goTo("/")}>
+          Exit admin
+        </Button>
+      );
+    }
+
+    if (isPublic && !authenticated) {
+      return (
+        <>
+          <Button variant="ghost" onClick={() => goTo("/login")}>
+            Log in
+          </Button>
+          <Button
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            onClick={() => goTo("/signup")}
+          >
+            Get started
+          </Button>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <Button variant="ghost" onClick={() => goTo("/mechanic/profile")}>
+          <User className="size-4" />
+          {userName}'s profile
+        </Button>
+        <Button variant="outline" onClick={handleLogout}>
+          <LogOut className="size-4" />
+          Log out
+        </Button>
+      </>
+    );
+  };
+
+  const mobileButtons = () => {
+    if (variant === "admin") {
+      return (
+        <Button
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
+          onClick={() => goTo("/")}
+        >
+          Exit admin
+        </Button>
+      );
+    }
+
+    if (isPublic && !authenticated) {
+      return (
+        <>
+          <Button
+            className="justify-start"
+            onClick={() => goTo("/login")}
+            variant="ghost"
+          >
+            Log in
+          </Button>
+          <Button
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            onClick={() => goTo("/signup")}
+          >
+            Get started
+          </Button>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <Button
+          className="justify-start"
+          onClick={() => goTo("/mechanic/profile")}
+          variant="ghost"
+        >
+          <User className="size-4" />
+          {userName}'s profile
+        </Button>
+        <Button
+          className="justify-start"
+          onClick={handleLogout}
+          variant="ghost"
+        >
+          <LogOut className="size-4" />
+          Log out
+        </Button>
+      </>
+    );
   };
 
   return (
@@ -71,23 +192,7 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
         )}
 
         <div className="hidden items-center gap-2 md:flex">
-          {variant === "admin" ? (
-            <Button variant="outline" onClick={() => goTo("/")}>
-              Exit admin
-            </Button>
-          ) : (
-            <>
-              <Button variant="ghost" onClick={() => goTo("/login")}>
-                Log in
-              </Button>
-              <Button
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-                onClick={() => goTo("/signup")}
-              >
-                Get started
-              </Button>
-            </>
-          )}
+          {desktopButtons()}
         </div>
 
         <Button
@@ -115,19 +220,8 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
                   {link.label}
                 </Button>
               ))}
-            <Button
-              className="justify-start"
-              onClick={() => goTo("/login")}
-              variant="ghost"
-            >
-              Log in
-            </Button>
-            <Button
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-              onClick={() => goTo(variant === "admin" ? "/" : "/signup")}
-            >
-              {variant === "admin" ? "Exit admin" : "Get started"}
-            </Button>
+
+            {mobileButtons()}
           </div>
         </div>
       )}

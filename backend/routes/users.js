@@ -5,7 +5,7 @@ const asyncHandler = require('../utils/asyncHandler');
 
 const router = express.Router();
 
-router.use(authenticate, requireRole('user'));
+router.use(authenticate, requireRole('user', 'provider'));
 router.get('/me', asyncHandler(userController.getMe));
 router.put('/me', asyncHandler(userController.updateMe));
 

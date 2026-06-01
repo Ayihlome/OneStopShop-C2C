@@ -25,8 +25,18 @@ function formatApiError(error) {
     .join(' ');
 }
 
+// Detect common misconfiguration: relative URL when frontend is served from a different origin
+const apiUrl = import.meta.env.VITE_API_URL;
+if (apiUrl && apiUrl.startsWith('/') && import.meta.env.PROD) {
+  console.warn(
+    `[OneStopShop] VITE_API_URL is set to "${apiUrl}" (relative path), ` +
+    'but the frontend is running in production mode. The Vite dev proxy is not active. ' +
+    'Set VITE_API_URL to the full backend URL, e.g. "https://backend.up.railway.app".'
+  );
+}
+
 const client = axios.create({
-  baseURL: normalizeApiBaseUrl(import.meta.env.VITE_API_URL),
+  baseURL: normalizeApiBaseUrl(apiUrl),
   withCredentials: true,
 });
 

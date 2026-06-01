@@ -61,6 +61,7 @@ export default function Main() {
               <Button
                 onClick={() => navigate("/find-mechanic")}
                 size="lg"
+                type="button"
               >
                 Find a mechanic
                 <ArrowRight className="size-4" />
@@ -68,6 +69,7 @@ export default function Main() {
               <Button
                 onClick={() => navigate("/signup")}
                 size="lg"
+                type="button"
                 variant="outline"
               >
                 Join the platform
@@ -120,22 +122,24 @@ export default function Main() {
             <Button
               className="mt-6 bg-accent text-accent-foreground hover:bg-accent/90"
               onClick={() => navigate("/signup")}
+              type="button"
             >
               Start as driver
             </Button>
           </div>
           <div className="rounded-lg border border-white/20 p-6">
             <Wrench className="mb-5 size-8" />
-            <h2 className="text-2xl font-semibold">For mechanics</h2>
+            <h2 className="text-2xl font-semibold">For service providers</h2>
             <p className="mt-3 text-primary-foreground/70">
-              Create a service profile, highlight specialties, and prepare for
+              Upgrade your account to create a service profile, highlight specialties, and prepare for
               platform verification.
             </p>
             <Button
               className="mt-6 bg-accent text-accent-foreground hover:bg-accent/90"
-              onClick={() => navigate("/signup")}
+              onClick={() => navigate("/mechanic/setup")}
+              type="button"
             >
-              Start as mechanic
+              Become a provider
             </Button>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { CheckCircle2, Mail, RefreshCw } from "lucide-react";
+import { Car, CheckCircle2, Mail, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 
@@ -49,12 +49,22 @@ export default function DriverEmailVerification() {
             </div>
             <Button
               className="w-full"
-              onClick={() => navigate("/find-mechanic")}
+              onClick={() => navigate("/my-vehicles")}
               variant="secondary"
             >
-              <CheckCircle2 className="size-4" />
-              Continue to find mechanics
+              <Car className="size-4" />
+              Add a vehicle
             </Button>
+            <div className="text-center text-sm text-muted-foreground">
+              Or{" "}
+              <Button
+                className="h-auto p-0 text-foreground"
+                onClick={() => navigate("/find-mechanic")}
+                variant="link"
+              >
+                continue to find mechanics
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </section>

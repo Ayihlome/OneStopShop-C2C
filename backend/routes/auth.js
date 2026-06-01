@@ -32,30 +32,10 @@ router.post(
 );
 
 router.post(
-  '/signup/mechanic',
-  [
-    ...signupValidators,
-    body('whatsapp_number')
-      .optional({ nullable: true, checkFalsy: true })
-      .isMobilePhone('any')
-      .withMessage('WhatsApp number must be valid'),
-  ],
-  validate,
-  asyncHandler(authController.signupMechanic)
-);
-
-router.post(
   '/login/user',
   loginValidators,
   validate,
   asyncHandler(authController.loginUser)
-);
-
-router.post(
-  '/login/mechanic',
-  loginValidators,
-  validate,
-  asyncHandler(authController.loginMechanic)
 );
 
 router.post(
