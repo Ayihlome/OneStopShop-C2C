@@ -3,7 +3,7 @@ const { body, query } = require('express-validator');
 const mechanicController = require('../controllers/mechanicController');
 const { authenticate, requireRole } = require('../middleware/auth');
 const validate = require('../middleware/validate');
-const upload = require('../middleware/upload');
+const { docUpload } = require('../middleware/upload');
 const asyncHandler = require('../utils/asyncHandler');
 
 const router = express.Router();
@@ -47,7 +47,7 @@ router.post(
   '/documents',
   authenticate,
   requireRole('provider'),
-  upload.single('document'),
+  docUpload.single('document'),
   [
     body('doc_type')
       .isIn(['id', 'certification', 'proof_of_residence'])

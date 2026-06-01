@@ -1,5 +1,5 @@
-import { Eye, Save, Star, Wrench } from "lucide-react";
-import { FormEvent, useEffect, useState } from "react";
+import { Eye, Save, Star, Upload, Wrench } from "lucide-react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 
 import Layout from "@/app/components/Layout";
@@ -19,6 +19,7 @@ import { StatusMessage } from "@/app/components/ui/status-message";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
 import { Textarea } from "@/app/components/ui/textarea";
 import { getMechanicProfile, updateMechanic } from "@/api/mechanics";
+import client from "@/api/client";
 
 type ProfileForm = {
   businessName: string;
@@ -50,6 +51,8 @@ export default function MyMechanicProfile() {
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("Loading profile from backend...");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
   const currentUser = () => {
@@ -187,6 +190,35 @@ export default function MyMechanicProfile() {
     }
   };
 
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('photo', file);
+
+    setUploadingPhoto(true);
+    setStatus('Uploading photo...');
+
+    try {
+      const resp = await client.post('/users/photo', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const userData = resp.data || resp;
+      setProfile((prev) => ({ ...prev, photoUrl: userData.profile_photo_url || '' }));
+      setStatus('Photo uploaded.');
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : 'Could not upload photo.',
+      );
+    } finally {
+      setUploadingPhoto(false);
+      if (photoInputRef.current) photoInputRef.current.value = '';
+    }
+  };
+
   const specialties = profile.specialties
     .split(",")
     .map((item) => item.trim())
@@ -304,15 +336,35 @@ export default function MyMechanicProfile() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="photoUrl">Profile photo URL (optional)</Label>
-                    <Input
-                      id="photoUrl"
-                      onChange={(event) =>
-                        updateField("photoUrl", event.target.value)
-                      }
-                      placeholder="https://example.com/photo.jpg"
-                      value={profile.photoUrl}
-                    />
+                    <Label htmlFor="photoUrl">Profile photo</Label>
+                    <div className="flex items-center gap-3">
+                      <Input
+                        id="photoUrl"
+                        onChange={(event) =>
+                          updateField("photoUrl", event.target.value)
+                        }
+                        placeholder="https://example.com/photo.jpg"
+                        value={profile.photoUrl}
+                      />
+                      <div>
+                        <input
+                          accept=".jpg,.jpeg,.png,.webp"
+                          className="hidden"
+                          onChange={handlePhotoUpload}
+                          ref={photoInputRef}
+                          type="file"
+                        />
+                        <Button
+                          disabled={uploadingPhoto}
+                          onClick={() => photoInputRef.current?.click()}
+                          type="button"
+                          variant="outline"
+                        >
+                          <Upload className="size-4" />
+                          {uploadingPhoto ? "Uploading..." : "Upload"}
+                        </Button>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-2">

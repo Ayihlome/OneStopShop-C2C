@@ -48,8 +48,12 @@ export default function MyVehicles() {
         const resp = await listVehicles();
         setVehicles(resp.data || []);
         setStatus("");
-      } catch {
-        setStatus("Could not load vehicles. Make sure you are signed in.");
+      } catch (error) {
+        setStatus(
+          error instanceof Error
+            ? error.message
+            : "Could not load vehicles. Make sure you are signed in.",
+        );
       }
     }
     load();

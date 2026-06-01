@@ -45,13 +45,6 @@ export default function Footer() {
           >
             Log in
           </Button>
-          <Button
-            className="h-auto justify-start p-0 text-primary-foreground/70"
-            onClick={() => navigate("/admin/dashboard")}
-            variant="link"
-          >
-            Admin dashboard
-          </Button>
         </div>
       </div>
       <div className="border-t px-4 py-4 text-center text-xs text-primary-foreground/60">

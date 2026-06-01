@@ -17,6 +17,7 @@ import { Label } from "@/app/components/ui/label";
 import { StatusMessage } from "@/app/components/ui/status-message";
 import { Textarea } from "@/app/components/ui/textarea";
 import { becomeProvider } from "@/api/mechanics";
+import client from "@/api/client";
 
 type ProviderForm = {
   businessName: string;
@@ -113,6 +114,18 @@ export default function MechanicProfileSetup() {
         specialities: form.specialties,
       });
 
+      // Refresh user data in localStorage to reflect provider role
+      try {
+        const meResp = await client.get('/users/me');
+        const me = meResp.data || meResp;
+        if (me) {
+          const existingUser = JSON.parse(localStorage.getItem('oss_user') || '{}');
+          localStorage.setItem('oss_user', JSON.stringify({ ...existingUser, ...me }));
+        }
+      } catch {
+        // Non-critical — user data refreshes on next login
+      }
+
       setStatus("Provider profile created.");
       navigate("/mechanic/verify");
     } catch (error) {
@@ -196,6 +209,25 @@ export default function MechanicProfileSetup() {
                 {renderInput("yearsOfExperience", "Years of experience", "10", "number")}
                 {renderInput("payfastMerchantId", "PayFast Merchant ID (optional)", "")}
                 {renderInput("payfastMerchantKey", "PayFast Merchant Key (optional)", "")}
+              </div>
+
+              {/* PayFast info notice */}
+              <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                <p className="font-medium">PayFast account required for payments</p>
+                <p className="mt-1">
+                  To receive payments from customers, you need a{" "}
+                  <a
+                    className="underline underline-offset-2 hover:text-amber-900"
+                    href="https://www.payfast.co.za/"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    PayFast
+                  </a>{" "}
+                  merchant account. Sign up at payfast.co.za, then enter your
+                  Merchant ID and Key above. You can add these later from your
+                  profile page.
+                </p>
               </div>
 
               <div className="space-y-3">
