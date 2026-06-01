@@ -104,7 +104,7 @@ export default function SignUp() {
       if (redirectTo && redirectTo.includes("/mechanic/")) {
         navigate(redirectTo);
       } else {
-        navigate("/driver/setup");
+        navigate("/find-mechanic");
       }
     } catch (error) {
       setStatus(
