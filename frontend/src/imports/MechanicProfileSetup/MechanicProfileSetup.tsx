@@ -127,7 +127,7 @@ export default function MechanicProfileSetup() {
       }
 
       setStatus("Provider profile created.");
-      navigate("/mechanic/profile");
+      navigate("/mechanic/verify");
     } catch (error) {
       setStatus(
         error instanceof Error

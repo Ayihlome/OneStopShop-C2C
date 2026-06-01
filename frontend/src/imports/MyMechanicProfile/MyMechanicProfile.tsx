@@ -1,4 +1,4 @@
-import { UserPlus, Wrench } from "lucide-react";
+import { Eye, UserPlus, Wrench } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 
@@ -68,18 +68,29 @@ export default function MyProfile() {
   return (
     <Layout className="bg-primary" variant="app">
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <Badge className="mb-4 bg-primary text-primary-foreground">
-            My account
-          </Badge>
-          <h1 className="text-4xl font-semibold text-primary-foreground">
-            My profile
-          </h1>
-          <p className="mt-3 max-w-2xl text-primary-foreground/80">
-            {isProvider
-              ? "Manage your personal details and service provider profile."
-              : "View and edit your personal account information."}
-          </p>
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <Badge className="mb-4 bg-primary text-primary-foreground">
+              My account
+            </Badge>
+            <h1 className="text-4xl font-semibold text-primary-foreground">
+              My profile
+            </h1>
+            <p className="mt-3 max-w-2xl text-primary-foreground/80">
+              {isProvider
+                ? "Manage your personal details and service provider profile."
+                : "View and edit your personal account information."}
+            </p>
+          </div>
+          {isProvider && (
+            <Button
+              onClick={() => navigate(`/mechanic/${userId}?from=profile`)}
+              variant="outline"
+            >
+              <Eye className="size-4" />
+              View public profile
+            </Button>
+          )}
         </div>
 
         <Tabs

@@ -21,9 +21,14 @@ async function listUsers() {
 
 async function getUser(accountId) {
   const result = await pool.query(
-    `SELECT a.*, u.id AS user_profile_id, 'user' AS role
+    `SELECT a.*, u.id AS user_profile_id,
+       CASE
+         WHEN sp.account_id IS NOT NULL THEN 'provider'
+         ELSE 'user'
+       END AS role
      FROM accounts a
      INNER JOIN users u ON u.account_id = a.id
+     LEFT JOIN service_provider_profiles sp ON sp.account_id = a.id
      WHERE a.id = $1`,
     [accountId]
   );
