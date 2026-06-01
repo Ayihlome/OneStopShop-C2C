@@ -1,0 +1,334 @@
+import { Save } from "lucide-react";
+import { FormEvent, useEffect, useState } from "react";
+
+import { Badge } from "@/app/components/ui/badge";
+import { Button } from "@/app/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/app/components/ui/card";
+import { Input } from "@/app/components/ui/input";
+import { Label } from "@/app/components/ui/label";
+import { StatusMessage } from "@/app/components/ui/status-message";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/app/components/ui/table";
+import { Textarea } from "@/app/components/ui/textarea";
+import {
+  getMechanicProfile,
+  updateMechanic,
+} from "@/api/mechanics";
+import {
+  listProviderBookings,
+  updateBookingStatus,
+} from "@/api/bookings";
+
+type ProviderForm = {
+  businessName: string;
+  specialties: string;
+  serviceDescription: string;
+  availability: string;
+};
+
+type Booking = {
+  id: number;
+  booking_status: string;
+  preferred_schedule: string;
+  description?: string;
+};
+
+const statusColors: Record<string, string> = {
+  payment_pending: "bg-gray-100 text-gray-800",
+  paid: "bg-green-100 text-green-800",
+  whatsapp_redirected: "bg-blue-100 text-blue-800",
+  in_progress: "bg-blue-100 text-blue-800",
+  completed: "bg-emerald-100 text-emerald-800",
+  cancelled: "bg-red-100 text-red-800",
+  refunded: "bg-orange-100 text-orange-800",
+};
+
+const emptyForm: ProviderForm = {
+  businessName: "",
+  specialties: "",
+  serviceDescription: "",
+  availability: "Available",
+};
+
+export default function ProviderInfo({ userId }: { userId: number }) {
+  const [form, setForm] = useState<ProviderForm>(emptyForm);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [status, setStatus] = useState("Loading provider info...");
+  const [bookingsStatus, setBookingsStatus] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function load() {
+      try {
+        const [profileResp, bookingsResp] = await Promise.all([
+          getMechanicProfile(userId),
+          listProviderBookings().catch(() => null),
+        ]);
+
+        const profile = profileResp.data;
+
+        if (!ignore) {
+          setForm({
+            businessName: String(profile.business_name ?? ""),
+            specialties: Array.isArray(profile.specialities)
+              ? (profile.specialities as string[]).join(", ")
+              : "",
+            serviceDescription: String(profile.service_description ?? ""),
+            availability: profile.is_available ? "Available" : "Unavailable",
+          });
+          setLoaded(true);
+          setStatus("");
+
+          if (bookingsResp) {
+            const bData = bookingsResp.data || bookingsResp;
+            setBookings(Array.isArray(bData) ? bData : []);
+          }
+        }
+      } catch (error) {
+        if (!ignore) {
+          setStatus(
+            error instanceof Error
+              ? error.message
+              : "Could not load provider info.",
+          );
+        }
+      }
+    }
+
+    load();
+    return () => { ignore = true; };
+  }, [userId]);
+
+  const updateField = (field: keyof ProviderForm, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setStatus("Saving...");
+
+    try {
+      const specialties = form.specialties
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      await updateMechanic(userId, {
+        business_name: form.businessName || null,
+        service_description: form.serviceDescription || null,
+        is_available: form.availability.toLowerCase() !== "unavailable",
+        specialities: specialties,
+      });
+      setStatus("Provider info saved.");
+    } catch (error) {
+      setStatus(
+        error instanceof Error ? error.message : "Could not save.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleBookingAction = async (bookingId: number, newStatus: string) => {
+    try {
+      await updateBookingStatus(bookingId, newStatus);
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.id === bookingId ? { ...b, booking_status: newStatus } : b,
+        ),
+      );
+      setBookingsStatus(`Booking #${bookingId} updated to ${newStatus}.`);
+    } catch (error) {
+      setBookingsStatus(
+        error instanceof Error
+          ? error.message
+          : `Could not update booking #${bookingId}.`,
+      );
+    }
+  };
+
+  const canTransition = (current: string): string[] => {
+    switch (current) {
+      case "paid":
+        return ["in_progress"];
+      case "in_progress":
+        return ["completed"];
+      case "payment_pending":
+      case "whatsapp_redirected":
+        return ["cancelled"];
+      default:
+        return [];
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Provider Info Form */}
+      <Card className="rounded-lg bg-card">
+        <CardHeader>
+          <CardTitle>Service provider information</CardTitle>
+          <CardDescription>
+            Your public service profile. Customers see this when browsing
+            providers.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="sp-businessName">Business name</Label>
+                <Input
+                  id="sp-businessName"
+                  onChange={(e) =>
+                    updateField("businessName", e.target.value)
+                  }
+                  placeholder="e.g. Brake & oil specialist"
+                  value={form.businessName}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="sp-availability">Availability</Label>
+                <Input
+                  id="sp-availability"
+                  onChange={(e) =>
+                    updateField("availability", e.target.value)
+                  }
+                  placeholder="Available / Unavailable"
+                  value={form.availability}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="sp-specialties">Specialties</Label>
+              <Input
+                id="sp-specialties"
+                onChange={(e) =>
+                  updateField("specialties", e.target.value)
+                }
+                placeholder="Diagnostics, Engine repair, Electrical"
+                value={form.specialties}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="sp-description">Service description</Label>
+              <Textarea
+                id="sp-description"
+                onChange={(e) =>
+                  updateField("serviceDescription", e.target.value)
+                }
+                placeholder="Describe your experience and service approach"
+                value={form.serviceDescription}
+              />
+            </div>
+
+            {status && <StatusMessage message={status} />}
+
+            <Button disabled={isSubmitting} type="submit">
+              <Save className="size-4" />
+              {isSubmitting ? "Saving..." : "Save provider info"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Bookings Section */}
+      <Card className="rounded-lg bg-card">
+        <CardHeader>
+          <CardTitle>Bookings</CardTitle>
+          <CardDescription>
+            Service requests from customers. Update the status as you work
+            through each booking.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {bookings.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No bookings yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>#</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {bookings.map((booking) => (
+                  <TableRow key={booking.id}>
+                    <TableCell className="font-medium">
+                      {booking.id}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        className={
+                          statusColors[booking.booking_status] ||
+                          "bg-gray-100 text-gray-800"
+                        }
+                        variant="outline"
+                      >
+                        {booking.booking_status.replace(/_/g, " ")}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {new Date(
+                        booking.preferred_schedule,
+                      ).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
+                      {booking.description || "—"}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        {canTransition(booking.booking_status).map(
+                          (nextStatus) => (
+                            <Button
+                              key={nextStatus}
+                              onClick={() =>
+                                handleBookingAction(booking.id, nextStatus)
+                              }
+                              size="sm"
+                              variant="outline"
+                            >
+                              {nextStatus.replace(/_/g, " ")}
+                            </Button>
+                          ),
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+          {bookingsStatus && (
+            <div className="mt-3">
+              <StatusMessage message={bookingsStatus} />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
