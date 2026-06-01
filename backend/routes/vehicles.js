@@ -11,9 +11,11 @@ const createVehicleValidators = [
   body('make').trim().notEmpty().withMessage('Make is required'),
   body('model').trim().notEmpty().withMessage('Model is required'),
   body('year_produced')
+    .optional({ nullable: true })
     .isInt({ min: 1900, max: 2030 })
     .withMessage('Year produced must be between 1900 and 2030'),
-  body('license_plate').trim().notEmpty().withMessage('License plate is required'),
+  body('license_plate').optional({ nullable: true }).trim(),
+  body('notes').optional({ nullable: true }).trim(),
 ];
 
 const updateVehicleValidators = [

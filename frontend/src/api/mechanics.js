@@ -12,9 +12,9 @@ export async function getMechanicProfile(id) {
   return client.get(`/mechanics/${id}/profile`);
 }
 
-export async function searchMechanics(query) {
+export async function searchMechanics(params = {}) {
   return client.get('/mechanics/search', {
-    params: { query },
+    params,
   });
 }
 
