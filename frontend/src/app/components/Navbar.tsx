@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router";
 
 import { Button } from "./ui/button";
 import { cn } from "./ui/utils";
+import NotificationBell from "./NotificationBell";
 
 type NavbarProps = {
   variant?: "public" | "app" | "admin" | "onboarding";
@@ -96,6 +97,7 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
 
     return (
       <>
+        <NotificationBell />
         <Button variant="ghost" onClick={() => goTo("/mechanic/profile")}>
           <User className="size-4" />
           {userName}'s profile

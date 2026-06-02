@@ -19,6 +19,7 @@ import BookingDetail from "../imports/BookingDetail/BookingDetail";
 import ProviderDashboard from "../imports/ProviderDashboard/ProviderDashboard";
 import ProviderBookings from "../imports/ProviderBookings/ProviderBookings";
 import ProviderBookingDetail from "../imports/ProviderBookingDetail/ProviderBookingDetail";
+import Notifications from "../imports/Notifications/Notifications";
 
 export const router = createBrowserRouter([
   {
@@ -104,6 +105,11 @@ export const router = createBrowserRouter([
     path: "/provider/bookings/:id",
     loader: requireAuth,
     Component: ProviderBookingDetail,
+  },
+  {
+    path: "/notifications",
+    loader: requireAuth,
+    Component: Notifications,
   },
   {
     path: "*",
