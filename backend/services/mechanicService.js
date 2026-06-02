@@ -437,7 +437,14 @@ async function uploadDocument(mechanicId, docType, file) {
     [providerId, docType, `/uploads/documents/${file.filename}`]
   );
 
-  logger.info('Mechanic document uploaded', {
+  // Queue a background processing job for OCR, thumbnails, validation
+  await pool.query(
+    `INSERT INTO processing_jobs (document_id, job_type)
+     VALUES ($1, 'document_ocr')`,
+    [result.rows[0].id]
+  );
+
+  logger.info('Mechanic document uploaded and processing job queued', {
     mechanicId,
     providerId,
     documentId: result.rows[0].id,

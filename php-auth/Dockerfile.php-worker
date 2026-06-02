@@ -1,0 +1,22 @@
+FROM php:8.2-cli
+
+RUN apt-get update && apt-get install -y \
+    libmagickwand-dev \
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    poppler-utils \
+    --no-install-recommends && \
+    pecl install imagick && \
+    docker-php-ext-enable imagick && \
+    docker-php-ext-install mbstring pdo_pgsql exif && \
+    apt-get clean
+
+WORKDIR /app
+
+COPY composer.json .
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
+    composer install --no-dev --no-interaction
+
+COPY worker.php .
+
+CMD ["php", "worker.php"]
