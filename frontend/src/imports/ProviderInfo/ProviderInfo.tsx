@@ -33,6 +33,7 @@ import {
 
 type ProviderForm = {
   businessName: string;
+  businessWhatsapp: string;
   specialties: string;
   serviceDescription: string;
   availability: string;
@@ -57,6 +58,7 @@ const statusColors: Record<string, string> = {
 
 const emptyForm: ProviderForm = {
   businessName: "",
+  businessWhatsapp: "",
   specialties: "",
   serviceDescription: "",
   availability: "Available",
@@ -86,6 +88,7 @@ export default function ProviderInfo({ userId }: { userId: number }) {
         if (!ignore) {
           setForm({
             businessName: String(profile.business_name ?? ""),
+            businessWhatsapp: String(profile.business_whatsapp_number ?? ""),
             specialties: Array.isArray(profile.specialities)
               ? (profile.specialities as string[]).join(", ")
               : "",
@@ -133,6 +136,7 @@ export default function ProviderInfo({ userId }: { userId: number }) {
 
       await updateMechanic(userId, {
         business_name: form.businessName || null,
+        business_whatsapp_number: form.businessWhatsapp || null,
         service_description: form.serviceDescription || null,
         is_available: form.availability.toLowerCase() !== "unavailable",
         specialities: specialties,
@@ -204,6 +208,19 @@ export default function ProviderInfo({ userId }: { userId: number }) {
                   value={form.businessName}
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="sp-whatsapp">WhatsApp number</Label>
+                <Input
+                  id="sp-whatsapp"
+                  onChange={(e) =>
+                    updateField("businessWhatsapp", e.target.value)
+                  }
+                  placeholder="+27831234567"
+                  value={form.businessWhatsapp}
+                />
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="sp-availability">Availability</Label>
                 <Input

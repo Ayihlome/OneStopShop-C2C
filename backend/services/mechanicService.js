@@ -29,6 +29,7 @@ const PROVIDER_SELECT = `
     sp.lng,
     COALESCE(ROUND(AVG(r.rating)::numeric, 2), 0) AS average_rating,
     COUNT(DISTINCT r.id)::int AS review_count,
+    sp.business_whatsapp_number,
     COALESCE(array_agg(DISTINCT s.name) FILTER (WHERE s.name IS NOT NULL), '{}') AS specialities,
     'provider' AS role
   FROM accounts a
@@ -46,7 +47,7 @@ function withProviderMeta(record) {
   if (!record) return record;
   return {
     ...record,
-    whatsapp_available: false,
+    whatsapp_available: Boolean(record.business_whatsapp_number),
   };
 }
 
@@ -57,7 +58,7 @@ function toNullable(value) {
 async function listMechanics() {
   const result = await pool.query(
     `${PROVIDER_SELECT}
-     WHERE a.status = 'active' AND sp.provider_status = 'active' AND sp.verification_badge = true
+     WHERE a.status = 'active' AND sp.provider_status = 'active'
      ${PROVIDER_GROUP}
      ORDER BY sp.verification_badge DESC, average_rating DESC`
   );
@@ -334,16 +335,18 @@ async function update(accountId, input) {
     const providerUpdate = await client.query(
       `UPDATE service_provider_profiles
        SET business_name = COALESCE($2, business_name),
-           service_description = COALESCE($3, service_description),
-           years_of_experience = COALESCE($4, years_of_experience),
-           is_available = COALESCE($5, is_available),
-           lat = COALESCE($6, lat),
-           lng = COALESCE($7, lng)
+           business_whatsapp_number = COALESCE($3, business_whatsapp_number),
+           service_description = COALESCE($4, service_description),
+           years_of_experience = COALESCE($5, years_of_experience),
+           is_available = COALESCE($6, is_available),
+           lat = COALESCE($7, lat),
+           lng = COALESCE($8, lng)
        WHERE account_id = $1
        RETURNING *`,
       [
         accountId,
         toNullable(input.business_name),
+        toNullable(input.business_whatsapp_number),
         toNullable(input.service_description),
         toNullable(input.years_of_experience),
         toNullable(input.is_available),

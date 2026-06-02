@@ -104,6 +104,7 @@ export default function MechProfileFullView() {
             bio: profile.service_description || "No description provided yet.",
             verified: Boolean(profile.verification_badge),
             photoUrl: profile.profile_photo_url || "",
+            phone: profile.business_whatsapp_number || profile.phone_number || "",
           });
           setBackendReviews(
             (reviewResponse.data || []).map((review) => ({
