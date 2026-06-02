@@ -78,11 +78,7 @@ export default function ProviderInfo({ userId }: { userId: number }) {
 
     async function load() {
       try {
-        const [profileResp, bookingsResp] = await Promise.all([
-          getMechanicProfile(userId),
-          listProviderBookings().catch(() => null),
-        ]);
-
+        const profileResp = await getMechanicProfile(userId);
         const profile = profileResp.data;
 
         if (!ignore) {
@@ -97,11 +93,6 @@ export default function ProviderInfo({ userId }: { userId: number }) {
           });
           setLoaded(true);
           setStatus("");
-
-          if (bookingsResp) {
-            const bData = bookingsResp.data || bookingsResp;
-            setBookings(Array.isArray(bData) ? bData : []);
-          }
         }
       } catch (error) {
         if (!ignore) {
@@ -111,6 +102,17 @@ export default function ProviderInfo({ userId }: { userId: number }) {
               : "Could not load provider info.",
           );
         }
+      }
+
+      // Fetch bookings independently — doesn't block profile load
+      try {
+        const bookingsResp = await listProviderBookings();
+        if (!ignore && bookingsResp) {
+          const bData = bookingsResp.data || bookingsResp;
+          setBookings(Array.isArray(bData) ? bData : []);
+        }
+      } catch {
+        if (!ignore) setBookingsStatus("Could not load bookings.");
       }
     }
 
