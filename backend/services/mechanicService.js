@@ -70,6 +70,31 @@ async function listMechanics() {
   return sanitize(result.rows.map(withProviderMeta));
 }
 
+async function getProviderStats(accountId) {
+  const stats = await pool.query(
+    `SELECT
+       COUNT(*) FILTER (WHERE b.booking_status IN ('payment_pending', 'paid', 'whatsapp_redirected')) AS active_bookings,
+       COUNT(*) AS total_bookings,
+       COALESCE(SUM(p.amount) FILTER (
+         WHERE p.payment_status = 'successful'
+           AND p.paid_at >= date_trunc('month', NOW())
+       ), 0) AS earnings_this_month,
+       COUNT(*) FILTER (WHERE b.booking_status = 'completed') AS completed_bookings
+     FROM bookings b
+     INNER JOIN service_provider_profiles sp ON sp.id = b.service_provider_id
+     LEFT JOIN payments p ON p.booking_id = b.id
+     WHERE sp.account_id = $1`,
+    [accountId]
+  );
+
+  return sanitize(stats.rows[0]) || {
+    active_bookings: 0,
+    total_bookings: 0,
+    earnings_this_month: 0,
+    completed_bookings: 0,
+  };
+}
+
 async function getMechanic(accountId) {
   const result = await pool.query(
     `${PROVIDER_SELECT}
@@ -472,6 +497,7 @@ module.exports = {
   listMechanics,
   getMechanic,
   getProfile,
+  getProviderStats,
   searchMechanics,
   filterMechanics,
   findNearby,

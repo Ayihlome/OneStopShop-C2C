@@ -34,6 +34,11 @@ const appLinks = [
   { label: "My profile", path: "/mechanic/profile" },
 ];
 
+const providerLinks = [
+  { label: "Dashboard", path: "/provider/dashboard" },
+  { label: "Bookings", path: "/provider/bookings" },
+];
+
 export default function Navbar({ variant = "public" }: NavbarProps) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -44,6 +49,10 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
   const showNavLinks = variant !== "onboarding" && variant !== "admin";
   const isPublic = variant === "public";
   const userName = user?.first_name || user?.email?.split("@")[0] || "My";
+  const isProvider = user?.role === "provider" || user?.isProvider === true;
+  const displayLinks = isProvider && variant === "app"
+    ? [...links, ...providerLinks]
+    : links;
 
   const goTo = useCallback(
     (path: string) => {
@@ -176,7 +185,7 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
 
         {showNavLinks && (
           <nav className="hidden items-center gap-1 md:flex">
-            {links.map((link) => (
+            {displayLinks.map((link) => (
               <Button
                 className={cn(
                   "text-foreground",
@@ -210,8 +219,19 @@ export default function Navbar({ variant = "public" }: NavbarProps) {
       {open && (
         <div className="border-t bg-background px-4 py-4 md:hidden">
           <div className="flex flex-col gap-2">
-            {showNavLinks &&
+              {showNavLinks &&
               links.map((link) => (
+                <Button
+                  className="justify-start"
+                  key={link.path}
+                  onClick={() => goTo(link.path)}
+                  variant="ghost"
+                >
+                  {link.label}
+                </Button>
+              ))}
+
+            {isProvider && variant === "app" && providerLinks.map((link) => (
                 <Button
                   className="justify-start"
                   key={link.path}

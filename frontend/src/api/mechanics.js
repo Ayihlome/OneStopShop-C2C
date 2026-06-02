@@ -49,3 +49,7 @@ export async function uploadDocument(file, docType) {
     },
   });
 }
+
+export async function getProviderStats() {
+  return client.get('/mechanics/provider/stats');
+}
