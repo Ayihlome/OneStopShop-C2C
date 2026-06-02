@@ -16,6 +16,9 @@ import MyVehicles from "../imports/MyVehicles/MyVehicles";
 import PlatformAdminDashboard from "../imports/PlatformAdminDashboard/PlatformAdminDashboard";
 import MyBookings from "../imports/MyBookings/MyBookings";
 import BookingDetail from "../imports/BookingDetail/BookingDetail";
+import ProviderDashboard from "../imports/ProviderDashboard/ProviderDashboard";
+import ProviderBookings from "../imports/ProviderBookings/ProviderBookings";
+import ProviderBookingDetail from "../imports/ProviderBookingDetail/ProviderBookingDetail";
 
 export const router = createBrowserRouter([
   {
@@ -86,6 +89,21 @@ export const router = createBrowserRouter([
     path: "/bookings/:id",
     loader: requireAuth,
     Component: BookingDetail,
+  },
+  {
+    path: "/provider/dashboard",
+    loader: requireAuth,
+    Component: ProviderDashboard,
+  },
+  {
+    path: "/provider/bookings",
+    loader: requireAuth,
+    Component: ProviderBookings,
+  },
+  {
+    path: "/provider/bookings/:id",
+    loader: requireAuth,
+    Component: ProviderBookingDetail,
   },
   {
     path: "*",

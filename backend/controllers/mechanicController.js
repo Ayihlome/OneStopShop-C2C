@@ -15,6 +15,11 @@ async function getMechanicProfile(req, res) {
   return res.status(200).json({ data });
 }
 
+async function getProviderStats(req, res) {
+  const data = await mechanicService.getProviderStats(req.user.id);
+  return res.status(200).json({ data });
+}
+
 async function searchMechanics(req, res) {
   const data = await mechanicService.searchMechanics(req.query.query || '');
   return res.status(200).json({ data });
@@ -72,6 +77,7 @@ module.exports = {
   listMechanics,
   getMechanic,
   getMechanicProfile,
+  getProviderStats,
   searchMechanics,
   filterMechanics,
   findNearby,
