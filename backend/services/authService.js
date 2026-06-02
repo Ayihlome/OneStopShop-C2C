@@ -193,4 +193,5 @@ module.exports = {
   signupUser,
   loginAccount,
   loginAdmin,
+  signToken,
 };

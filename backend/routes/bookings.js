@@ -27,7 +27,6 @@ router.get('/user', authenticate, asyncHandler(bookingController.listMyBookings)
 router.get(
   '/mechanic',
   authenticate,
-  requireRole('provider'),
   asyncHandler(bookingController.listMechanicBookings)
 );
 router.get('/:id', authenticate, asyncHandler(bookingController.getBooking));

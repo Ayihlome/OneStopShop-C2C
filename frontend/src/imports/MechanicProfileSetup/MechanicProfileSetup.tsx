@@ -102,7 +102,7 @@ export default function MechanicProfileSetup() {
     setStatus("Creating provider profile...");
 
     try {
-      await becomeProvider({
+      const response = await becomeProvider({
         business_name: form.businessName,
         business_whatsapp_number: form.whatsappNumber,
         service_description: form.serviceDescription || null,
@@ -113,6 +113,11 @@ export default function MechanicProfileSetup() {
         payfast_merchant_key: form.payfastMerchantKey || null,
         specialities: form.specialties,
       });
+
+      // Save new token reflecting provider role
+      if (response.token) {
+        localStorage.setItem("oss_token", response.token);
+      }
 
       // Refresh user data in localStorage to reflect provider role
       try {

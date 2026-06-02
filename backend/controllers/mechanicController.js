@@ -57,7 +57,15 @@ async function uploadDocument(req, res) {
 
 async function createProviderProfile(req, res) {
   const data = await mechanicService.createProviderProfile(req.user.id, req.body);
-  return res.status(201).json({ data, message: 'Success' });
+
+  // Issue a new token reflecting the provider role
+  const newToken = require('../services/authService').signToken({
+    id: req.user.id,
+    email: req.user.email,
+    role: 'provider',
+  });
+
+  return res.status(201).json({ data, token: newToken, message: 'Success' });
 }
 
 module.exports = {
