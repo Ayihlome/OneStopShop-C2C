@@ -14,6 +14,8 @@ import MyMechanicProfile from "../imports/MyMechanicProfile/MyMechanicProfile";
 import MechProfileFullView from "../imports/MechProfileFullView/MechProfileFullView";
 import MyVehicles from "../imports/MyVehicles/MyVehicles";
 import PlatformAdminDashboard from "../imports/PlatformAdminDashboard/PlatformAdminDashboard";
+import MyBookings from "../imports/MyBookings/MyBookings";
+import BookingDetail from "../imports/BookingDetail/BookingDetail";
 
 export const router = createBrowserRouter([
   {
@@ -74,6 +76,16 @@ export const router = createBrowserRouter([
     path: "/my-vehicles",
     loader: requireAuth,
     Component: MyVehicles,
+  },
+  {
+    path: "/bookings",
+    loader: requireAuth,
+    Component: MyBookings,
+  },
+  {
+    path: "/bookings/:id",
+    loader: requireAuth,
+    Component: BookingDetail,
   },
   {
     path: "*",

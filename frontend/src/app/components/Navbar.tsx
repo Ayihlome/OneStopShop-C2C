@@ -29,6 +29,7 @@ const publicLinks = [
 
 const appLinks = [
   { label: "Find mechanics", path: "/find-mechanic" },
+  { label: "My bookings", path: "/bookings" },
   { label: "My vehicles", path: "/my-vehicles" },
   { label: "My profile", path: "/mechanic/profile" },
 ];
