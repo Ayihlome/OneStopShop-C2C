@@ -26,6 +26,8 @@ const KEYWORD_RULES = [
         'positive' => [
             'identification',
             'identity',
+            'identity number',
+            'id number',
             'id card',
             'id document',
             'identity document',
@@ -42,6 +44,11 @@ const KEYWORD_RULES = [
             'home affairs',
             'government',
             'official document',
+            'surname',
+            'given names',
+            'date of birth',
+            'country of birth',
+            'id no',
         ],
         'negative' => [
             'sample',
@@ -354,6 +361,14 @@ function processJob(PDO $pdo, array $job): void
             $ocrText   = trim($tesseract->lang('eng')->run());
         }
 
+        // Log OCR preview to help debug keyword matching
+        $preview = mb_substr($ocrText, 0, 300);
+        fwrite(STDOUT, "[OCR] doc #{$documentId} ({$docType}) — "
+            . (strlen($ocrText) > 0
+                ? strlen($ocrText) . " chars: " . str_replace("\n", "\\n", $preview)
+                : "NO TEXT EXTRACTED")
+            . "\n");
+
         // ----------------------------------------------------------
         // 5. Keyword matching & auto-verification
         // ----------------------------------------------------------
@@ -446,19 +461,23 @@ function matchKeywords(string $ocrText, string $docType): array
 
     $lowerText = mb_strtolower($ocrText);
 
+    // Normalize whitespace: collapse all whitespace sequences to single space
+    // so multi-word keywords match even when OCR inserts line breaks
+    $normalized = preg_replace('/\s+/', ' ', $lowerText);
+
     // Score positive keywords
     foreach ($rules['positive'] as $keyword) {
         $lowerKeyword = mb_strtolower($keyword);
-        if (mb_strpos($lowerText, $lowerKeyword) !== false) {
+        if (mb_strpos($normalized, $lowerKeyword) !== false) {
             $result['score']++;
             $result['matched_keywords'][] = $keyword;
         }
     }
 
-    // Check negative keywords
+    // Check negative keywords (also use normalized text)
     foreach ($rules['negative'] as $keyword) {
         $lowerKeyword = mb_strtolower($keyword);
-        if (mb_strpos($lowerText, $lowerKeyword) !== false) {
+        if (mb_strpos($normalized, $lowerKeyword) !== false) {
             $result['negative_hits'][] = $keyword;
         }
     }
