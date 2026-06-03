@@ -3,6 +3,7 @@ FROM php:8.2-cli
 # Install system dependencies (includes libpq-dev for pdo_pgsql)
 RUN apt-get update && apt-get install -y \
     libmagickwand-dev \
+    libonig-dev \
     libpq-dev \
     tesseract-ocr \
     tesseract-ocr-eng \
