@@ -79,6 +79,16 @@ const KEYWORD_RULES = [
             'weight',
             'eyes',
             'hair',
+            // Short field labels common on IDs
+            'dl',
+            'lic',
+            'dob',
+            'exp',
+            'sex',
+            'addr',
+            'license no',
+            'license number',
+            'lic no',
         ],
         'negative' => [
             'sample',
@@ -95,10 +105,13 @@ const KEYWORD_RULES = [
             'certified',
             'certificate',
             'certification',
+            'cert',
             'qualified',
             'qualification',
             'completed',
+            'completion',
             'graduate',
+            'graduated',
             'diploma',
             'degree',
             'mechanic',
@@ -110,6 +123,11 @@ const KEYWORD_RULES = [
             'training',
             'course',
             'workshop',
+            'accredited',
+            'awarded',
+            'successfully',
+            'competent',
+            'competency',
             // South African universities & institutions
             'witwatersrand',
             'university of pretoria',
@@ -384,7 +402,46 @@ function processJob(PDO $pdo, array $job): void
         $thumbUrl = dirname($fileUrl) . '/thumbs/' . basename($thumbPath);
 
         // ----------------------------------------------------------
-        // 4. OCR with Tesseract
+        // 3b. Image preprocessing for better OCR
+        // ----------------------------------------------------------
+        $ocrImagePath = $filePath;
+        if (class_exists('Imagick')) {
+            try {
+                $preprocess = new Imagick($filePath);
+                $geo = $preprocess->getImageGeometry();
+                $longest = max($geo['width'], $geo['height']);
+
+                // Upscale small images (under 1500px) to improve OCR
+                if ($longest < 1500) {
+                    $scale = 1500 / $longest;
+                    $preprocess->resizeImage(
+                        (int) ($geo['width'] * $scale),
+                        (int) ($geo['height'] * $scale),
+                        Imagick::FILTER_LANCZOS, 1
+                    );
+                }
+
+                // Grayscale + contrast for cleaner text
+                $preprocess->setImageType(Imagick::IMGTYPE_GRAYSCALE);
+                $preprocess->contrastImage(true); // enhance contrast
+
+                // Save preprocessed temp file for OCR
+                $ocrImagePath = tempnam(sys_get_temp_dir(), 'ocr_') . '.png';
+                $preprocess->setImageFormat('png');
+                $preprocess->writeImage($ocrImagePath);
+                $preprocess->clear();
+
+                fwrite(STDOUT, "[OCR] Preprocessed image: {$longest}px -> "
+                    . max($preprocess->getImageGeometry()['width'], $preprocess->getImageGeometry()['height'])
+                    . "px\n");
+            } catch (Throwable $e) {
+                fwrite(STDERR, "[OCR] Preprocessing skipped: {$e->getMessage()}\n");
+                $ocrImagePath = $filePath;
+            }
+        }
+
+        // ----------------------------------------------------------
+        // 4. OCR with Tesseract (using preprocessed image)
         // ----------------------------------------------------------
         // Log file info before OCR
         fwrite(STDOUT, "[OCR] doc #{$documentId} — file={$filePath} size=" . filesize($filePath) . "\n");
@@ -395,7 +452,7 @@ function processJob(PDO $pdo, array $job): void
 
         if ($tesseractAvailable) {
             try {
-                $tesseract = new thiagoalessio\TesseractOCR\TesseractOCR($filePath);
+                $tesseract = new thiagoalessio\TesseractOCR\TesseractOCR($ocrImagePath);
                 $ocrText   = trim($tesseract->lang('eng')->run());
                 fwrite(STDOUT, "[OCR] Package returned " . strlen($ocrText) . " chars\n");
             } catch (Throwable $e) {
@@ -410,7 +467,7 @@ function processJob(PDO $pdo, array $job): void
             fwrite(STDOUT, "[OCR] Direct binary: " . ($tesseractBin ?: "NOT FOUND") . " (v{$tesseractVer})\n");
 
             if ($tesseractBin) {
-                $escapedPath = escapeshellarg($filePath);
+                $escapedPath = escapeshellarg($ocrImagePath);
                 $cmd = "tesseract {$escapedPath} stdout -l eng 2>&1";
                 $directOcr = trim(shell_exec($cmd) ?: '');
                 if (!empty($directOcr)) {
