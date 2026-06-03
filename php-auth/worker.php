@@ -157,6 +157,25 @@ $pdo = new PDO($pdoDsn, $pdoUser ?? null, $pdoPass ?? null, [
 fwrite(STDOUT, "=== Document Processing Worker Started ===\n");
 
 // =================================================================
+// SCHEMA MIGRATION — ensure background-processing columns exist
+// =================================================================
+$migrateColumns = [
+    'ocr_text TEXT',
+    'thumbnail_url VARCHAR(500)',
+    'doc_metadata JSONB DEFAULT \'{}\'',
+    'validation_result JSONB DEFAULT \'{}\'',
+];
+foreach ($migrateColumns as $columnDef) {
+    $colName = explode(' ', $columnDef)[0];
+    try {
+        $pdo->exec("ALTER TABLE mechanic_documents ADD COLUMN IF NOT EXISTS $columnDef");
+    } catch (PDOException $e) {
+        fwrite(STDERR, "[MIGRATE] Could not add column $colName: {$e->getMessage()}\n");
+    }
+}
+fwrite(STDOUT, "[MIGRATE] Schema up to date\n");
+
+// =================================================================
 // STARTUP RECONCILIATION — catch up documents that were missed
 // =================================================================
 $reconciled = reconcilePendingDocuments($pdo);
