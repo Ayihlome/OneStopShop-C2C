@@ -356,9 +356,48 @@ function processJob(PDO $pdo, array $job): void
         // ----------------------------------------------------------
         // 4. OCR with Tesseract
         // ----------------------------------------------------------
-        if (class_exists('thiagoalessio\\TesseractOCR\\TesseractOCR')) {
-            $tesseract = new thiagoalessio\TesseractOCR\TesseractOCR($filePath);
-            $ocrText   = trim($tesseract->lang('eng')->run());
+        // Log file info before OCR
+        fwrite(STDOUT, "[OCR] doc #{$documentId} — file={$filePath} size=" . filesize($filePath) . "\n");
+
+        // First, try the PHP package
+        $tesseractAvailable = class_exists('thiagoalessio\\TesseractOCR\\TesseractOCR');
+        fwrite(STDOUT, "[OCR] TesseractOCR class " . ($tesseractAvailable ? "found" : "NOT FOUND") . "\n");
+
+        if ($tesseractAvailable) {
+            try {
+                $tesseract = new thiagoalessio\TesseractOCR\TesseractOCR($filePath);
+                $ocrText   = trim($tesseract->lang('eng')->run());
+                fwrite(STDOUT, "[OCR] Package returned " . strlen($ocrText) . " chars\n");
+            } catch (Throwable $e) {
+                fwrite(STDERR, "[OCR] Package threw: {$e->getMessage()}\n");
+            }
+        }
+
+        // If package returned nothing, try direct tesseract via shell
+        if (empty($ocrText)) {
+            $tesseractBin = trim(shell_exec('which tesseract 2>/dev/null') ?: '');
+            $tesseractVer = trim(shell_exec('tesseract --version 2>&1 | head -1') ?: 'unknown');
+            fwrite(STDOUT, "[OCR] Direct binary: " . ($tesseractBin ?: "NOT FOUND") . " (v{$tesseractVer})\n");
+
+            if ($tesseractBin) {
+                $escapedPath = escapeshellarg($filePath);
+                $cmd = "tesseract {$escapedPath} stdout -l eng 2>&1";
+                $directOcr = trim(shell_exec($cmd) ?: '');
+                if (!empty($directOcr)) {
+                    $ocrText = $directOcr;
+                    fwrite(STDOUT, "[OCR] Direct binary returned " . strlen($ocrText) . " chars\n");
+                } else {
+                    fwrite(STDERR, "[OCR] Direct binary returned empty — trying with --psm 6\n");
+                    $cmd = "tesseract {$escapedPath} stdout -l eng --psm 6 2>&1";
+                    $directOcr = trim(shell_exec($cmd) ?: '');
+                    if (!empty($directOcr)) {
+                        $ocrText = $directOcr;
+                        fwrite(STDOUT, "[OCR] Direct binary (psm 6) returned " . strlen($ocrText) . " chars\n");
+                    } else {
+                        fwrite(STDERR, "[OCR] All Tesseract attempts returned empty text\n");
+                    }
+                }
+            }
         }
 
         // Log OCR preview to help debug keyword matching
