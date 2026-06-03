@@ -34,6 +34,11 @@ const config = {
     cancelUrl: process.env.PAYFAST_CANCEL_URL || 'http://localhost:5173/booking/cancel',
     notifyUrl: process.env.PAYFAST_NOTIFY_URL || 'http://localhost:3000/api/payments/itn',
   },
+  whatsapp: {
+    token: process.env.WHATSAPP_TOKEN,
+    phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID,
+    webhookVerifyToken: process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN,
+  },
 };
 
 module.exports = config;

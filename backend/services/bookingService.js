@@ -3,6 +3,7 @@ const logger = require('../utils/logger');
 const { errorMeta } = require('../utils/logging');
 const { sanitize } = require('../utils/sanitize');
 const { createError } = require('../utils/errors');
+const whatsapp = require('./whatsappService');
 
 const BOOKING_SELECT = `
   SELECT
@@ -94,6 +95,13 @@ async function createBooking(userId, input) {
     );
 
     await client.query('COMMIT');
+
+    // ── WhatsApp notifications (non-blocking) ──────────────
+    const newBooking = booking.rows[0];
+    sendBookingNotifications(input, newBooking, userId).catch((err) =>
+      logger.error('WhatsApp notification failed', errorMeta(err))
+    );
+
     logger.info('Booking created', {
       bookingId: booking.rows[0].id,
       userId,
@@ -154,20 +162,38 @@ async function getBooking(id, requester) {
     throw createError(403, 'Forbidden');
   }
 
-  // Include WhatsApp URL only if owner and payment confirmed
+  // Include WhatsApp contact info for customer
   if (isOwner) {
+    // Always include provider's WhatsApp number as a contact channel
+    const providerInfo = await pool.query(
+      `SELECT sp.business_whatsapp_number
+       FROM service_provider_profiles sp
+       WHERE sp.id = $1`,
+      [booking.service_provider_id]
+    );
+
+    if (providerInfo.rows[0]?.business_whatsapp_number) {
+      const cleaned = String(providerInfo.rows[0].business_whatsapp_number).replace(/\D/g, '');
+      const message = encodeURIComponent(
+        `I've booked you via OneStopShop (Booking #${booking.id})`
+      );
+      booking.contact_whatsapp_url = `https://wa.me/${cleaned}?text=${message}`;
+    }
+
+    // Payment-confirmed whatsapp_url (existing flow — full access)
     const paymentInfo = await pool.query(
-      `SELECT p.payment_status, sp.business_whatsapp_number
+      `SELECT p.payment_status
        FROM bookings b2
        INNER JOIN payments p ON p.booking_id = b2.id
-       INNER JOIN service_provider_profiles sp ON sp.id = b2.service_provider_id
        WHERE b2.id = $1`,
       [id]
     );
 
     if (paymentInfo.rows[0] && paymentInfo.rows[0].payment_status === 'successful') {
-      const cleaned = String(paymentInfo.rows[0].business_whatsapp_number).replace(/\D/g, '');
-      booking.whatsapp_url = `https://wa.me/${cleaned}`;
+      const cleaned = String(providerInfo.rows[0]?.business_whatsapp_number || '').replace(/\D/g, '');
+      if (cleaned) {
+        booking.whatsapp_url = `https://wa.me/${cleaned}`;
+      }
     }
   }
 
@@ -272,7 +298,72 @@ async function updateBookingStatus(id, status, requester) {
     role: requester.role,
   });
 
+  // ── WhatsApp status notification (non-blocking) ─────────
+  const statusNotifyStatuses = ['in_progress', 'completed', 'cancelled', 'rejected'];
+  if (statusNotifyStatuses.includes(status)) {
+    pool.query('SELECT phone_number FROM accounts WHERE id = $1', [booking.customer_user_id])
+      .then((custResult) => {
+        const phone = custResult.rows[0]?.phone_number;
+        if (phone) {
+          whatsapp.sendStatusUpdate(phone, id, status).catch(() => {});
+        }
+      })
+      .catch(() => {});
+  }
+
   return sanitize(result.rows[0]);
+}
+
+/**
+ * Fetch customer phone and provider WhatsApp number, then send notifications.
+ * Called non-blocking after booking creation — never throws to caller.
+ */
+async function sendBookingNotifications(input, booking, customerUserId) {
+  try {
+    const [customerResult, providerResult] = await Promise.all([
+      pool.query('SELECT phone_number FROM accounts WHERE id = $1', [customerUserId]),
+      pool.query(
+        `SELECT sp.business_whatsapp_number, sp.business_name
+         FROM service_provider_profiles sp
+         WHERE sp.id = $1`,
+        [input.providerId]
+      ),
+    ]);
+
+    const customerPhone = customerResult.rows[0]?.phone_number;
+    const providerPhone = providerResult.rows[0]?.business_whatsapp_number;
+    const businessName = providerResult.rows[0]?.business_name;
+
+    const bookingData = {
+      id: booking.id,
+      description: booking.description,
+      preferred_schedule: booking.preferred_schedule,
+      business_name: businessName,
+    };
+
+    if (customerPhone) {
+      await whatsapp.sendBookingConfirmation(customerPhone, {
+        ...bookingData,
+        customer_name: `${booking.customer_first_name || ''} ${booking.customer_last_name || ''}`.trim() || 'Customer',
+      });
+    }
+
+    if (providerPhone) {
+      // Get customer name for the provider notification
+      const custResult = await pool.query(
+        'SELECT first_name, last_name FROM accounts WHERE id = $1',
+        [customerUserId]
+      );
+      const customerName = `${custResult.rows[0]?.first_name || ''} ${custResult.rows[0]?.last_name || ''}`.trim() || 'A customer';
+      await whatsapp.sendNewBookingNotification(providerPhone, {
+        ...bookingData,
+        customer_name: customerName,
+      });
+    }
+  } catch (error) {
+    // Already caught at the call site — log here for extra detail
+    logger.warn('sendBookingNotifications error', errorMeta(error));
+  }
 }
 
 module.exports = {
