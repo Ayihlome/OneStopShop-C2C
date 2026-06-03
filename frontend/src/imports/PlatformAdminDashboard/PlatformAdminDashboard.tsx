@@ -42,6 +42,7 @@ import {
   verifyMechanic,
   suspendAccount,
   listPendingDocuments,
+  getDocument,
   approveDocument,
   rejectDocument,
   listPayments,
@@ -90,6 +91,12 @@ type Document = {
   doc_type?: string;
   status?: string;
   created_at?: string;
+  file_url?: string;
+  thumbnail_url?: string;
+  ocr_text?: string;
+  validation_result?: string;
+  doc_metadata?: string;
+  provider_id?: number;
 };
 
 type Payment = {
@@ -272,6 +279,63 @@ export default function PlatformAdminDashboard() {
     } catch {
       setStatus("Could not reject document.");
     }
+  };
+
+  const [reviewDoc, setReviewDoc] = useState<Document | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+
+  const handleOpenReview = async (doc: Document) => {
+    setReviewLoading(true);
+    try {
+      const resp = await getDocument(doc.id);
+      setReviewDoc(resp?.data ?? resp ?? doc);
+    } catch {
+      setStatus("Could not load document details.");
+      setReviewDoc(doc);
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  const handleReviewAction = async (id: number, action: "approve" | "reject") => {
+    try {
+      if (action === "approve") {
+        await approveDocument(id);
+      } else {
+        await rejectDocument(id);
+      }
+      setDocuments((prev) => prev.filter((d) => d.id !== id));
+      setReviewDoc(null);
+    } catch {
+      setStatus(`Could not ${action} document.`);
+    }
+  };
+
+  const parseValidation = (raw?: string) => {
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as {
+        auto_verified?: boolean;
+        status?: string;
+        score?: number;
+        matched_keywords?: string[];
+        negative_hits?: string[];
+        rules_applied?: string;
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  const validationBadge = (v: { status?: string; auto_verified?: boolean } | null) => {
+    if (!v) return null;
+    if (v.auto_verified || v.status === "auto_verified") {
+      return <Badge className="bg-emerald-100 text-emerald-800" variant="outline">Auto-verified</Badge>;
+    }
+    if (v.status === "suspicious") {
+      return <Badge className="bg-red-100 text-red-800" variant="outline">Suspicious</Badge>;
+    }
+    return <Badge className="bg-amber-100 text-amber-800" variant="outline">Needs review</Badge>;
   };
 
   const formatDate = (raw?: string) => {
@@ -664,6 +728,7 @@ export default function PlatformAdminDashboard() {
                       <TableHead>ID</TableHead>
                       <TableHead>Provider</TableHead>
                       <TableHead>Type</TableHead>
+                      <TableHead>Validation</TableHead>
                       <TableHead>Uploaded</TableHead>
                       <TableHead>Preview</TableHead>
                       <TableHead>Actions</TableHead>
@@ -681,6 +746,9 @@ export default function PlatformAdminDashboard() {
                             {label(doc.doc_type)}
                           </Badge>
                         </TableCell>
+                        <TableCell>
+                          {validationBadge(parseValidation(doc.validation_result))}
+                        </TableCell>
                         <TableCell>{formatDate(doc.created_at)}</TableCell>
                         <TableCell>
                           {doc.thumbnail_url ? (
@@ -689,10 +757,6 @@ export default function PlatformAdminDashboard() {
                                 alt="Thumbnail"
                                 className="size-10 rounded object-cover cursor-pointer"
                                 src={doc.thumbnail_url}
-                                onClick={() =>
-                                  doc.ocr_text &&
-                                  alert(`OCR Text:\n\n${doc.ocr_text}`)
-                                }
                               />
                               {doc.ocr_text && (
                                 <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[8px] text-primary-foreground">
@@ -706,6 +770,14 @@ export default function PlatformAdminDashboard() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
+                            <Button
+                              onClick={() => handleOpenReview(doc)}
+                              size="sm"
+                              variant="outline"
+                            >
+                              <Eye className="size-3 mr-1" />
+                              Review
+                            </Button>
                             <Button
                               onClick={() => handleApproveDoc(doc.id)}
                               size="sm"
@@ -734,6 +806,176 @@ export default function PlatformAdminDashboard() {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Review Modal Overlay */}
+        {reviewDoc && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            onClick={() => setReviewDoc(null)}
+          >
+            <div
+              className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-card p-6 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold">
+                    Document #{reviewDoc.id} — {label(reviewDoc.doc_type)}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {reviewDoc.first_name} {reviewDoc.last_name}
+                    {reviewDoc.business_name && (
+                      <> — {reviewDoc.business_name}</>
+                    )}
+                  </p>
+                </div>
+                <Button onClick={() => setReviewDoc(null)} size="sm" variant="ghost">
+                  ✕
+                </Button>
+              </div>
+
+              {reviewLoading ? (
+                <StatusMessage message="Loading document details..." />
+              ) : (
+                <div className="grid gap-6 md:grid-cols-2">
+                  {/* Left: Image preview */}
+                  <div className="space-y-3">
+                    <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+                      Document image
+                    </h3>
+                    {reviewDoc.file_url || reviewDoc.thumbnail_url ? (
+                      <img
+                        alt="Document"
+                        className="w-full rounded border object-contain"
+                        src={reviewDoc.file_url || reviewDoc.thumbnail_url}
+                        style={{ maxHeight: 400 }}
+                      />
+                    ) : (
+                      <div className="flex h-40 items-center justify-center rounded border text-sm text-muted-foreground">
+                        No preview available
+                      </div>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Uploaded {formatDate(reviewDoc.created_at)}
+                    </p>
+                  </div>
+
+                  {/* Right: OCR + Validation */}
+                  <div className="space-y-4">
+                    {/* Validation result */}
+                    {parseValidation(reviewDoc.validation_result) && (
+                      <div className="space-y-2">
+                        <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+                          Validation result
+                        </h3>
+                        {(() => {
+                          const v = parseValidation(reviewDoc.validation_result);
+                          if (!v) return null;
+                          return (
+                            <div className="space-y-2 rounded border p-3 text-sm">
+                              <div className="flex items-center gap-2">
+                                {validationBadge(v)}
+                                <span className="text-muted-foreground">
+                                  Score: {v.score ?? 0}
+                                </span>
+                              </div>
+                              {v.matched_keywords && v.matched_keywords.length > 0 && (
+                                <div>
+                                  <p className="text-xs text-muted-foreground mb-1">Matched keywords:</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {v.matched_keywords.map((kw) => (
+                                      <Badge key={kw} variant="secondary" className="text-xs">
+                                        {kw}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {v.negative_hits && v.negative_hits.length > 0 && (
+                                <div>
+                                  <p className="text-xs text-red-600 mb-1">Negative hits:</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {v.negative_hits.map((nh) => (
+                                      <Badge key={nh} variant="outline" className="border-red-200 text-red-700 text-xs">
+                                        {nh}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {v.rules_applied && (
+                                <p className="text-xs text-muted-foreground">
+                                  Rules: {v.rules_applied}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+
+                    {/* OCR text */}
+                    <div className="space-y-2">
+                      <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+                        OCR text
+                      </h3>
+                      <pre className="max-h-40 overflow-y-auto whitespace-pre-wrap rounded border bg-muted p-3 text-xs">
+                        {reviewDoc.ocr_text || "No OCR text extracted."}
+                      </pre>
+                    </div>
+
+                    {/* Metadata */}
+                    {reviewDoc.doc_metadata && (() => {
+                      try {
+                        const meta = JSON.parse(reviewDoc.doc_metadata);
+                        const entries = Object.entries(meta);
+                        if (entries.length === 0) return null;
+                        return (
+                          <div className="space-y-2">
+                            <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+                              File metadata
+                            </h3>
+                            <div className="rounded border p-3 text-xs space-y-1">
+                              {entries.map(([key, val]) => (
+                                <div key={key} className="flex justify-between">
+                                  <span className="text-muted-foreground">{key}</span>
+                                  <span>{String(val)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      } catch {
+                        return null;
+                      }
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="mt-6 flex justify-end gap-3 border-t pt-4">
+                <Button onClick={() => setReviewDoc(null)} variant="outline">
+                  Close
+                </Button>
+                <Button
+                  onClick={() => handleReviewAction(reviewDoc.id, "reject")}
+                  variant="outline"
+                  className="text-red-600"
+                >
+                  <XCircle className="size-4 mr-1" />
+                  Reject
+                </Button>
+                <Button
+                  onClick={() => handleReviewAction(reviewDoc.id, "approve")}
+                >
+                  <CheckCircle2 className="size-4 mr-1" />
+                  Approve
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
     </Layout>
   );

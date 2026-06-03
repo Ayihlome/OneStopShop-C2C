@@ -40,6 +40,11 @@ async function listPendingDocuments(req, res) {
   return res.status(200).json({ data });
 }
 
+async function getDocument(req, res) {
+  const data = await adminService.getDocument(req.params.id);
+  return res.status(200).json({ data });
+}
+
 async function approveDocument(req, res) {
   const data = await adminService.approveDocument(req.params.id, req.user.id);
   return res.status(200).json({ data, message: 'Success' });
@@ -64,6 +69,7 @@ module.exports = {
   verifyMechanic,
   suspendAccount,
   listPendingDocuments,
+  getDocument,
   approveDocument,
   rejectDocument,
   listPayments,
