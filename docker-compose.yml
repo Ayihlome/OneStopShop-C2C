@@ -65,6 +65,20 @@ services:
     command: npm run dev -- --host 0.0.0.0
     restart: unless-stopped
 
+  php-worker:
+    build:
+      context: ./php-auth
+      dockerfile: Dockerfile.php-worker
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    volumes:
+      - uploads_data:/app/uploads
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   uploads_data:

@@ -11,3 +11,7 @@ services:
       NODE_ENV: production
     volumes: !reset []
     command: sh -c "npm run build && npx serve dist -p 5173 -s"
+
+  php-worker:
+    environment:
+      NODE_ENV: production

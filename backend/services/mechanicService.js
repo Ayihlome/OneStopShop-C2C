@@ -431,13 +431,20 @@ async function uploadDocument(mechanicId, docType, file) {
   const providerId = profileResult.rows[0].id;
 
   const result = await pool.query(
-    `INSERT INTO mechanic_documents (provider_id, doc_type, file_url)
-     VALUES ($1, $2, $3)
+    `INSERT INTO mechanic_documents (mechanic_id, provider_id, doc_type, file_url)
+     VALUES ($1, $2, $3, $4)
      RETURNING *`,
-    [providerId, docType, `/uploads/documents/${file.filename}`]
+    [mechanicId, providerId, docType, `/uploads/documents/${file.filename}`]
   );
 
-  logger.info('Mechanic document uploaded', {
+  // Queue a background processing job for OCR, thumbnails, validation
+  await pool.query(
+    `INSERT INTO processing_jobs (document_id, job_type)
+     VALUES ($1, 'document_ocr')`,
+    [result.rows[0].id]
+  );
+
+  logger.info('Mechanic document uploaded and processing job queued', {
     mechanicId,
     providerId,
     documentId: result.rows[0].id,

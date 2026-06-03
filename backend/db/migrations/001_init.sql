@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- =================================================================
--- SERVICE PROVIDER PROFILES (replaces old mechanics table)
+-- SERVICE PROVIDER PROFILES
 -- =================================================================
 CREATE TABLE IF NOT EXISTS service_provider_profiles (
   id SERIAL PRIMARY KEY,
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS specialities (
 );
 
 -- =================================================================
--- PROVIDER SPECIALITIES (replaces mechanic_specialities)
+-- PROVIDER SPECIALITIES
 -- =================================================================
 CREATE TABLE IF NOT EXISTS provider_specialities (
   provider_id INT NOT NULL REFERENCES service_provider_profiles(id) ON DELETE CASCADE,
@@ -94,18 +94,24 @@ CREATE TABLE IF NOT EXISTS admins (
 );
 
 -- =================================================================
--- MECHANIC DOCUMENTS (references admins)
+-- MECHANIC DOCUMENTS
 -- =================================================================
 CREATE TABLE IF NOT EXISTS mechanic_documents (
   id BIGSERIAL PRIMARY KEY,
-  provider_id INT REFERENCES service_provider_profiles(id) ON DELETE CASCADE,
+  mechanic_id INT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  provider_id INT NOT NULL REFERENCES service_provider_profiles(id) ON DELETE CASCADE,
   doc_type VARCHAR(50) NOT NULL CHECK (doc_type IN ('id', 'certification', 'proof_of_residence')),
   file_url TEXT NOT NULL,
   status VARCHAR(20) NOT NULL DEFAULT 'pending'
     CHECK (status IN ('pending', 'approved', 'rejected')),
   reviewed_at TIMESTAMPTZ,
   reviewed_by BIGINT REFERENCES admins(id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  -- Background processing results (populated by PHP worker)
+  ocr_text TEXT,
+  thumbnail_url VARCHAR(500),
+  doc_metadata JSONB DEFAULT '{}',
+  validation_result JSONB DEFAULT '{}'
 );
 
 -- =================================================================
@@ -116,9 +122,9 @@ CREATE TABLE IF NOT EXISTS vehicles (
   user_id BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
   make VARCHAR(120) NOT NULL,
   model VARCHAR(120) NOT NULL,
-  year_produced INT NOT NULL CHECK (year_produced BETWEEN 1900 AND 2030),
+  year_produced INT CHECK (year_produced IS NULL OR (year_produced BETWEEN 1900 AND 2030)),
   color VARCHAR(80),
-  license_plate VARCHAR(40) NOT NULL UNIQUE,
+  license_plate VARCHAR(40) UNIQUE,
   fuel_type VARCHAR(50),
   transmission VARCHAR(50),
   notes TEXT,
@@ -126,7 +132,7 @@ CREATE TABLE IF NOT EXISTS vehicles (
 );
 
 -- =================================================================
--- BOOKINGS (C2C: customer->provider, payment-gated)
+-- BOOKINGS
 -- =================================================================
 CREATE TABLE IF NOT EXISTS bookings (
   id SERIAL PRIMARY KEY,
@@ -143,187 +149,6 @@ CREATE TABLE IF NOT EXISTS bookings (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
--- =================================================================
--- MIGRATION: handle pre-existing bookings table (old schema had
---   'status' instead of 'booking_status', 'user_id' instead of
---   'customer_user_id', 'mechanic_id' instead of 'service_provider_id')
---   Must run BEFORE any indexes reference the new column names.
--- =================================================================
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'bookings' AND column_name = 'booking_status'
-  ) THEN
-    ALTER TABLE bookings ADD COLUMN booking_status VARCHAR(30);
-    IF EXISTS (
-      SELECT 1 FROM information_schema.columns
-      WHERE table_name = 'bookings' AND column_name = 'status'
-    ) THEN
-      UPDATE bookings SET booking_status =
-        CASE status
-          WHEN 'pending'  THEN 'payment_pending'
-          WHEN 'accepted' THEN 'paid'
-          WHEN 'rejected' THEN 'cancelled'
-          ELSE status
-        END;
-    END IF;
-    ALTER TABLE bookings ALTER COLUMN booking_status SET NOT NULL;
-    ALTER TABLE bookings ALTER COLUMN booking_status SET DEFAULT 'payment_pending';
-    ALTER TABLE bookings ADD CONSTRAINT bookings_booking_status_check
-      CHECK (booking_status IN (
-        'payment_pending', 'paid', 'whatsapp_redirected',
-        'in_progress', 'completed', 'cancelled', 'refunded'
-      ));
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'bookings' AND column_name = 'customer_user_id'
-  ) THEN
-    ALTER TABLE bookings ADD COLUMN customer_user_id BIGINT;
-    IF EXISTS (
-      SELECT 1 FROM information_schema.columns
-      WHERE table_name = 'bookings' AND column_name = 'user_id'
-    ) THEN
-      UPDATE bookings SET customer_user_id = user_id;
-    END IF;
-    ALTER TABLE bookings ALTER COLUMN customer_user_id SET NOT NULL;
-    ALTER TABLE bookings ADD CONSTRAINT fk_bookings_customer
-      FOREIGN KEY (customer_user_id) REFERENCES accounts(id) ON DELETE CASCADE;
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'bookings' AND column_name = 'service_provider_id'
-  ) THEN
-    ALTER TABLE bookings ADD COLUMN service_provider_id INT;
-    IF EXISTS (
-      SELECT 1 FROM information_schema.columns
-      WHERE table_name = 'bookings' AND column_name = 'mechanic_id'
-    ) THEN
-      UPDATE bookings b SET service_provider_id = (
-      SELECT sp.id FROM service_provider_profiles sp
-      WHERE sp.account_id = b.mechanic_id
-    )
-    WHERE EXISTS (
-      SELECT 1 FROM service_provider_profiles sp
-      WHERE sp.account_id = b.mechanic_id
-    );
-    END IF;
-    ALTER TABLE bookings ALTER COLUMN service_provider_id SET NOT NULL;
-    ALTER TABLE bookings ADD CONSTRAINT fk_bookings_service_provider
-      FOREIGN KEY (service_provider_id) REFERENCES service_provider_profiles(id) ON DELETE CASCADE;
-  END IF;
-
-  -- ===============================================================
-  -- MECHANIC_AVAILABILITY: old had 'mechanic_id' (BIGINT FK→accounts),
-  --   new expects 'provider_id' (INT FK→service_provider_profiles)
-  -- ===============================================================
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'mechanic_availability' AND column_name = 'provider_id'
-  ) THEN
-    ALTER TABLE mechanic_availability ADD COLUMN provider_id INT;
-    IF EXISTS (
-      SELECT 1 FROM information_schema.columns
-      WHERE table_name = 'mechanic_availability' AND column_name = 'mechanic_id'
-    ) THEN
-      UPDATE mechanic_availability ma SET provider_id = (
-      SELECT sp.id FROM service_provider_profiles sp
-      WHERE sp.account_id = ma.mechanic_id
-    )
-    WHERE EXISTS (
-      SELECT 1 FROM service_provider_profiles sp
-      WHERE sp.account_id = ma.mechanic_id
-    );
-    END IF;
-    ALTER TABLE mechanic_availability ALTER COLUMN provider_id SET NOT NULL;
-    ALTER TABLE mechanic_availability ADD CONSTRAINT fk_avail_provider
-      FOREIGN KEY (provider_id) REFERENCES service_provider_profiles(id) ON DELETE CASCADE;
-  END IF;
-
-  -- ===============================================================
-  -- MECHANIC_DOCUMENTS: old had 'mechanic_id' (BIGINT FK→accounts),
-  --   new expects 'provider_id' (INT FK→service_provider_profiles)
-  -- ===============================================================
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'mechanic_documents' AND column_name = 'provider_id'
-  ) THEN
-    ALTER TABLE mechanic_documents ADD COLUMN provider_id INT;
-    IF EXISTS (
-      SELECT 1 FROM information_schema.columns
-      WHERE table_name = 'mechanic_documents' AND column_name = 'mechanic_id'
-    ) THEN
-      UPDATE mechanic_documents md SET provider_id = (
-      SELECT sp.id FROM service_provider_profiles sp
-      WHERE sp.account_id = md.mechanic_id
-    )
-    WHERE EXISTS (
-      SELECT 1 FROM service_provider_profiles sp
-      WHERE sp.account_id = md.mechanic_id
-    );
-    END IF;
-    ALTER TABLE mechanic_documents ALTER COLUMN provider_id SET NOT NULL;
-    ALTER TABLE mechanic_documents ADD CONSTRAINT fk_docs_provider
-      FOREIGN KEY (provider_id) REFERENCES service_provider_profiles(id) ON DELETE CASCADE;
-  END IF;
-
-  -- ===============================================================
-  -- REVIEWS: old had 'user_id' (BIGINT) and 'mechanic_id' (BIGINT),
-  --   new expects 'reviewer_user_id' (BIGINT) and
-  --   'service_provider_id' (INT FK→service_provider_profiles)
-  -- ===============================================================
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'reviews' AND column_name = 'reviewer_user_id'
-  ) THEN
-    ALTER TABLE reviews ADD COLUMN reviewer_user_id BIGINT;
-    IF EXISTS (
-      SELECT 1 FROM information_schema.columns
-      WHERE table_name = 'reviews' AND column_name = 'user_id'
-    ) THEN
-      UPDATE reviews SET reviewer_user_id = user_id;
-    END IF;
-    ALTER TABLE reviews ALTER COLUMN reviewer_user_id SET NOT NULL;
-    ALTER TABLE reviews ADD CONSTRAINT fk_reviews_reviewer
-      FOREIGN KEY (reviewer_user_id) REFERENCES accounts(id) ON DELETE CASCADE;
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'reviews' AND column_name = 'service_provider_id'
-  ) THEN
-    ALTER TABLE reviews ADD COLUMN service_provider_id INT;
-    IF EXISTS (
-      SELECT 1 FROM information_schema.columns
-      WHERE table_name = 'reviews' AND column_name = 'mechanic_id'
-    ) THEN
-      UPDATE reviews r SET service_provider_id = (
-      SELECT sp.id FROM service_provider_profiles sp
-      WHERE sp.account_id = r.mechanic_id
-    )
-    WHERE EXISTS (
-      SELECT 1 FROM service_provider_profiles sp
-      WHERE sp.account_id = r.mechanic_id
-    );
-    END IF;
-    ALTER TABLE reviews ALTER COLUMN service_provider_id SET NOT NULL;
-    ALTER TABLE reviews ADD CONSTRAINT fk_reviews_provider
-      FOREIGN KEY (service_provider_id) REFERENCES service_provider_profiles(id) ON DELETE CASCADE;
-  END IF;
-END;
-$$;
-
--- Drop old-column indexes before creating new ones
-DROP INDEX IF EXISTS idx_bookings_user_id;
-DROP INDEX IF EXISTS idx_bookings_mechanic_id;
-DROP INDEX IF EXISTS idx_bookings_status;
-DROP INDEX IF EXISTS idx_reviews_mechanic_id;
-DROP INDEX IF EXISTS idx_mechanic_availability_mechanic_id;
-DROP INDEX IF EXISTS idx_mechanic_specialities_mechanic_id;
 
 -- Partial unique index: only one active job per provider at a time
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_active_job
@@ -382,6 +207,24 @@ CREATE TABLE IF NOT EXISTS page_visits (
   user_agent TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- =================================================================
+-- PROCESSING JOBS (background document processing queue)
+-- =================================================================
+CREATE TABLE IF NOT EXISTS processing_jobs (
+  id SERIAL PRIMARY KEY,
+  document_id INT NOT NULL REFERENCES mechanic_documents(id) ON DELETE CASCADE,
+  job_type VARCHAR(50) NOT NULL DEFAULT 'document_ocr',
+  status VARCHAR(20) NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
+  error_message TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  processed_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_processing_jobs_pending
+  ON processing_jobs (status, created_at)
+  WHERE status = 'pending';
 
 -- =================================================================
 -- SET_UPDATED_AT TRIGGER FUNCTION

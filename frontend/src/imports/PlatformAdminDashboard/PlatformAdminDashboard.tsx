@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   DollarSign,
   Download,
+  Eye,
   ShieldCheck,
   UsersRound,
   Wrench,
@@ -664,6 +665,7 @@ export default function PlatformAdminDashboard() {
                       <TableHead>Provider</TableHead>
                       <TableHead>Type</TableHead>
                       <TableHead>Uploaded</TableHead>
+                      <TableHead>Preview</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -680,6 +682,28 @@ export default function PlatformAdminDashboard() {
                           </Badge>
                         </TableCell>
                         <TableCell>{formatDate(doc.created_at)}</TableCell>
+                        <TableCell>
+                          {doc.thumbnail_url ? (
+                            <div className="relative">
+                              <img
+                                alt="Thumbnail"
+                                className="size-10 rounded object-cover cursor-pointer"
+                                src={doc.thumbnail_url}
+                                onClick={() =>
+                                  doc.ocr_text &&
+                                  alert(`OCR Text:\n\n${doc.ocr_text}`)
+                                }
+                              />
+                              {doc.ocr_text && (
+                                <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[8px] text-primary-foreground">
+                                  <Eye className="size-3" />
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
                             <Button
