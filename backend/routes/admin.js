@@ -13,6 +13,7 @@ router.delete('/mechanics/:id', ...isSuperAdmin, asyncHandler(adminController.de
 router.patch('/mechanics/:id/verify', ...isSuperAdmin, asyncHandler(adminController.verifyMechanic));
 router.patch('/accounts/:id/suspend', ...isSuperAdmin, asyncHandler(adminController.suspendAccount));
 router.get('/documents', ...isMod, asyncHandler(adminController.listPendingDocuments));
+router.get('/documents/:id', ...isMod, asyncHandler(adminController.getDocument));
 router.patch('/documents/:id/approve', ...isSuperAdmin, asyncHandler(adminController.approveDocument));
 router.patch('/documents/:id/reject', ...isSuperAdmin, asyncHandler(adminController.rejectDocument));
 router.get('/payments', ...isMod, asyncHandler(adminController.listPayments));

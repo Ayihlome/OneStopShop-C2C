@@ -32,6 +32,10 @@ export async function listPendingDocuments() {
   return client.get('/admin/documents');
 }
 
+export async function getDocument(id) {
+  return client.get(`/admin/documents/${id}`);
+}
+
 export async function approveDocument(id) {
   return client.patch(`/admin/documents/${id}/approve`);
 }

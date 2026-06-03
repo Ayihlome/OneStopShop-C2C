@@ -93,6 +93,28 @@ async function listPendingDocuments() {
   return sanitize(result.rows);
 }
 
+async function getDocument(id) {
+  const result = await pool.query(
+    `SELECT
+       md.*,
+       a.first_name,
+       a.last_name,
+       a.email,
+       sp.business_name
+     FROM mechanic_documents md
+     INNER JOIN service_provider_profiles sp ON sp.id = md.provider_id
+     INNER JOIN accounts a ON a.id = sp.account_id
+     WHERE md.id = $1`,
+    [id]
+  );
+
+  if (!result.rows[0]) {
+    throw createError(404, 'Document not found');
+  }
+
+  return sanitize(result.rows[0]);
+}
+
 async function approveDocument(id, adminId) {
   const client = await pool.connect();
 
@@ -227,6 +249,7 @@ module.exports = {
   verifyMechanic,
   suspendAccount,
   listPendingDocuments,
+  getDocument,
   approveDocument,
   rejectDocument,
   listPayments,
