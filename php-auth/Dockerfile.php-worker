@@ -5,21 +5,26 @@ RUN apt-get update && apt-get install -y \
     libmagickwand-dev \
     libonig-dev \
     libpq-dev \
+    libzip-dev \
     tesseract-ocr \
     tesseract-ocr-eng \
+    unzip \
     poppler-utils \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions via PECL + docker-php-ext-*
 RUN pecl install imagick && docker-php-ext-enable imagick
-RUN docker-php-ext-install mbstring pdo_pgsql exif
+RUN docker-php-ext-install mbstring pdo_pgsql exif zip
 
 WORKDIR /app
 
 COPY composer.json .
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
-    && composer install --no-dev --no-interaction
+# Install Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# Install PHP dependencies
+RUN composer install --no-dev --no-interaction
 
 COPY worker.php .
 
