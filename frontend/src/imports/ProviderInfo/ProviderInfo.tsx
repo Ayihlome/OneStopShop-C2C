@@ -1,4 +1,4 @@
-import { Save } from "lucide-react";
+import { Save, Upload } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 
 import { Badge } from "@/app/components/ui/badge";
@@ -25,6 +25,7 @@ import { Textarea } from "@/app/components/ui/textarea";
 import {
   getMechanicProfile,
   updateMechanic,
+  uploadDocument,
 } from "@/api/mechanics";
 import {
   listProviderBookings,
@@ -72,6 +73,12 @@ export default function ProviderInfo({ userId }: { userId: number }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loaded, setLoaded] = useState(false);
+
+  // Document upload state
+  const [docType, setDocType] = useState("id");
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const [docStatus, setDocStatus] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     let ignore = false;
@@ -171,6 +178,30 @@ export default function ProviderInfo({ userId }: { userId: number }) {
     }
   };
 
+  const handleDocUpload = async () => {
+    if (!docFile) {
+      setDocStatus("Select a document file first.");
+      return;
+    }
+
+    setIsUploading(true);
+    setDocStatus("Uploading...");
+
+    try {
+      await uploadDocument(docFile, docType);
+      setDocStatus("Document uploaded and queued for processing.");
+      setDocFile(null);
+    } catch (error) {
+      setDocStatus(
+        error instanceof Error
+          ? error.message
+          : "Upload failed. Make sure you're signed in as a service provider.",
+      );
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const canTransition = (current: string): string[] => {
     switch (current) {
       case "paid":
@@ -267,6 +298,57 @@ export default function ProviderInfo({ userId }: { userId: number }) {
               {isSubmitting ? "Saving..." : "Save provider info"}
             </Button>
           </form>
+        </CardContent>
+      </Card>
+
+      {/* Document Upload Card */}
+      <Card className="rounded-lg bg-card">
+        <CardHeader>
+          <CardTitle>Verification documents</CardTitle>
+          <CardDescription>
+            Upload your ID, certification, and proof of residence for
+            verification. Accepted formats: PDF, JPG, PNG (max 5 MB each).
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="docType">Document type</Label>
+              <select
+                className="flex h-9 w-full rounded-md border border-border bg-input-background px-3 py-1 text-sm text-foreground outline-none"
+                id="docType"
+                onChange={(e) => setDocType(e.target.value)}
+                value={docType}
+              >
+                <option value="id">ID document</option>
+                <option value="certification">Certification</option>
+                <option value="proof_of_residence">Proof of residence</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="document">Document file</Label>
+              <Input
+                accept=".pdf,.jpg,.jpeg,.png"
+                id="document"
+                onChange={(e) => setDocFile(e.target.files?.[0] || null)}
+                type="file"
+              />
+            </div>
+          </div>
+          {docFile && (
+            <p className="mt-2 text-sm text-muted-foreground">
+              {docFile.name} ({(docFile.size / 1024 / 1024).toFixed(1)} MB)
+            </p>
+          )}
+          <Button
+            className="mt-4"
+            disabled={isUploading || !docFile}
+            onClick={handleDocUpload}
+          >
+            <Upload className="size-4" />
+            {isUploading ? "Uploading..." : "Upload document"}
+          </Button>
+          {docStatus && <div className="mt-3"><StatusMessage message={docStatus} /></div>}
         </CardContent>
       </Card>
 
