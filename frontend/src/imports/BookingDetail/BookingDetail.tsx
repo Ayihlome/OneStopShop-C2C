@@ -65,6 +65,7 @@ type BookingDetail = {
   vehicle_model?: string;
   license_plate?: string;
   whatsapp_url?: string;
+  contact_whatsapp_url?: string;
 };
 
 export default function BookingDetail() {
@@ -352,6 +353,25 @@ export default function BookingDetail() {
                       )}
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Contact via WhatsApp */}
+            {booking.contact_whatsapp_url && booking.booking_status !== 'cancelled' && booking.booking_status !== 'rejected' && (
+              <Card className="rounded-lg border-emerald-200 bg-card">
+                <CardContent className="py-4">
+                  <p className="mb-2 text-sm font-medium text-emerald-700">
+                    Chat with the provider about your booking:
+                  </p>
+                  <Button
+                    className="w-full"
+                    onClick={() => window.open(booking.contact_whatsapp_url, '_blank')}
+                    variant="outline"
+                  >
+                    <MessageSquare className="size-4" />
+                    Contact via WhatsApp
+                  </Button>
                 </CardContent>
               </Card>
             )}
