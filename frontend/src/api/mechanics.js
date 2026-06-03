@@ -53,3 +53,19 @@ export async function uploadDocument(file, docType) {
 export async function getProviderStats() {
   return client.get('/mechanics/provider/stats');
 }
+
+export async function getAvailability(id) {
+  return client.get(`/mechanics/${id}/availability`);
+}
+
+export async function setAvailability(id, slots) {
+  return client.put(`/mechanics/${id}/availability`, { slots });
+}
+
+export async function addAvailabilityException(id, date, reason) {
+  return client.post(`/mechanics/${id}/availability/exceptions`, { date, reason });
+}
+
+export async function removeAvailabilityException(id, exceptionId) {
+  return client.delete(`/mechanics/${id}/availability/exceptions/${exceptionId}`);
+}

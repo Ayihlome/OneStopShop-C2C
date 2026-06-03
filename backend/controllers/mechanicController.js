@@ -73,6 +73,34 @@ async function createProviderProfile(req, res) {
   return res.status(201).json({ data, token: newToken, message: 'Success' });
 }
 
+// =================================================================
+// AVAILABILITY CONTROLLERS
+// =================================================================
+
+async function getAvailability(req, res) {
+  const data = await mechanicService.getAvailability(Number(req.params.id));
+  return res.status(200).json({ data });
+}
+
+async function setAvailability(req, res) {
+  const data = await mechanicService.setAvailability(req.user.id, req.body.slots);
+  return res.status(200).json({ data, message: 'Availability updated' });
+}
+
+async function addAvailabilityException(req, res) {
+  const data = await mechanicService.addAvailabilityException(
+    req.user.id,
+    req.body.date,
+    req.body.reason
+  );
+  return res.status(201).json({ data });
+}
+
+async function removeAvailabilityException(req, res) {
+  await mechanicService.removeAvailabilityException(req.user.id, Number(req.params.exceptionId));
+  return res.status(200).json({ message: 'Exception removed' });
+}
+
 module.exports = {
   listMechanics,
   getMechanic,
@@ -84,4 +112,8 @@ module.exports = {
   updateMechanic,
   uploadDocument,
   createProviderProfile,
+  getAvailability,
+  setAvailability,
+  addAvailabilityException,
+  removeAvailabilityException,
 };
