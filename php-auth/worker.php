@@ -413,10 +413,10 @@ function checkProviderQualification(PDO $pdo, int $providerId): void
             "UPDATE service_provider_profiles
              SET verification_status = 'verified',
                  updated_at = NOW()
-             WHERE id = ? AND verification_status != 'verified'"
+             WHERE account_id = ? AND verification_status != 'verified'"
         )->execute([$providerId]);
 
-        fwrite(STDOUT, "[★] Provider #{$providerId} is now VERIFIED "
+        fwrite(STDOUT, "[★] Provider (account #{$providerId}) is now VERIFIED "
             . "(all {$requiredTypes} doc types auto-approved)\n");
     }
 }

@@ -80,7 +80,7 @@ async function listPendingDocuments() {
        a.last_name,
        a.email
      FROM mechanic_documents md
-     INNER JOIN service_provider_profiles sp ON sp.id = md.mechanic_id
+     INNER JOIN service_provider_profiles sp ON sp.id = md.provider_id
      INNER JOIN accounts a ON a.id = sp.account_id
      WHERE md.status = 'pending'
      ORDER BY md.created_at ASC`
