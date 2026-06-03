@@ -155,11 +155,77 @@ $pdo = new PDO($pdoDsn, $pdoUser ?? null, $pdoPass ?? null, [
 ]);
 
 fwrite(STDOUT, "=== Document Processing Worker Started ===\n");
+
+// =================================================================
+// STARTUP RECONCILIATION — catch up documents that were missed
+// =================================================================
+$reconciled = reconcilePendingDocuments($pdo);
+if ($reconciled > 0) {
+    fwrite(STDOUT, "[RECONCILE] Queued {$reconciled} previously unprocessed document(s)\n");
+}
+
 fwrite(STDOUT, "Polling every 3 seconds...\n");
 
 while (true) {
     processNextJob($pdo);
     sleep(3);
+}
+
+// ===================================================================
+// STARTUP RECONCILIATION
+// ===================================================================
+/**
+ * On startup, find documents that were never queued or whose latest job
+ * failed, and enqueue them so nothing gets stuck waiting for processing.
+ */
+function reconcilePendingDocuments(PDO $pdo): int
+{
+    // Documents with no processing_jobs entry at all
+    $stmt = $pdo->query(
+        "SELECT md.id
+         FROM mechanic_documents md
+         LEFT JOIN processing_jobs pj ON pj.document_id = md.id
+         WHERE pj.id IS NULL"
+    );
+    $missing = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    // Documents whose latest job failed (retry them)
+    $stmt = $pdo->query(
+        "SELECT md.id
+         FROM mechanic_documents md
+         INNER JOIN LATERAL (
+             SELECT status FROM processing_jobs
+             WHERE document_id = md.id
+             ORDER BY created_at DESC
+             LIMIT 1
+         ) latest ON true
+         WHERE latest.status = 'failed'"
+    );
+    $failed = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    $docIds = array_unique(array_merge($missing, $failed));
+    if (empty($docIds)) {
+        return 0;
+    }
+
+    $queued = 0;
+    $insert = $pdo->prepare(
+        "INSERT INTO processing_jobs (document_id, job_type)
+         VALUES (?, 'document_ocr')"
+    );
+
+    foreach ($docIds as $id) {
+        try {
+            $insert->execute([(int) $id]);
+            if ($insert->rowCount() > 0) {
+                $queued++;
+            }
+        } catch (PDOException $e) {
+            fwrite(STDERR, "[RECONCILE] Failed to queue doc #{$id}: {$e->getMessage()}\n");
+        }
+    }
+
+    return $queued;
 }
 
 // ===================================================================
