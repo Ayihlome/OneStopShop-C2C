@@ -1,132 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mxfile host="Hermes Agent" modified="2026-06-03T19:00:00.000Z" agent="Hermes" version="24.6.5">
+<mxfile host="Hermes Agent" modified="2026-06-03T19:20:00.000Z" agent="Hermes" version="24.6.5">
   <diagram id="context-diagram" name="Context Diagram">
-    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+    <mxGraphModel dx="1000" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
 
-        <!-- Legend -->
-        <mxCell id="legend-bg" value="Legend" style="swimlane;whiteSpace=wrap;html=1;startSize=24;horizontal=1;container=1;collapsible=0;rounded=1;fillColor=#f5f5f5;strokeColor=#cccccc;fontSize=12;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="40" y="40" width="200" height="110" as="geometry" />
-        </mxCell>
-        <mxCell id="legend-ext" value="External Entity" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="legend-bg">
-          <mxGeometry x="20" y="40" width="90" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="legend-sys" value="System" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="legend-bg">
-          <mxGeometry x="20" y="75" width="90" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="legend-flow" value="Data Flow" style="html=1;rounded=1;endArrow=openThin;fontSize=11;" edge="1" parent="1">
-          <mxGeometry x="130" y="55" width="50" height="0" relative="1" as="geometry">
-            <mxPoint x="130" y="85" as="sourcePoint" />
-            <mxPoint x="170" y="85" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="legend-flow-label" value="Data Flow" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
-          <mxGeometry x="175" y="72" width="60" height="20" as="geometry" />
+        <!-- System (centre) -->
+        <mxCell id="system" value="OneStopShop&#10;C2C Platform" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="280" width="160" height="80" as="geometry" />
         </mxCell>
 
-        <!-- System (center) -->
-        <mxCell id="system-box" value="OneStopShop C2C Platform" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="400" y="290" width="240" height="120" as="geometry" />
+        <!-- External entities -->
+        <mxCell id="ext-customer" value="Customer" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="100" y="280" width="120" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="system-detail" value="React Frontend + Express API +&#10;PostgreSQL + PHP Worker" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;fontSize=10;fontColor=#666666;" vertex="1" parent="system-box">
-          <mxGeometry x="10" y="75" width="220" height="40" as="geometry" />
+        <mxCell id="ext-provider" value="Service&#10;Provider" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="100" y="400" width="120" height="50" as="geometry" />
         </mxCell>
-
-        <!-- External Entities -->
-        <!-- Customer -->
-        <mxCell id="customer" value="Customer&#10;(Car Owner)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;" vertex="1" parent="1">
-          <mxGeometry x="40" y="280" width="160" height="70" as="geometry" />
+        <mxCell id="ext-admin" value="Administrator" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="100" y="160" width="120" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="customer-icon" value="&#x1f9d1;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=28;" vertex="1" parent="customer">
-          <mxGeometry x="10" y="5" width="30" height="30" as="geometry" />
+        <mxCell id="ext-payfast" value="PayFast" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="720" y="160" width="120" height="50" as="geometry" />
         </mxCell>
-
-        <!-- Service Provider -->
-        <mxCell id="provider" value="Service Provider&#10;(Mechanic)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;" vertex="1" parent="1">
-          <mxGeometry x="40" y="440" width="160" height="70" as="geometry" />
-        </mxCell>
-        <mxCell id="provider-icon" value="&#x1f527;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=28;" vertex="1" parent="provider">
-          <mxGeometry x="10" y="5" width="30" height="30" as="geometry" />
+        <mxCell id="ext-whatsapp" value="WhatsApp&#10;API" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="720" y="400" width="120" height="50" as="geometry" />
         </mxCell>
 
-        <!-- Admin -->
-        <mxCell id="admin" value="Administrator" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;" vertex="1" parent="1">
-          <mxGeometry x="40" y="150" width="160" height="70" as="geometry" />
-        </mxCell>
-        <mxCell id="admin-icon" value="&#x1f464;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=28;" vertex="1" parent="admin">
-          <mxGeometry x="10" y="5" width="30" height="30" as="geometry" />
-        </mxCell>
-
-        <!-- PayFast -->
-        <mxCell id="payfast" value="PayFast&#10;(Payment Gateway)" style="shape=cloud;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="740" y="150" width="170" height="80" as="geometry" />
-        </mxCell>
-
-        <!-- WhatsApp -->
-        <mxCell id="whatsapp" value="WhatsApp&#10;Cloud API" style="shape=cloud;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="740" y="460" width="170" height="80" as="geometry" />
-        </mxCell>
-
-        <!-- Data Flows: Customer -->
-        <mxCell id="flow-customer-register" value="Register / Login" style="html=1;rounded=1;endArrow=openThin;fontSize=10;" edge="1" parent="1" source="customer" target="system-box">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="200" y="310" as="sourcePoint" />
-            <mxPoint x="400" y="310" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="flow-customer-search" value="Search Providers" style="html=1;rounded=1;endArrow=openThin;fontSize=10;exitX=1;exitY=0.5;" edge="1" parent="1" source="customer" target="system-box">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="200" y="315" as="sourcePoint" />
-            <mxPoint x="400" y="315" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="flow-customer-book" value="Book Service / Pay" style="html=1;rounded=1;endArrow=openThin;fontSize=10;exitX=1;exitY=0.7;" edge="1" parent="1" source="customer" target="system-box">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="200" y="330" as="sourcePoint" />
-            <mxPoint x="400" y="340" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="flow-customer-review" value="Leave Review" style="html=1;rounded=1;endArrow=openThin;fontSize=10;exitX=1;exitY=0.9;" edge="1" parent="1" source="customer" target="system-box">
+        <!-- Flows -->
+        <mxCell id="f-cust" value="Sign up, search,&#10;book, pay, review" style="html=1;rounded=1;endArrow=open;fontSize=10;" edge="1" parent="1" source="ext-customer" target="system">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-
-        <!-- Data Flows: Provider -->
-        <mxCell id="flow-provider-register" value="Register as Provider" style="html=1;rounded=1;endArrow=openThin;fontSize=10;exitX=1;exitY=0.3;" edge="1" parent="1" source="provider" target="system-box">
+        <mxCell id="f-prov" value="Register, upload&#10;docs, manage" style="html=1;rounded=1;endArrow=open;fontSize=10;" edge="1" parent="1" source="ext-provider" target="system">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="flow-provider-docs" value="Upload Documents" style="html=1;rounded=1;endArrow=openThin;fontSize=10;exitX=1;exitY=0.5;" edge="1" parent="1" source="provider" target="system-box">
+        <mxCell id="f-admin" value="Review, verify,&#10;manage" style="html=1;rounded=1;endArrow=open;fontSize=10;" edge="1" parent="1" source="ext-admin" target="system">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="flow-provider-manage" value="Manage Bookings" style="html=1;rounded=1;endArrow=openThin;fontSize=10;exitX=1;exitY=0.7;" edge="1" parent="1" source="provider" target="system-box">
+        <mxCell id="f-pay" value="Payments" style="html=1;rounded=1;endArrow=open;fontSize=10;" edge="1" parent="1" source="system" target="ext-payfast">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="flow-provider-avail" value="Set Availability" style="html=1;rounded=1;endArrow=openThin;fontSize=10;exitX=1;exitY=0.9;" edge="1" parent="1" source="provider" target="system-box">
+        <mxCell id="f-itn" value="ITN callback" style="html=1;rounded=1;endArrow=open;fontSize=10;" edge="1" parent="1" source="ext-payfast" target="system">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-
-        <!-- Data Flows: Admin -->
-        <mxCell id="flow-admin-moderate" value="Moderate Users /&#10;Verify Providers" style="html=1;rounded=1;endArrow=openThin;fontSize=10;exitX=1;exitY=0.3;" edge="1" parent="1" source="admin" target="system-box">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="flow-admin-docs" value="Review Documents" style="html=1;rounded=1;endArrow=openThin;fontSize=10;exitX=1;exitY=0.7;" edge="1" parent="1" source="admin" target="system-box">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- Data Flows: PayFast -->
-        <mxCell id="flow-payfast-redirect" value="Redirect to Pay" style="html=1;rounded=1;endArrow=openThin;fontSize=10;entryX=0;entryY=0.5;" edge="1" parent="1" source="system-box" target="payfast">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="flow-payfast-itn" value="Payment ITN Webhook" style="html=1;rounded=1;endArrow=openThin;fontSize=10;exitX=0;exitY=0.7;" edge="1" parent="1" source="payfast" target="system-box">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- Data Flows: WhatsApp -->
-        <mxCell id="flow-whatsapp-out" value="Send Notification" style="html=1;rounded=1;endArrow=openThin;fontSize=10;entryX=0;entryY=0.5;" edge="1" parent="1" source="system-box" target="whatsapp">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="flow-whatsapp-in" value="Delivery Status" style="html=1;rounded=1;endArrow=openThin;fontSize=10;exitX=0;exitY=0.7;" edge="1" parent="1" source="whatsapp" target="system-box">
+        <mxCell id="f-whatsapp" value="Notifications" style="html=1;rounded=1;endArrow=open;fontSize=10;" edge="1" parent="1" source="system" target="ext-whatsapp">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 

@@ -1,311 +1,168 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mxfile host="Hermes Agent" modified="2026-06-03T19:10:00.000Z" agent="Hermes" version="24.6.5">
+<mxfile host="Hermes Agent" modified="2026-06-03T19:24:00.000Z" agent="Hermes" version="24.6.5">
   <diagram id="use-case-diagram" name="Use Case Diagram">
-    <mxGraphModel dx="1600" dy="1100" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
 
-        <!-- System Boundary -->
-        <mxCell id="system-boundary" value="OneStopShop C2C Platform" style="swimlane;whiteSpace=wrap;html=1;startSize=30;horizontal=1;container=1;collapsible=0;rounded=1;fillColor=#f8f9fa;strokeColor=#6c8ebf;fontSize=14;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="280" y="40" width="900" height="760" as="geometry" />
+        <!-- System boundary -->
+        <mxCell id="bnd" value="OneStopShop C2C Platform" style="swimlane;whiteSpace=wrap;html=1;startSize=26;horizontal=1;container=1;collapsible=0;rounded=1;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="40" width="600" height="540" as="geometry" />
         </mxCell>
 
-        <!-- ==================== ACTORS ==================== -->
-
-        <!-- Customer -->
-        <mxCell id="actor-customer" value="Customer" style="shape=umlActor;whiteSpace=wrap;html=1;fontSize=14;" vertex="1" parent="1">
-          <mxGeometry x="80" y="320" width="40" height="60" as="geometry" />
+        <!-- Actors -->
+        <mxCell id="a-cust" value="" style="shape=umlActor;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="60" y="220" width="30" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="actor-customer-label" value="Customer&#10;(Car Owner)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="50" y="385" width="100" height="30" as="geometry" />
+        <mxCell id="a-cust-lbl" value="Customer" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="275" width="70" height="20" as="geometry" />
         </mxCell>
 
-        <!-- Provider -->
-        <mxCell id="actor-provider" value="" style="shape=umlActor;whiteSpace=wrap;html=1;fontSize=14;" vertex="1" parent="1">
-          <mxGeometry x="80" y="530" width="40" height="60" as="geometry" />
+        <mxCell id="a-prov" value="" style="shape=umlActor;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="60" y="380" width="30" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="actor-provider-label" value="Service Provider&#10;(Mechanic)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="40" y="595" width="120" height="30" as="geometry" />
-        </mxCell>
-
-        <!-- Admin -->
-        <mxCell id="actor-admin" value="" style="shape=umlActor;whiteSpace=wrap;html=1;fontSize=14;" vertex="1" parent="1">
-          <mxGeometry x="80" y="150" width="40" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="actor-admin-label" value="Administrator" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="50" y="215" width="100" height="20" as="geometry" />
+        <mxCell id="a-prov-lbl" value="Provider" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="435" width="70" height="20" as="geometry" />
         </mxCell>
 
-        <!-- PayFast (System Actor) -->
-        <mxCell id="actor-payfast" value="P" style="ellipse;whiteSpace=wrap;html=1;fontSize=18;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="1250" y="200" width="50" height="50" as="geometry" />
+        <mxCell id="a-admin" value="" style="shape=umlActor;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="60" y="80" width="30" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="actor-payfast-label" value="PayFast" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="1220" y="255" width="110" height="20" as="geometry" />
-        </mxCell>
-        <mxCell id="actor-payfast-stereotype" value="&lt;&lt;system&gt;&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=bottom;fontSize=10;fontColor=#999;" vertex="1" parent="1">
-          <mxGeometry x="1220" y="240" width="110" height="15" as="geometry" />
+        <mxCell id="a-admin-lbl" value="Admin" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="135" width="70" height="20" as="geometry" />
         </mxCell>
 
-        <!-- WhatsApp (System Actor) -->
-        <mxCell id="actor-whatsapp" value="W" style="ellipse;whiteSpace=wrap;html=1;fontSize=18;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="1250" y="610" width="50" height="50" as="geometry" />
+        <mxCell id="a-pay" value="P" style="ellipse;whiteSpace=wrap;html=1;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="870" y="130" width="36" height="36" as="geometry" />
         </mxCell>
-        <mxCell id="actor-whatsapp-label" value="WhatsApp API" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="1220" y="665" width="110" height="20" as="geometry" />
-        </mxCell>
-        <mxCell id="actor-whatsapp-stereotype" value="&lt;&lt;system&gt;&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=bottom;fontSize=10;fontColor=#999;" vertex="1" parent="1">
-          <mxGeometry x="1220" y="650" width="110" height="15" as="geometry" />
+        <mxCell id="a-pay-lbl" value="PayFast" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="855" y="170" width="66" height="20" as="geometry" />
         </mxCell>
 
-        <!-- ==================== USE CASES - CUSTOMER ==================== -->
-
-        <mxCell id="uc-register" value="Register Account" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="50" y="50" width="120" height="40" as="geometry" />
+        <mxCell id="a-wa" value="W" style="ellipse;whiteSpace=wrap;html=1;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="870" y="380" width="36" height="36" as="geometry" />
         </mxCell>
-        <mxCell id="uc-login" value="Login" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="50" y="110" width="120" height="40" as="geometry" />
-        </mxCell>
-        <mxCell id="uc-manage-profile" value="Manage Profile" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="50" y="170" width="120" height="40" as="geometry" />
-        </mxCell>
-        <mxCell id="uc-search" value="Search Mechanics" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="50" y="230" width="120" height="40" as="geometry" />
-        </mxCell>
-        <mxCell id="uc-view-profile" value="View Mechanic&#10;Profile" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="50" y="290" width="120" height="50" as="geometry" />
-        </mxCell>
-        <mxCell id="uc-register-vehicle" value="Register Vehicle" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="240" y="50" width="120" height="40" as="geometry" />
-        </mxCell>
-        <mxCell id="uc-book-service" value="Book a Service" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="240" y="130" width="120" height="50" as="geometry" />
-        </mxCell>
-        <mxCell id="uc-make-payment" value="Make Payment" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="240" y="260" width="120" height="40" as="geometry" />
-        </mxCell>
-        <mxCell id="uc-view-booking" value="View Booking&#10;Status" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="240" y="330" width="120" height="50" as="geometry" />
-        </mxCell>
-        <mxCell id="uc-cancel-booking" value="Cancel Booking" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="430" y="50" width="120" height="40" as="geometry" />
-        </mxCell>
-        <mxCell id="uc-leave-review" value="Leave a Review" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="430" y="120" width="120" height="40" as="geometry" />
-        </mxCell>
-        <mxCell id="uc-contact-whatsapp" value="Contact via&#10;WhatsApp" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="430" y="200" width="120" height="50" as="geometry" />
+        <mxCell id="a-wa-lbl" value="WhatsApp" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="855" y="420" width="66" height="20" as="geometry" />
         </mxCell>
 
-        <!-- ==================== USE CASES - PROVIDER ==================== -->
-
-        <mxCell id="uc-become-provider" value="Become a&#10;Provider" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="430" y="420" width="120" height="50" as="geometry" />
+        <!-- Customer use cases -->
+        <mxCell id="uc-reg" value="Register / Login" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="bnd">
+          <mxGeometry x="40" y="40" width="100" height="34" as="geometry" />
         </mxCell>
-        <mxCell id="uc-manage-business" value="Manage Business&#10;Profile" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="430" y="510" width="120" height="50" as="geometry" />
+        <mxCell id="uc-search" value="Search &amp; Browse" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="bnd">
+          <mxGeometry x="40" y="90" width="100" height="34" as="geometry" />
         </mxCell>
-        <mxCell id="uc-set-availability" value="Set Availability&#10;Schedule" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="430" y="600" width="120" height="50" as="geometry" />
+        <mxCell id="uc-book" value="Book Service" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="bnd">
+          <mxGeometry x="40" y="140" width="100" height="34" as="geometry" />
         </mxCell>
-        <mxCell id="uc-upload-docs" value="Upload&#10;Verification Docs" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="610" y="420" width="120" height="50" as="geometry" />
-        </mxCell>
-        <mxCell id="uc-view-requests" value="View Booking&#10;Requests" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="610" y="510" width="120" height="50" as="geometry" />
-        </mxCell>
-        <mxCell id="uc-accept-reject" value="Accept / Reject&#10;Booking" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="610" y="600" width="120" height="50" as="geometry" />
-        </mxCell>
-        <mxCell id="uc-update-status" value="Update Booking&#10;Status" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="240" y="420" width="120" height="50" as="geometry" />
-        </mxCell>
-        <mxCell id="uc-view-reviews" value="View Reviews" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="240" y="510" width="120" height="40" as="geometry" />
+        <mxCell id="uc-pay" value="Pay / Review" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="bnd">
+          <mxGeometry x="40" y="190" width="100" height="34" as="geometry" />
         </mxCell>
 
-        <!-- ==================== USE CASES - ADMIN ==================== -->
-
-        <mxCell id="uc-admin-login" value="Admin Login" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="610" y="50" width="120" height="40" as="geometry" />
+        <!-- Provider use cases -->
+        <mxCell id="uc-prov-reg" value="Register Profile" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="bnd">
+          <mxGeometry x="240" y="40" width="100" height="34" as="geometry" />
         </mxCell>
-        <mxCell id="uc-dashboard" value="View Dashboard" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="610" y="120" width="120" height="40" as="geometry" />
+        <mxCell id="uc-avail" value="Set Availability" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="bnd">
+          <mxGeometry x="240" y="90" width="100" height="34" as="geometry" />
         </mxCell>
-        <mxCell id="uc-manage-users" value="Manage Users" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="610" y="190" width="120" height="40" as="geometry" />
+        <mxCell id="uc-docs" value="Upload Docs" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="bnd">
+          <mxGeometry x="240" y="140" width="100" height="34" as="geometry" />
         </mxCell>
-        <mxCell id="uc-manage-providers" value="Manage&#10;Providers" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="240" y="190" width="120" height="50" as="geometry" />
-        </mxCell>
-        <mxCell id="uc-review-docs" value="Review&#10;Documents" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="610" y="260" width="120" height="50" as="geometry" />
-        </mxCell>
-        <mxCell id="uc-verify-provider" value="Verify Provider" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="240" y="270" width="120" height="40" as="geometry" />
-        </mxCell>
-        <mxCell id="uc-view-payments" value="View Payment&#10;History" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="610" y="340" width="120" height="50" as="geometry" />
+        <mxCell id="uc-bookings" value="Manage Bookings" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="bnd">
+          <mxGeometry x="240" y="190" width="100" height="34" as="geometry" />
         </mxCell>
 
-        <!-- ==================== SYSTEM ACTOR USE CASES ==================== -->
+        <!-- Admin use cases -->
+        <mxCell id="uc-dash" value="Dashboard" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="bnd">
+          <mxGeometry x="440" y="40" width="100" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="uc-users" value="Manage Users" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="bnd">
+          <mxGeometry x="440" y="90" width="100" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="uc-verify" value="Verify Providers" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="bnd">
+          <mxGeometry x="440" y="140" width="100" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="uc-rev" value="Review Docs" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="bnd">
+          <mxGeometry x="440" y="190" width="100" height="34" as="geometry" />
+        </mxCell>
 
-        <mxCell id="uc-process-payment" value="Process Payment" style="ellipse;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="240" y="700" width="120" height="40" as="geometry" />
+        <!-- System use cases -->
+        <mxCell id="uc-process" value="Process Payment" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="bnd">
+          <mxGeometry x="440" y="280" width="100" height="34" as="geometry" />
         </mxCell>
-        <mxCell id="uc-itn" value="ITN Callback" style="ellipse;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="430" y="700" width="120" height="40" as="geometry" />
+        <mxCell id="uc-wa" value="Send Notifications" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="bnd">
+          <mxGeometry x="440" y="330" width="100" height="34" as="geometry" />
         </mxCell>
-        <mxCell id="uc-send-notif" value="Send WhatsApp&#10;Notification" style="ellipse;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="system-boundary">
-          <mxGeometry x="610" y="700" width="120" height="50" as="geometry" />
-        </mxCell>
-
-        <!-- ==================== ACTOR CONNECTORS ==================== -->
 
         <!-- Customer → Use Cases -->
-        <mxCell id="conn-cust-register" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-customer" target="uc-register">
+        <mxCell id="c-cust" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="a-cust" target="uc-reg">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="conn-cust-login" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-customer" target="uc-login">
+        <mxCell id="c-cust-s" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="a-cust" target="uc-search">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="conn-cust-profile" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-customer" target="uc-manage-profile">
+        <mxCell id="c-cust-b" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="a-cust" target="uc-book">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="conn-cust-search" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-customer" target="uc-search">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="conn-cust-viewprofile" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-customer" target="uc-view-profile">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="conn-cust-vehicle" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-customer" target="uc-register-vehicle">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="conn-cust-book" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-customer" target="uc-book-service">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="conn-cust-pay" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-customer" target="uc-make-payment">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="conn-cust-viewbook" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-customer" target="uc-view-booking">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="conn-cust-cancel" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-customer" target="uc-cancel-booking">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="conn-cust-review" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-customer" target="uc-leave-review">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="conn-cust-whatsapp" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-customer" target="uc-contact-whatsapp">
+        <mxCell id="c-cust-p" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="a-cust" target="uc-pay">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
         <!-- Provider → Use Cases -->
-        <mxCell id="conn-prov-become" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-provider" target="uc-become-provider">
+        <mxCell id="c-prov1" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="a-prov" target="uc-prov-reg">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="conn-prov-business" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-provider" target="uc-manage-business">
+        <mxCell id="c-prov2" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="a-prov" target="uc-avail">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="conn-prov-avail" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-provider" target="uc-set-availability">
+        <mxCell id="c-prov3" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="a-prov" target="uc-docs">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="conn-prov-docs" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-provider" target="uc-upload-docs">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="conn-prov-requests" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-provider" target="uc-view-requests">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="conn-prov-accept" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-provider" target="uc-accept-reject">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="conn-prov-status" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-provider" target="uc-update-status">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="conn-prov-reviews" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-provider" target="uc-view-reviews">
+        <mxCell id="c-prov4" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="a-prov" target="uc-bookings">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
         <!-- Admin → Use Cases -->
-        <mxCell id="conn-admin-login" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-admin" target="uc-admin-login">
+        <mxCell id="c-admin1" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="a-admin" target="uc-dash">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="conn-admin-dash" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-admin" target="uc-dashboard">
+        <mxCell id="c-admin2" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="a-admin" target="uc-users">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="conn-admin-users" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-admin" target="uc-manage-users">
+        <mxCell id="c-admin3" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="a-admin" target="uc-verify">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="conn-admin-providers" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-admin" target="uc-manage-providers">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="conn-admin-docs" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-admin" target="uc-review-docs">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="conn-admin-verify" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-admin" target="uc-verify-provider">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="conn-admin-payments" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="actor-admin" target="uc-view-payments">
+        <mxCell id="c-admin4" value="" style="html=1;rounded=1;endArrow=classic;" edge="1" parent="1" source="a-admin" target="uc-rev">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- PayFast → System Use Cases -->
-        <mxCell id="conn-payfast-process" value="" style="html=1;rounded=1;endArrow=classic;dashed=1;" edge="1" parent="1" source="actor-payfast" target="uc-process-payment">
+        <!-- PayFast → Process Payment -->
+        <mxCell id="c-pay" value="" style="html=1;rounded=1;endArrow=classic;dashed=1;" edge="1" parent="1" source="a-pay" target="uc-process">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="conn-payfast-itn" value="" style="html=1;rounded=1;endArrow=classic;dashed=1;" edge="1" parent="1" source="actor-payfast" target="uc-itn">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- WhatsApp → System Use Cases -->
-        <mxCell id="conn-whatsapp-send" value="" style="html=1;rounded=1;endArrow=classic;dashed=1;" edge="1" parent="1" source="actor-whatsapp" target="uc-send-notif">
+        <!-- WhatsApp → Send Notifications -->
+        <mxCell id="c-wa" value="" style="html=1;rounded=1;endArrow=classic;dashed=1;" edge="1" parent="1" source="a-wa" target="uc-wa">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- ==================== RELATIONSHIPS ==================== -->
-
-        <!-- <<include>> Book Service → Register Vehicle -->
-        <mxCell id="rel-book-include-vehicle" value="&lt;&lt;include&gt;&gt;" style="html=1;rounded=1;endArrow=block;endFill=1;dashed=1;fontSize=10;fontColor=#666;" edge="1" parent="1" source="uc-book-service" target="uc-register-vehicle">
+        <!-- <<include>> Book Service → Pay/Review -->
+        <mxCell id="r-inc" value="&lt;&lt;include&gt;&gt;" style="html=1;rounded=1;endArrow=block;endFill=1;dashed=1;fontSize=9;" edge="1" parent="1" source="uc-book" target="uc-pay">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="300" y="110" as="sourcePoint" />
-            <mxPoint x="300" y="70" as="targetPoint" />
+            <mxPoint x="140" y="195" as="sourcePoint" />
+            <mxPoint x="140" y="225" as="targetPoint" />
           </mxGeometry>
         </mxCell>
 
-        <!-- <<include>> Book Service → Make Payment -->
-        <mxCell id="rel-book-include-pay" value="&lt;&lt;include&gt;&gt;" style="html=1;rounded=1;endArrow=block;endFill=1;dashed=1;fontSize=10;fontColor=#666;" edge="1" parent="1" source="uc-book-service" target="uc-make-payment">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="390" y="175" as="sourcePoint" />
-            <mxPoint x="360" y="280" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-
-        <!-- <<extend>> Become a Provider → Upload Verification Docs -->
-        <mxCell id="rel-become-extend-docs" value="&lt;&lt;extend&gt;&gt;" style="html=1;rounded=1;endArrow=open;dashed=1;fontSize=10;fontColor=#666;" edge="1" parent="1" source="uc-upload-docs" target="uc-become-provider">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="580" y="445" as="sourcePoint" />
-            <mxPoint x="550" y="445" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-
-        <!-- Make Payment → Process Payment -->
-        <mxCell id="rel-pay-include-process" value="&lt;&lt;include&gt;&gt;" style="html=1;rounded=1;endArrow=block;endFill=1;dashed=1;fontSize=10;fontColor=#666;" edge="1" parent="1" source="uc-make-payment" target="uc-process-payment">
+        <!-- Book Service → Send Notifications -->
+        <mxCell id="r-ext" value="&lt;&lt;extend&gt;&gt;" style="html=1;rounded=1;endArrow=open;dashed=1;fontSize=9;" edge="1" parent="1" source="uc-wa" target="uc-book">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Make Payment → ITN Callback -->
-        <mxCell id="rel-pay-include-itn" value="&lt;&lt;include&gt;&gt;" style="html=1;rounded=1;endArrow=block;endFill=1;dashed=1;fontSize=10;fontColor=#666;" edge="1" parent="1" source="uc-make-payment" target="uc-itn">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- Book Service → Send WhatsApp -->
-        <mxCell id="rel-book-extend-whatsapp" value="&lt;&lt;extend&gt;&gt;" style="html=1;rounded=1;endArrow=open;dashed=1;fontSize=10;fontColor=#666;" edge="1" parent="1" source="uc-send-notif" target="uc-book-service">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- Accept/Reject → Send WhatsApp -->
-        <mxCell id="rel-accept-extend-whatsapp" value="&lt;&lt;extend&gt;&gt;" style="html=1;rounded=1;endArrow=open;dashed=1;fontSize=10;fontColor=#666;" edge="1" parent="1" source="uc-send-notif" target="uc-accept-reject">
+        <!-- Book Service → Process Payment -->
+        <mxCell id="r-pay" value="&lt;&lt;include&gt;&gt;" style="html=1;rounded=1;endArrow=block;endFill=1;dashed=1;fontSize=9;" edge="1" parent="1" source="uc-pay" target="uc-process">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
