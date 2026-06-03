@@ -130,7 +130,26 @@ if (!$dsn) {
     exit(1);
 }
 
-$pdo = new PDO($dsn, null, null, [
+// Support both explicit pgsql: DSN and postgresql:// URL formats
+if (str_starts_with($dsn, 'pgsql:')) {
+    $pdoDsn = $dsn;
+} elseif (str_starts_with($dsn, 'postgresql://') || str_starts_with($dsn, 'postgres://')) {
+    $parts = parse_url($dsn);
+    $host   = $parts['host'] ?? 'localhost';
+    $port   = $parts['port'] ?? 5432;
+    $dbname = ltrim($parts['path'] ?? '', '/');
+    $user   = $parts['user'] ?? 'postgres';
+    $pass   = $parts['pass'] ?? '';
+
+    $pdoDsn = sprintf('pgsql:host=%s;port=%d;dbname=%s', $host, $port, $dbname);
+    $pdoUser = $user;
+    $pdoPass = $pass;
+} else {
+    fwrite(STDERR, "FATAL: Unrecognised DATABASE_URL format: $dsn\n");
+    exit(1);
+}
+
+$pdo = new PDO($pdoDsn, $pdoUser ?? null, $pdoPass ?? null, [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
 ]);

@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
 
 # Install PHP extensions via PECL + docker-php-ext-*
 RUN pecl install imagick && docker-php-ext-enable imagick
-RUN docker-php-ext-install mbstring pdo_pgsql exif zip
+RUN docker-php-ext-install mbstring pdo_pgsql pgsql exif zip
 
 WORKDIR /app
 
