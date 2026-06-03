@@ -210,6 +210,23 @@ function processJob(PDO $pdo, array $job): void
     $metadata   = [];
     $thumbUrl   = null;
 
+    // If the file isn't local (separate-container deployment), download it
+    if (!file_exists($filePath)) {
+        $backendUrl = rtrim(getenv('BACKEND_URL') ?: 'http://localhost:3000', '/');
+        $remoteUrl  = $backendUrl . $fileUrl;
+
+        $remoteContent = @file_get_contents($remoteUrl);
+        if ($remoteContent === false) {
+            throw new RuntimeException(
+                "File not found locally ($filePath) and failed to download from backend: $remoteUrl"
+            );
+        }
+
+        $tempFile  = tempnam(sys_get_temp_dir(), 'doc_');
+        file_put_contents($tempFile, $remoteContent);
+        $filePath  = $tempFile;
+    }
+
     try {
         // ----------------------------------------------------------
         // 1. Validate file exists
