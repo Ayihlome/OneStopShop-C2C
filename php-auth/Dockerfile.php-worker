@@ -1,21 +1,24 @@
 FROM php:8.2-cli
 
+# Install system dependencies (includes libpq-dev for pdo_pgsql)
 RUN apt-get update && apt-get install -y \
     libmagickwand-dev \
+    libpq-dev \
     tesseract-ocr \
     tesseract-ocr-eng \
     poppler-utils \
-    --no-install-recommends && \
-    pecl install imagick && \
-    docker-php-ext-enable imagick && \
-    docker-php-ext-install mbstring pdo_pgsql exif && \
-    apt-get clean
+    --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions via PECL + docker-php-ext-*
+RUN pecl install imagick && docker-php-ext-enable imagick
+RUN docker-php-ext-install mbstring pdo_pgsql exif
 
 WORKDIR /app
 
 COPY composer.json .
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
-    composer install --no-dev --no-interaction
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
+    && composer install --no-dev --no-interaction
 
 COPY worker.php .
 
