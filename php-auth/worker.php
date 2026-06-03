@@ -12,6 +12,18 @@
 
 declare(strict_types=1);
 
+// Load Composer autoloader for TesseractOCR and other packages
+$autoloadPaths = [
+    __DIR__ . '/vendor/autoload.php',
+    __DIR__ . '/../vendor/autoload.php',
+];
+foreach ($autoloadPaths as $path) {
+    if (file_exists($path)) {
+        require $path;
+        break;
+    }
+}
+
 // ===================================================================
 // KEYWORD RULES — Per doc_type
 // ===================================================================
@@ -35,6 +47,8 @@ const KEYWORD_RULES = [
             "driver's licence",
             'drivers license',
             'drivers licence',
+            'driver license',
+            'driver licence',
             'passport',
             'national id',
             'national identity',
@@ -49,6 +63,22 @@ const KEYWORD_RULES = [
             'date of birth',
             'country of birth',
             'id no',
+            // Common driver's license fields (any country)
+            'issue date',
+            'expiration date',
+            'expiry date',
+            'date of issue',
+            'date of expiry',
+            'class',
+            'endorsements',
+            'restrictions',
+            'donor',
+            'organ donor',
+            'sex',
+            'height',
+            'weight',
+            'eyes',
+            'hair',
         ],
         'negative' => [
             'sample',
