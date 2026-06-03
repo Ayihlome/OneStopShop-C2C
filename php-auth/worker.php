@@ -170,7 +170,7 @@ function processNextJob(PDO $pdo): void
 {
     // Fetch one pending job, skip-locked to avoid contention between workers
     $stmt = $pdo->prepare(
-        "SELECT pj.id, pj.document_id, md.file_url, md.doc_type, md.provider_id
+        "SELECT pj.id, pj.document_id, md.file_url, md.doc_type, md.mechanic_id
          FROM processing_jobs pj
          JOIN mechanic_documents md ON md.id = pj.document_id
          WHERE pj.status = 'pending'
@@ -198,7 +198,7 @@ function processJob(PDO $pdo, array $job): void
     $documentId  = (int) $job['document_id'];
     $fileUrl     = $job['file_url'];
     $docType     = $job['doc_type'];
-    $providerId  = (int) $job['provider_id'];
+    $providerId  = (int) $job['mechanic_id'];
 
     // Mark as processing
     $pdo->prepare("UPDATE processing_jobs SET status = 'processing' WHERE id = ?")
@@ -399,7 +399,7 @@ function checkProviderQualification(PDO $pdo, int $providerId): void
     $stmt = $pdo->prepare(
         "SELECT COUNT(DISTINCT doc_type) AS verified_types
          FROM mechanic_documents
-         WHERE provider_id = ?
+         WHERE mechanic_id = ?
            AND validation_result->>'auto_verified' = 'true'
            AND doc_type IN ('id', 'certification', 'proof_of_residence')"
     );

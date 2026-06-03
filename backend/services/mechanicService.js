@@ -431,7 +431,7 @@ async function uploadDocument(mechanicId, docType, file) {
   const providerId = profileResult.rows[0].id;
 
   const result = await pool.query(
-    `INSERT INTO mechanic_documents (provider_id, doc_type, file_url)
+    `INSERT INTO mechanic_documents (mechanic_id, doc_type, file_url)
      VALUES ($1, $2, $3)
      RETURNING *`,
     [providerId, docType, `/uploads/documents/${file.filename}`]

@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS admins (
 -- =================================================================
 CREATE TABLE IF NOT EXISTS mechanic_documents (
   id BIGSERIAL PRIMARY KEY,
-  provider_id INT REFERENCES service_provider_profiles(id) ON DELETE CASCADE,
+  mechanic_id INT REFERENCES service_provider_profiles(id) ON DELETE CASCADE,
   doc_type VARCHAR(50) NOT NULL CHECK (doc_type IN ('id', 'certification', 'proof_of_residence')),
   file_url TEXT NOT NULL,
   status VARCHAR(20) NOT NULL DEFAULT 'pending'
