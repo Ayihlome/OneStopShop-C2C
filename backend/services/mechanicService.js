@@ -146,6 +146,7 @@ async function searchMechanics(query) {
 async function filterMechanics(filters) {
   const values = [];
   const conditions = ["a.status = 'active'"];
+  const having = [];
 
   if (filters.city) {
     values.push(filters.city);
@@ -157,10 +158,50 @@ async function filterMechanics(filters) {
     conditions.push(`s.name ILIKE '%' || $${values.length} || '%'`);
   }
 
+  if (filters.min_rating) {
+    values.push(Number(filters.min_rating));
+    having.push(`ROUND(AVG(r.rating)::numeric, 2) >= $${values.length}`);
+  }
+
+  if (filters.verified === 'true') {
+    conditions.push("sp.verification_badge = TRUE");
+  }
+
+  if (filters.is_available === 'true') {
+    conditions.push("sp.is_available = TRUE");
+  }
+
+  // Filter by available_on date — checks weekly schedule + exceptions
+  if (filters.available_on) {
+    const date = new Date(filters.available_on);
+    const dayOfWeek = date.getDay();
+    const dateStr = filters.available_on;
+
+    conditions.push(
+      `EXISTS (
+        SELECT 1 FROM provider_availability pa
+        WHERE pa.provider_id = sp.id
+          AND pa.day_of_week = ${dayOfWeek}
+          AND pa.is_active = TRUE
+      )`
+    );
+    conditions.push(
+      `NOT EXISTS (
+        SELECT 1 FROM provider_availability_exceptions pae
+        WHERE pae.provider_id = sp.id
+          AND pae.exception_date = '${dateStr}'
+          AND pae.is_available = FALSE
+      )`
+    );
+  }
+
+  const havingClause = having.length > 0 ? `HAVING ${having.join(' AND ')}` : '';
+
   const result = await pool.query(
     `${PROVIDER_SELECT}
      WHERE ${conditions.join(' AND ')}
      ${PROVIDER_GROUP}
+     ${havingClause}
      ORDER BY sp.verification_badge DESC, average_rating DESC`,
     values
   );
@@ -170,6 +211,10 @@ async function filterMechanics(filters) {
     filters: {
       hasCity: Boolean(filters.city),
       hasSpecialty: Boolean(filters.specialty),
+      hasMinRating: Boolean(filters.min_rating),
+      verified: filters.verified,
+      isAvailable: filters.is_available,
+      availableOn: filters.available_on,
     },
   });
 
@@ -500,6 +545,105 @@ async function verifyMechanic(accountId) {
   return getMechanic(accountId);
 }
 
+// =================================================================
+// PROVIDER AVAILABILITY
+// =================================================================
+
+async function getAvailability(accountId) {
+  // Look up the provider profile id from the account id
+  const profile = await pool.query(
+    `SELECT id FROM service_provider_profiles WHERE account_id = $1`,
+    [accountId]
+  );
+  if (!profile.rows[0]) return { slots: [], exceptions: [] };
+
+  const providerId = profile.rows[0].id;
+
+  const [slots, exceptions] = await Promise.all([
+    pool.query(
+      `SELECT * FROM provider_availability
+       WHERE provider_id = $1 AND is_active = TRUE
+       ORDER BY day_of_week, start_time`,
+      [providerId]
+    ),
+    pool.query(
+      `SELECT * FROM provider_availability_exceptions
+       WHERE provider_id = $1
+       ORDER BY exception_date DESC
+       LIMIT 50`,
+      [providerId]
+    ),
+  ]);
+  return { slots: slots.rows, exceptions: exceptions.rows };
+}
+
+async function setAvailability(accountId, slots) {
+  const profile = await pool.query(
+    `SELECT id FROM service_provider_profiles WHERE account_id = $1`,
+    [accountId]
+  );
+  if (!profile.rows[0]) throw createError(404, 'Provider profile not found');
+  const providerId = profile.rows[0].id;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    // Replace all active slots for this provider
+    await client.query(
+      `DELETE FROM provider_availability WHERE provider_id = $1`,
+      [providerId]
+    );
+    for (const slot of slots) {
+      await client.query(
+        `INSERT INTO provider_availability (provider_id, day_of_week, start_time, end_time)
+         VALUES ($1, $2, $3, $4)`,
+        [providerId, slot.day_of_week, slot.start_time, slot.end_time]
+      );
+    }
+    await client.query('COMMIT');
+    return getAvailability(providerId);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+async function addAvailabilityException(accountId, date, reason) {
+  const profile = await pool.query(
+    `SELECT id FROM service_provider_profiles WHERE account_id = $1`,
+    [accountId]
+  );
+  if (!profile.rows[0]) throw createError(404, 'Provider profile not found');
+  const providerId = profile.rows[0].id;
+
+  const result = await pool.query(
+    `INSERT INTO provider_availability_exceptions (provider_id, exception_date, reason)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (provider_id, exception_date)
+     DO UPDATE SET reason = $3, is_available = FALSE
+     RETURNING *`,
+    [providerId, date, reason || null]
+  );
+  return sanitize(result.rows[0]);
+}
+
+async function removeAvailabilityException(accountId, id) {
+  const profile = await pool.query(
+    `SELECT id FROM service_provider_profiles WHERE account_id = $1`,
+    [accountId]
+  );
+  if (!profile.rows[0]) throw createError(404, 'Provider profile not found');
+  const providerId = profile.rows[0].id;
+
+  await pool.query(
+    `DELETE FROM provider_availability_exceptions
+     WHERE id = $1 AND provider_id = $2`,
+    [id, providerId]
+  );
+}
+
 module.exports = {
   listMechanics,
   getMechanic,
@@ -513,4 +657,8 @@ module.exports = {
   deleteMechanic,
   verifyMechanic,
   createProviderProfile,
+  getAvailability,
+  setAvailability,
+  addAvailabilityException,
+  removeAvailabilityException,
 };

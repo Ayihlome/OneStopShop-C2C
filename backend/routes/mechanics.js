@@ -74,4 +74,22 @@ router.put(
   asyncHandler(mechanicController.updateMechanic)
 );
 
+// Availability
+router.get('/:id/availability', asyncHandler(mechanicController.getAvailability));
+router.put(
+  '/:id/availability',
+  authenticate,
+  asyncHandler(mechanicController.setAvailability)
+);
+router.post(
+  '/:id/availability/exceptions',
+  authenticate,
+  asyncHandler(mechanicController.addAvailabilityException)
+);
+router.delete(
+  '/:id/availability/exceptions/:exceptionId',
+  authenticate,
+  asyncHandler(mechanicController.removeAvailabilityException)
+);
+
 module.exports = router;

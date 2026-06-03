@@ -1,4 +1,4 @@
-import { MapPin, Search, Star, Wrench } from "lucide-react";
+import { MapPin, Search, Star, Wrench, CalendarDays, Verified } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
@@ -115,6 +115,9 @@ function normalizeMechanic(mechanic: BackendMechanic) {
 export default function FindYourMechanic() {
   const [location, setLocation] = useState("");
   const [specialty, setSpecialty] = useState("all");
+  const [availableOn, setAvailableOn] = useState("");
+  const [minRating, setMinRating] = useState("all");
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [mechanics, setMechanics] = useState(fallbackMechanics);
   const [status, setStatus] = useState("Loading mechanics from backend...");
   const [isLoading, setIsLoading] = useState(true);
@@ -126,13 +129,16 @@ export default function FindYourMechanic() {
       setStatus("Loading mechanics from backend...");
 
       try {
-        const response =
-          location || specialty !== "all"
-            ? await filterMechanics({
-                city: location || undefined,
-                specialty: specialty === "all" ? undefined : specialty,
-              })
-            : await listMechanics();
+          const response =
+            location || specialty !== "all" || availableOn || minRating !== "all" || verifiedOnly
+              ? await filterMechanics({
+                  city: location || undefined,
+                  specialty: specialty === "all" ? undefined : specialty,
+                  available_on: availableOn || undefined,
+                  min_rating: minRating !== "all" ? minRating : undefined,
+                  verified: verifiedOnly ? "true" : undefined,
+                })
+              : await listMechanics();
 
         setMechanics(response.data.map(normalizeMechanic));
         setStatus("Mechanics loaded from backend.");
@@ -149,7 +155,7 @@ export default function FindYourMechanic() {
     }, 300);
 
     return () => window.clearTimeout(timer);
-  }, [location, specialty]);
+  }, [location, specialty, availableOn, minRating, verifiedOnly]);
 
   const filteredMechanics = mechanics.filter((mechanic) => {
     const matchesLocation =
@@ -207,6 +213,45 @@ export default function FindYourMechanic() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+            </CardContent>
+            <CardContent className="grid gap-4 pb-6 sm:grid-cols-3">
+              <div className="space-y-2">
+                <Label>Available on</Label>
+                <div className="relative">
+                  <CalendarDays className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    className="pl-9"
+                    onChange={(e) => setAvailableOn(e.target.value)}
+                    type="date"
+                    value={availableOn}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Minimum rating</Label>
+                <Select onValueChange={setMinRating} value={minRating}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Any rating" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Any rating</SelectItem>
+                    <SelectItem value="3">3+ stars</SelectItem>
+                    <SelectItem value="4">4+ stars</SelectItem>
+                    <SelectItem value="4.5">4.5+ stars</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Verified only</Label>
+                <Button
+                  className={`w-full ${verifiedOnly ? "" : "border-border text-muted-foreground"}`}
+                  onClick={() => setVerifiedOnly(!verifiedOnly)}
+                  variant={verifiedOnly ? "default" : "outline"}
+                >
+                  <Verified className="size-4 mr-2" />
+                  {verifiedOnly ? "Verified only" : "All providers"}
+                </Button>
               </div>
             </CardContent>
           </Card>

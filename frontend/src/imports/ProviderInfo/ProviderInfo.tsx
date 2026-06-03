@@ -1,4 +1,4 @@
-import { Save, Upload } from "lucide-react";
+import { Save, Upload, CalendarDays } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 
 import { Badge } from "@/app/components/ui/badge";
@@ -26,6 +26,8 @@ import {
   getMechanicProfile,
   updateMechanic,
   uploadDocument,
+  getAvailability,
+  setAvailability,
 } from "@/api/mechanics";
 import {
   listProviderBookings,
