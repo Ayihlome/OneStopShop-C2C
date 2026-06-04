@@ -23,6 +23,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Hermes Agent working files
+.hermes/
+
 # OS/editor
 .DS_Store
 Thumbs.db
