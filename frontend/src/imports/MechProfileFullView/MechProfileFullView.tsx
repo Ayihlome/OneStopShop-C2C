@@ -33,6 +33,7 @@ import { listVehicles } from "@/api/vehicles";
 
 const fallbackProfile = {
   id: "robert-auto",
+  providerProfileId: null,
   name: "Robert Daniels",
   serviceName: "Robert's Auto Clinic",
   location: "Johannesburg",
@@ -92,6 +93,7 @@ export default function MechProfileFullView() {
         if (!ignore) {
           setMechanicData({
             id: String(profile.id),
+            providerProfileId: profile.provider_profile_id,
             name,
             serviceName: profile.business_name || name,
             location: profile.city || profile.town || "Unknown",
@@ -165,8 +167,13 @@ export default function MechProfileFullView() {
     setStatus("Creating booking...");
 
     try {
+      if (!mechanic.providerProfileId) {
+        setStatus("Could not create booking because the provider profile was not loaded.");
+        return;
+      }
+
       const bookingResp = await createBooking({
-        providerId: Number(id),
+        providerId: Number(mechanic.providerProfileId),
         vehicleId: Number(bookingForm.vehicleId),
         description: bookingForm.description,
         preferredSchedule: new Date(bookingForm.preferredSchedule).toISOString(),
