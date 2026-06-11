@@ -42,23 +42,34 @@ async function ensureVehicleBelongsToUser(vehicleId, userId) {
   }
 }
 
-async function ensureProviderExists(providerId) {
+async function resolveProviderProfileId(providerId) {
   const result = await pool.query(
     `SELECT id FROM service_provider_profiles WHERE id = $1 AND provider_status = 'active'`,
     [providerId]
   );
 
-  if (!result.rows[0]) {
+  if (result.rows[0]) {
+    return result.rows[0].id;
+  }
+
+  const byAccount = await pool.query(
+    `SELECT id FROM service_provider_profiles WHERE account_id = $1 AND provider_status = 'active'`,
+    [providerId]
+  );
+
+  if (!byAccount.rows[0]) {
     logger.warn('Booking validation failed because provider was not found', {
       providerId,
     });
     throw createError(400, 'Service provider not found or unavailable');
   }
+
+  return byAccount.rows[0].id;
 }
 
 async function createBooking(userId, input) {
   await ensureVehicleBelongsToUser(input.vehicleId, userId);
-  await ensureProviderExists(input.providerId);
+  const providerProfileId = await resolveProviderProfileId(input.providerId);
 
   const client = await pool.connect();
 
@@ -73,7 +84,7 @@ async function createBooking(userId, input) {
        RETURNING *`,
       [
         userId,
-        input.providerId,
+        providerProfileId,
         input.vehicleId,
         input.description,
         input.preferredSchedule,
@@ -83,13 +94,13 @@ async function createBooking(userId, input) {
     // Notify the provider's account
     await client.query(
       `INSERT INTO notifications (recipient_id, recipient_type, message)
-       VALUES (
+      VALUES (
          (SELECT account_id FROM service_provider_profiles WHERE id = $1),
          'mechanic',
          $2
        )`,
       [
-        input.providerId,
+        providerProfileId,
         `New booking request #${booking.rows[0].id}`,
       ]
     );
@@ -98,14 +109,18 @@ async function createBooking(userId, input) {
 
     // ── WhatsApp notifications (non-blocking) ──────────────
     const newBooking = booking.rows[0];
-    sendBookingNotifications(input, newBooking, userId).catch((err) =>
+    sendBookingNotifications(
+      { ...input, providerId: providerProfileId },
+      newBooking,
+      userId
+    ).catch((err) =>
       logger.error('WhatsApp notification failed', errorMeta(err))
     );
 
     logger.info('Booking created', {
       bookingId: booking.rows[0].id,
       userId,
-      providerId: input.providerId,
+      providerId: providerProfileId,
       vehicleId: input.vehicleId,
       status: booking.rows[0].booking_status,
     });
@@ -116,7 +131,7 @@ async function createBooking(userId, input) {
     logger.error('Booking creation rolled back', {
       ...errorMeta(error, { includeStack: true }),
       userId,
-      providerId: input.providerId,
+      providerId: providerProfileId,
       vehicleId: input.vehicleId,
     });
     throw error;

@@ -52,26 +52,30 @@ export default function ProviderDashboard() {
     let ignore = false;
 
     async function load() {
-      try {
-        const [statsResp, bookingsResp] = await Promise.all([
-          getProviderStats(),
-          listProviderBookings().catch(() => null),
-        ]);
+      const [statsResult, bookingsResult] = await Promise.allSettled([
+        getProviderStats(),
+        listProviderBookings(),
+      ]);
 
-        if (!ignore) {
+      if (!ignore) {
+        if (statsResult.status === "fulfilled") {
+          const statsResp = statsResult.value;
           setStats(statsResp?.data ?? statsResp ?? null);
-
-          if (bookingsResp) {
-            const bData = bookingsResp.data || bookingsResp;
-            setRecentBookings(
-              (Array.isArray(bData) ? bData : []).slice(0, 5)
-            );
-          }
-
-          setStatus("");
         }
-      } catch {
-        if (!ignore) setStatus("Could not load dashboard.");
+
+        if (bookingsResult.status === "fulfilled") {
+          const bookingsResp = bookingsResult.value;
+          const bData = bookingsResp.data || bookingsResp;
+          setRecentBookings(
+            (Array.isArray(bData) ? bData : []).slice(0, 5)
+          );
+        }
+
+        setStatus(
+          statsResult.status === "rejected" && bookingsResult.status === "rejected"
+            ? "Could not load dashboard."
+            : ""
+        );
       }
     }
 

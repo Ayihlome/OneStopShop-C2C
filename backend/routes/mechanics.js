@@ -57,11 +57,11 @@ router.post(
   asyncHandler(mechanicController.uploadDocument)
 );
 
-router.get('/:id/profile', asyncHandler(mechanicController.getMechanicProfile));
-router.get('/:id', asyncHandler(mechanicController.getMechanic));
-
 // Provider dashboard
 router.get('/provider/stats', authenticate, asyncHandler(mechanicController.getProviderStats));
+
+router.get('/:id/profile', asyncHandler(mechanicController.getMechanicProfile));
+router.get('/:id', asyncHandler(mechanicController.getMechanic));
 
 router.put(
   '/:id',

@@ -72,8 +72,14 @@ export default function ProviderBookings() {
           setBookings(data);
           setStatus("");
         }
-      } catch {
-        if (!ignore) setStatus("Could not load bookings.");
+      } catch (error) {
+        if (!ignore) {
+          setStatus(
+            error instanceof Error
+              ? error.message
+              : "Could not load bookings."
+          );
+        }
       } finally {
         if (!ignore) setIsLoading(false);
       }
