@@ -29,4 +29,21 @@ async function getPaymentStatus(req, res) {
   return res.status(200).json({ data });
 }
 
-module.exports = { initiatePayment, itnCallback, getPaymentStatus };
+async function paymentCancel(req, res) {
+  // For simplicity, reuse getPaymentStatus logic to return current payment status
+  const data = await paymentService.getPaymentStatus(
+    Number(req.params.bookingId),
+    req.user.id
+  );
+  return res.status(200).json({ data });
+}
+
+async function paymentSuccess(req, res) {
+  const data = await paymentService.paymentSuccess(
+    Number(req.params.bookingId),
+    req.user.id
+  );
+  return res.status(200).json({ data });
+}
+
+module.exports = { initiatePayment, itnCallback, getPaymentStatus, paymentSuccess }; 

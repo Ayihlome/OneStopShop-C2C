@@ -222,9 +222,58 @@ async function listAllPayments() {
   return sanitize(result.rows);
 }
 
+async function getPaymentStatus(bookingId, requesterId) {
+  const result = await pool.query(
+    `SELECT 
+        p.*,
+        sp.business_whatsapp_number,
+        b.customer_user_id,
+        b.booking_status
+      FROM payments p
+      INNER JOIN bookings b ON b.id = p.booking_id
+      INNER JOIN service_provider_profiles sp ON sp.id = b.service_provider_id
+      WHERE p.booking_id = $1`,
+    [bookingId]
+  );
+
+  const row = result.rows[0];
+  if (!row) {
+    throw createError(404, 'Payment not found for this booking');
+  }
+
+  // Only the customer who made the booking can see the WhatsApp URL
+  const isOwner = Number(row.customer_user_id) === Number(requesterId);
+  const paymentConfirmed = row.payment_status === 'successful';
+
+  const response = sanitize(row);
+  delete response.business_whatsapp_number; // remove by default
+
+  if (isOwner && paymentConfirmed && row.business_whatsapp_number) {
+    const cleaned = String(row.business_whatsapp_number).replace(/\D/g, '');
+    response.whatsapp_url = `https://wa.me/${cleaned}`;
+
+    // Advance booking status to 'whatsapp_redirected' if still on 'paid'
+    if (row.booking_status === 'paid') {
+      await pool.query(
+        `UPDATE bookings SET booking_status = 'whatsapp_redirected' WHERE id = $1`,
+        [bookingId]
+      );
+    }
+  }
+
+  return response;
+}
+
+async function paymentSuccess(bookingId, requesterId) {
+  // For simplicity, reuse getPaymentStatus logic to return payment details
+  return getPaymentStatus(bookingId, requesterId);
+}
+
+
 module.exports = {
   initiateSandboxPayment,
   confirmPayment,
   getPaymentStatus,
+  paymentSuccess,
   listAllPayments,
 };

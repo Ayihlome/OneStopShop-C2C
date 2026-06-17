@@ -27,4 +27,18 @@ router.get(
   asyncHandler(paymentController.getPaymentStatus)
 );
 
+//Cancelled page
+router.get(
+  '/booking/:bookingId/cancel',
+  authenticate,
+  asyncHandler(paymentController.paymentCancel) // Reuse paymentCancel to return current payment status
+);
+
+//success page
+router.get(
+  '/booking/:bookingId/success',
+  authenticate,
+  asyncHandler(paymentController.paymentSuccess)
+);
+
 module.exports = router;
