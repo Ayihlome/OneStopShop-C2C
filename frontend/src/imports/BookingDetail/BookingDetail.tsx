@@ -55,6 +55,8 @@ type BookingDetail = {
   description: string;
   preferred_schedule: string;
   created_at: string;
+  quoted_amount?: number | string | null;
+  quoted_at?: string | null;
   customer_first_name?: string;
   customer_last_name?: string;
   provider_first_name?: string;
@@ -115,6 +117,10 @@ export default function BookingDetail() {
 
   const handlePay = async () => {
     if (!booking) return;
+    if (!booking.quoted_amount) {
+      setStatus("The provider must set a booking price before payment.");
+      return;
+    }
     setStatus("Initiating payment...");
     try {
       const resp = await initiatePayment(booking.id);
@@ -173,6 +179,14 @@ export default function BookingDetail() {
   };
 
   const label = (s: string) => s.replace(/_/g, " ");
+  const formatCurrency = (value?: number | string | null) => {
+    const amount = Number(value);
+    if (!Number.isFinite(amount) || amount <= 0) return "";
+    return new Intl.NumberFormat("en-ZA", {
+      style: "currency",
+      currency: "ZAR",
+    }).format(amount);
+  };
 
   const currentStatusIndex = booking
     ? statusTimeline.indexOf(booking.booking_status)
@@ -382,14 +396,30 @@ export default function BookingDetail() {
                 <CardHeader>
                   <CardTitle className="text-lg">Payment</CardTitle>
                   <CardDescription>
-                    Pay via PayFast sandbox to confirm your booking.
+                    {booking.quoted_amount
+                      ? "Pay via PayFast to confirm your booking."
+                      : "The provider still needs to set the booking price."}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
+                  {booking.quoted_amount && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Amount due</p>
+                      <p className="text-2xl font-semibold">
+                        {formatCurrency(booking.quoted_amount)}
+                      </p>
+                    </div>
+                  )}
                   {!paymentUrl ? (
-                    <Button className="w-full" onClick={handlePay}>
+                    <Button
+                      className="w-full"
+                      disabled={!booking.quoted_amount}
+                      onClick={handlePay}
+                    >
                       <ExternalLink className="size-4" />
-                      Pay now (R100.00)
+                      {booking.quoted_amount
+                        ? `Pay now (${formatCurrency(booking.quoted_amount)})`
+                        : "Awaiting provider price"}
                     </Button>
                   ) : (
                     <>

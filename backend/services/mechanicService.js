@@ -410,7 +410,9 @@ async function update(accountId, input) {
            years_of_experience = COALESCE($5, years_of_experience),
            is_available = COALESCE($6, is_available),
            lat = COALESCE($7, lat),
-           lng = COALESCE($8, lng)
+           lng = COALESCE($8, lng),
+           payfast_merchant_id = COALESCE($9, payfast_merchant_id),
+           payfast_merchant_key = COALESCE($10, payfast_merchant_key)
        WHERE account_id = $1
        RETURNING *`,
       [
@@ -422,6 +424,8 @@ async function update(accountId, input) {
         toNullable(input.is_available),
         toNullable(input.lat),
         toNullable(input.lng),
+        toNullable(input.payfast_merchant_id),
+        toNullable(input.payfast_merchant_key),
       ]
     );
 

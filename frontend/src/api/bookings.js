@@ -20,6 +20,10 @@ export async function updateBookingStatus(id, status) {
   return client.patch(`/bookings/${id}/status`, { status });
 }
 
+export async function updateBookingPrice(id, amount) {
+  return client.patch(`/bookings/${id}/price`, { amount });
+}
+
 export async function initiatePayment(bookingId) {
   return client.post(`/payments/booking/${bookingId}/initiate`);
 }

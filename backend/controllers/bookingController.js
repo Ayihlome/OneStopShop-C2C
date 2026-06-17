@@ -29,10 +29,20 @@ async function updateBookingStatus(req, res) {
   return res.status(200).json({ data, message: 'Success' });
 }
 
+async function updateBookingPrice(req, res) {
+  const data = await bookingService.updateBookingPrice(
+    req.params.id,
+    req.body.amount,
+    req.user
+  );
+  return res.status(200).json({ data, message: 'Success' });
+}
+
 module.exports = {
   createBooking,
   getBooking,
   listMyBookings,
   listMechanicBookings,
   updateBookingStatus,
+  updateBookingPrice,
 };

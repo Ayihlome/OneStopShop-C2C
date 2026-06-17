@@ -69,6 +69,8 @@ router.put(
   [
     body('business_name').optional({ nullable: true, checkFalsy: true }).trim(),
     body('service_description').optional({ nullable: true, checkFalsy: true }).trim(),
+    body('payfast_merchant_id').optional({ nullable: true, checkFalsy: true }).trim(),
+    body('payfast_merchant_key').optional({ nullable: true, checkFalsy: true }).trim(),
   ],
   validate,
   asyncHandler(mechanicController.updateMechanic)

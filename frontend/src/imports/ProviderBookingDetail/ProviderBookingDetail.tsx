@@ -22,9 +22,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/app/components/ui/card";
+import { Input } from "@/app/components/ui/input";
+import { Label } from "@/app/components/ui/label";
 import { Separator } from "@/app/components/ui/separator";
 import { StatusMessage } from "@/app/components/ui/status-message";
-import { getBooking, updateBookingStatus } from "@/api/bookings";
+import { getBooking, updateBookingPrice, updateBookingStatus } from "@/api/bookings";
 
 const statusColors: Record<string, string> = {
   payment_pending: "bg-amber-100 text-amber-800 border-amber-200",
@@ -42,6 +44,8 @@ type Booking = {
   description: string;
   preferred_schedule: string;
   created_at: string;
+  quoted_amount?: number | string | null;
+  quoted_at?: string | null;
   customer_first_name?: string;
   customer_last_name?: string;
   provider_first_name?: string;
@@ -58,6 +62,8 @@ export default function ProviderBookingDetail() {
   const [booking, setBooking] = useState<Booking | null>(null);
   const [status, setStatus] = useState("Loading booking...");
   const [isLoading, setIsLoading] = useState(true);
+  const [priceInput, setPriceInput] = useState("");
+  const [isSavingPrice, setIsSavingPrice] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -69,6 +75,7 @@ export default function ProviderBookingDetail() {
         const data = resp?.data ?? resp;
         if (!ignore && data) {
           setBooking(data);
+          setPriceInput(data.quoted_amount ? String(data.quoted_amount) : "");
           setStatus("");
         } else if (!ignore) {
           setStatus("Booking not found.");
@@ -92,6 +99,35 @@ export default function ProviderBookingDetail() {
       setStatus(`Booking #${booking.id} updated to ${newStatus.replace(/_/g, " ")}.`);
     } catch {
       setStatus("Could not update booking status.");
+    }
+  };
+
+  const handlePriceSave = async () => {
+    if (!booking) return;
+    const amount = Number(priceInput);
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setStatus("Enter a valid booking price.");
+      return;
+    }
+
+    setIsSavingPrice(true);
+    setStatus("Saving booking price...");
+
+    try {
+      const resp = await updateBookingPrice(booking.id, amount.toFixed(2));
+      const data = resp?.data ?? resp;
+      setBooking((prev) => prev ? { ...prev, ...data } : data);
+      setPriceInput(data.quoted_amount ? String(data.quoted_amount) : amount.toFixed(2));
+      setStatus(`Booking price set to ${formatCurrency(amount)}.`);
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : "Could not save booking price."
+      );
+    } finally {
+      setIsSavingPrice(false);
     }
   };
 
@@ -120,6 +156,14 @@ export default function ProviderBookingDetail() {
   };
 
   const label = (s: string) => s.replace(/_/g, " ");
+  const formatCurrency = (value?: number | string | null) => {
+    const amount = Number(value);
+    if (!Number.isFinite(amount) || amount <= 0) return "Not quoted";
+    return new Intl.NumberFormat("en-ZA", {
+      style: "currency",
+      currency: "ZAR",
+    }).format(amount);
+  };
 
   const availableActions: { status: string; label: string; variant: "default" | "destructive" | "outline" }[] = [];
   if (booking) {
@@ -250,6 +294,47 @@ export default function ProviderBookingDetail() {
 
           {/* Actions */}
           <div className="space-y-6">
+            <Card className="rounded-lg bg-card">
+              <CardHeader>
+                <CardTitle className="text-lg">Booking price</CardTitle>
+                <CardDescription>
+                  Set the amount the customer will pay via PayFast.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">Current quote</p>
+                  <p className="text-xl font-semibold">
+                    {formatCurrency(booking.quoted_amount)}
+                  </p>
+                </div>
+                {booking.booking_status === "payment_pending" ? (
+                  <div className="grid gap-2">
+                    <Label htmlFor="bookingPrice">Amount in ZAR</Label>
+                    <Input
+                      id="bookingPrice"
+                      min="0.01"
+                      onChange={(event) => setPriceInput(event.target.value)}
+                      placeholder="850.00"
+                      step="0.01"
+                      type="number"
+                      value={priceInput}
+                    />
+                    <Button
+                      disabled={isSavingPrice}
+                      onClick={handlePriceSave}
+                    >
+                      {isSavingPrice ? "Saving..." : "Save price"}
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Price changes are closed after payment starts.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
             <Card className="rounded-lg bg-card">
               <CardHeader>
                 <CardTitle className="text-lg">Actions</CardTitle>

@@ -43,4 +43,16 @@ router.patch(
   asyncHandler(bookingController.updateBookingStatus)
 );
 
+router.patch(
+  '/:id/price',
+  authenticate,
+  [
+    body('amount')
+      .isFloat({ min: 0.01 })
+      .withMessage('A valid booking price is required'),
+  ],
+  validate,
+  asyncHandler(bookingController.updateBookingPrice)
+);
+
 module.exports = router;

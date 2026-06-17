@@ -4,7 +4,7 @@ const logger = require('../utils/logger');
 const { sanitize } = require('../utils/sanitize');
 const { createError } = require('../utils/errors');
 
-// Build a PayFast sandbox redirect URL from a booking and amount.
+// Build a PayFast redirect URL from a provider-priced booking.
 // The provider's PayFast merchant credentials are read from their profile.
 async function initiateSandboxPayment(bookingId, payerUserId) {
   const client = await pool.connect();
@@ -32,28 +32,49 @@ async function initiateSandboxPayment(bookingId, payerUserId) {
       throw createError(404, 'Booking not found or payment already processed');
     }
 
-    // Use provider's PayFast credentials if available, else fall back to platform credentials
-    const merchantId = booking.payfast_merchant_id || config.payfast.merchantId;
-    const merchantKey = booking.payfast_merchant_key || config.payfast.merchantKey;
+    const merchantId = String(booking.payfast_merchant_id || '').trim();
+    const merchantKey = String(booking.payfast_merchant_key || '').trim();
 
-    // A fixed amount per booking could be passed in as input,
-    // but for now a placeholder amount of 100.00 ZAR is used.
-    // In production this would come from a price agreed at booking creation.
-    const amount = '100.00';
+    if (!merchantId || !merchantKey) {
+      throw createError(400, 'This provider has not configured PayFast merchant credentials');
+    }
+
+    const quoteAmount = Number(booking.quoted_amount);
+    if (!Number.isFinite(quoteAmount) || quoteAmount <= 0) {
+      throw createError(400, 'The provider must set a booking price before payment can be made');
+    }
+
+    const amount = quoteAmount.toFixed(2);
 
     // Insert a pending payment record
     const paymentResult = await client.query(
       `INSERT INTO payments (booking_id, payer_user_id, amount, currency, payment_status)
        VALUES ($1, $2, $3, 'ZAR', 'pending')
+       ON CONFLICT (booking_id) DO UPDATE
+       SET payer_user_id = EXCLUDED.payer_user_id,
+           amount = EXCLUDED.amount,
+           currency = EXCLUDED.currency,
+           payment_status = 'pending',
+           payfast_payment_id = NULL,
+           sandbox_transaction_id = NULL,
+           paid_at = NULL
+       WHERE payments.payment_status IN ('pending', 'failed', 'cancelled')
        RETURNING *`,
       [bookingId, payerUserId, amount]
     );
 
     const payment = paymentResult.rows[0];
+    if (!payment) {
+      throw createError(409, 'Payment has already been completed for this booking');
+    }
 
     await client.query('COMMIT');
 
-    // Build PayFast sandbox redirect URL
+    const payfastBaseUrl = config.payfast.sandbox
+      ? 'https://sandbox.payfast.co.za/eng/process'
+      : 'https://www.payfast.co.za/eng/process';
+
+    // Build PayFast redirect URL
     const params = new URLSearchParams({
       merchant_id: merchantId,
       merchant_key: merchantKey,
@@ -65,17 +86,20 @@ async function initiateSandboxPayment(bookingId, payerUserId) {
       item_name: `OneStopShop Booking #${bookingId}`,
     });
 
-    const redirectUrl = `https://sandbox.payfast.co.za/eng/process?${params.toString()}`;
+    const redirectUrl = `${payfastBaseUrl}?${params.toString()}`;
 
-    logger.info('PayFast sandbox payment initiated', {
+    logger.info('PayFast payment initiated', {
       bookingId,
       paymentId: payment.id,
       payerUserId,
       amount,
+      sandbox: config.payfast.sandbox,
     });
 
     return {
       paymentId: payment.id,
+      amount,
+      currency: payment.currency,
       redirectUrl,
     };
   } catch (error) {

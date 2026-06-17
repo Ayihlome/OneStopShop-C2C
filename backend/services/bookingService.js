@@ -329,6 +329,90 @@ async function updateBookingStatus(id, status, requester) {
   return sanitize(result.rows[0]);
 }
 
+async function updateBookingPrice(id, amount, requester) {
+  const quoteAmount = Number(amount);
+
+  if (!Number.isFinite(quoteAmount) || quoteAmount <= 0) {
+    throw createError(400, 'A valid booking price is required');
+  }
+
+  const current = await pool.query(
+    `SELECT *
+     FROM bookings
+     WHERE id = $1`,
+    [id]
+  );
+  const booking = current.rows[0];
+
+  if (!booking) {
+    throw createError(404, 'Booking not found');
+  }
+
+  if (booking.booking_status !== 'payment_pending') {
+    throw createError(400, 'Booking price can only be set before payment is completed');
+  }
+
+  const providerResult = await pool.query(
+    `SELECT id FROM service_provider_profiles WHERE id = $1 AND account_id = $2`,
+    [booking.service_provider_id, requester.id]
+  );
+  const isProvider = providerResult.rows.length > 0;
+  const isAdmin = ['moderator', 'superadmin'].includes(requester.role);
+
+  if (!isProvider && !isAdmin) {
+    logger.warn('Booking price update forbidden', {
+      bookingId: id,
+      requesterId: requester.id,
+      role: requester.role,
+    });
+    throw createError(403, 'Forbidden');
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const result = await client.query(
+      `UPDATE bookings
+       SET quoted_amount = $2,
+           quoted_at = NOW()
+       WHERE id = $1
+       RETURNING *`,
+      [id, quoteAmount.toFixed(2)]
+    );
+
+    await client.query(
+      `DELETE FROM payments
+       WHERE booking_id = $1
+         AND payment_status = 'pending'`,
+      [id]
+    );
+
+    await client.query('COMMIT');
+
+    logger.info('Booking price updated', {
+      bookingId: id,
+      amount: quoteAmount.toFixed(2),
+      requesterId: requester.id,
+      role: requester.role,
+    });
+
+    return sanitize(result.rows[0]);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    logger.error('Booking price update rolled back', {
+      ...errorMeta(error, { includeStack: true }),
+      bookingId: id,
+      requesterId: requester.id,
+      role: requester.role,
+    });
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 /**
  * Fetch customer phone and provider WhatsApp number, then send notifications.
  * Called non-blocking after booking creation — never throws to caller.
@@ -387,4 +471,5 @@ module.exports = {
   listUserBookings,
   listMechanicBookings,
   updateBookingStatus,
+  updateBookingPrice,
 };

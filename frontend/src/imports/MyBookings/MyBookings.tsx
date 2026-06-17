@@ -31,6 +31,7 @@ type Booking = {
   description: string;
   preferred_schedule: string;
   created_at: string;
+  quoted_amount?: number | string | null;
   customer_first_name?: string;
   customer_last_name?: string;
   provider_first_name?: string;
@@ -85,6 +86,14 @@ export default function MyBookings() {
   };
 
   const label = (s: string) => s.replace(/_/g, " ");
+  const formatCurrency = (value?: number | string | null) => {
+    const amount = Number(value);
+    if (!Number.isFinite(amount) || amount <= 0) return "Awaiting quote";
+    return new Intl.NumberFormat("en-ZA", {
+      style: "currency",
+      currency: "ZAR",
+    }).format(amount);
+  };
 
   return (
     <Layout className="bg-primary" variant="app">
@@ -150,6 +159,9 @@ export default function MyBookings() {
                           {booking.business_name}
                         </span>
                       )}
+                      <span className="text-sm font-medium text-foreground">
+                        {formatCurrency(booking.quoted_amount)}
+                      </span>
                     </div>
                     <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
                       {booking.description || "No description"}

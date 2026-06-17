@@ -2,7 +2,6 @@ import {
   ArrowLeft,
   CalendarPlus,
   CheckCircle2,
-  ExternalLink,
   MapPin,
   MessageSquare,
   Star,
@@ -26,7 +25,7 @@ import { Label } from "@/app/components/ui/label";
 import { Separator } from "@/app/components/ui/separator";
 import { StatusMessage } from "@/app/components/ui/status-message";
 import { Textarea } from "@/app/components/ui/textarea";
-import { createBooking, initiatePayment, getPaymentStatus } from "@/api/bookings";
+import { createBooking } from "@/api/bookings";
 import { getMechanicProfile } from "@/api/mechanics";
 import { getMechanicReviews } from "@/api/reviews";
 import { listVehicles } from "@/api/vehicles";
@@ -67,8 +66,6 @@ export default function MechProfileFullView() {
     preferredSchedule: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentUrl, setPaymentUrl] = useState("");
-  const [whatsappUrl, setWhatsappUrl] = useState("");
   const { id } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -179,16 +176,9 @@ export default function MechProfileFullView() {
         preferredSchedule: new Date(bookingForm.preferredSchedule).toISOString(),
       });
       const booking = bookingResp.data;
-      setStatus("Booking created. Initiating payment...");
-
-      // Initiate PayFast payment
-      const paymentResp = await initiatePayment(booking.id);
-      const payment = paymentResp.data;
-      setPaymentUrl(payment.redirectUrl);
-      setStatus(
-        "Booking created. Click the payment button to complete via PayFast sandbox.",
-      );
+      setStatus("Booking created. The provider will set a price before payment.");
       setBookingForm({ vehicleId: "", description: "", preferredSchedule: "" });
+      navigate(`/bookings/${booking.id}`);
     } catch (error) {
       setStatus(
         error instanceof Error
@@ -197,20 +187,6 @@ export default function MechProfileFullView() {
       );
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const checkPaymentStatus = async (bookingId) => {
-    try {
-      const resp = await getPaymentStatus(bookingId);
-      const data = resp.data;
-      if (data.whatsapp_url) {
-        setWhatsappUrl(data.whatsapp_url);
-      } else {
-        setStatus("Payment not yet confirmed. Check back after paying.");
-      }
-    } catch {
-      setStatus("Could not fetch payment status.");
     }
   };
 
@@ -323,8 +299,8 @@ export default function MechProfileFullView() {
               <CardHeader>
                 <CardTitle>Request service</CardTitle>
                 <CardDescription>
-                  Submit a booking request. Payment is handled via PayFast
-                  sandbox after creation.
+                  Submit a booking request. The provider sets the price before
+                  you pay via PayFast.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -385,22 +361,6 @@ export default function MechProfileFullView() {
                   </Button>
                 </form>
 
-                {paymentUrl && (
-                  <div className="mt-4 space-y-2">
-                    <Button
-                      className="w-full"
-                      onClick={() => window.open(paymentUrl, "_blank")}
-                      variant="default"
-                    >
-                      <ExternalLink className="size-4" />
-                      Pay via PayFast (Sandbox)
-                    </Button>
-                    <p className="text-xs text-muted-foreground">
-                      After paying, come back and check payment status below.
-                    </p>
-                  </div>
-                )}
-
                 <Button
                   className="mt-3 w-full"
                   onClick={handleContact}
@@ -409,22 +369,6 @@ export default function MechProfileFullView() {
                   <MessageSquare className="size-4" />
                   Contact mechanic
                 </Button>
-
-                {whatsappUrl && (
-                  <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-4">
-                    <p className="mb-2 text-sm font-medium text-emerald-800">
-                      Payment confirmed! Contact the provider:
-                    </p>
-                    <Button
-                      className="w-full"
-                      onClick={() => window.open(whatsappUrl, "_blank")}
-                      variant="default"
-                    >
-                      <MessageSquare className="size-4" />
-                      Open WhatsApp
-                    </Button>
-                  </div>
-                )}
 
                 {status && <StatusMessage className="mt-3" message={status} />}
               </CardContent>

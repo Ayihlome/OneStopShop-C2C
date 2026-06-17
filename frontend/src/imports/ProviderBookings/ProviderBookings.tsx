@@ -48,6 +48,7 @@ type Booking = {
   description: string;
   preferred_schedule: string;
   created_at: string;
+  quoted_amount?: number | string | null;
   customer_first_name?: string;
   customer_last_name?: string;
   vehicle_make?: string;
@@ -126,6 +127,14 @@ export default function ProviderBookings() {
       : bookings.filter((b) => b.booking_status === activeTab);
 
   const label = (s: string) => s.replace(/_/g, " ");
+  const formatCurrency = (value?: number | string | null) => {
+    const amount = Number(value);
+    if (!Number.isFinite(amount) || amount <= 0) return "No quote";
+    return new Intl.NumberFormat("en-ZA", {
+      style: "currency",
+      currency: "ZAR",
+    }).format(amount);
+  };
 
   const formatDate = (raw: string) => {
     try {
@@ -212,6 +221,9 @@ export default function ProviderBookings() {
                         </Badge>
                         <span className="text-sm font-medium text-foreground">
                           #{booking.id}
+                        </span>
+                        <span className="text-sm font-medium text-foreground">
+                          {formatCurrency(booking.quoted_amount)}
                         </span>
                       </div>
                       <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">

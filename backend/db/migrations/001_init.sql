@@ -141,10 +141,12 @@ CREATE TABLE IF NOT EXISTS bookings (
   vehicle_id BIGINT NOT NULL REFERENCES vehicles(id) ON DELETE CASCADE,
   description TEXT NOT NULL,
   preferred_schedule TIMESTAMPTZ NOT NULL,
+  quoted_amount DECIMAL(10, 2) CHECK (quoted_amount IS NULL OR quoted_amount > 0),
+  quoted_at TIMESTAMPTZ,
   booking_status VARCHAR(30) NOT NULL DEFAULT 'payment_pending'
     CHECK (booking_status IN (
       'payment_pending', 'paid', 'whatsapp_redirected',
-      'in_progress', 'completed', 'cancelled', 'refunded'
+      'in_progress', 'completed', 'cancelled', 'rejected', 'refunded'
     )),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

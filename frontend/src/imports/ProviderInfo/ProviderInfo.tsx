@@ -40,12 +40,15 @@ type ProviderForm = {
   specialties: string;
   serviceDescription: string;
   availability: string;
+  payfastMerchantId: string;
+  payfastMerchantKey: string;
 };
 
 type Booking = {
   id: number;
   booking_status: string;
   preferred_schedule: string;
+  quoted_amount?: number | string | null;
   description?: string;
 };
 
@@ -65,6 +68,8 @@ const emptyForm: ProviderForm = {
   specialties: "",
   serviceDescription: "",
   availability: "Available",
+  payfastMerchantId: "",
+  payfastMerchantKey: "",
 };
 
 export default function ProviderInfo({ userId }: { userId: number }) {
@@ -99,6 +104,8 @@ export default function ProviderInfo({ userId }: { userId: number }) {
               : "",
             serviceDescription: String(profile.service_description ?? ""),
             availability: profile.is_available ? "Available" : "Unavailable",
+            payfastMerchantId: "",
+            payfastMerchantKey: "",
           });
           setLoaded(true);
           setStatus("");
@@ -150,6 +157,8 @@ export default function ProviderInfo({ userId }: { userId: number }) {
         business_whatsapp_number: form.businessWhatsapp || null,
         service_description: form.serviceDescription || null,
         is_available: form.availability.toLowerCase() !== "unavailable",
+        payfast_merchant_id: form.payfastMerchantId || null,
+        payfast_merchant_key: form.payfastMerchantKey || null,
         specialities: specialties,
       });
       setStatus("Provider info saved.");
@@ -218,6 +227,15 @@ export default function ProviderInfo({ userId }: { userId: number }) {
     }
   };
 
+  const formatCurrency = (value?: number | string | null) => {
+    const amount = Number(value);
+    if (!Number.isFinite(amount) || amount <= 0) return "No quote";
+    return new Intl.NumberFormat("en-ZA", {
+      style: "currency",
+      currency: "ZAR",
+    }).format(amount);
+  };
+
   return (
     <div className="space-y-6">
       {/* Provider Info Form */}
@@ -265,6 +283,32 @@ export default function ProviderInfo({ userId }: { userId: number }) {
                   }
                   placeholder="Available / Unavailable"
                   value={form.availability}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="sp-payfastMerchantId">PayFast Merchant ID</Label>
+                <Input
+                  id="sp-payfastMerchantId"
+                  onChange={(e) =>
+                    updateField("payfastMerchantId", e.target.value)
+                  }
+                  placeholder="Enter to add or replace"
+                  value={form.payfastMerchantId}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="sp-payfastMerchantKey">PayFast Merchant Key</Label>
+                <Input
+                  id="sp-payfastMerchantKey"
+                  onChange={(e) =>
+                    updateField("payfastMerchantKey", e.target.value)
+                  }
+                  placeholder="Enter to add or replace"
+                  type="password"
+                  value={form.payfastMerchantKey}
                 />
               </div>
             </div>
@@ -372,6 +416,7 @@ export default function ProviderInfo({ userId }: { userId: number }) {
                 <TableRow>
                   <TableHead>#</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Price</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Actions</TableHead>
@@ -393,6 +438,9 @@ export default function ProviderInfo({ userId }: { userId: number }) {
                       >
                         {booking.booking_status.replace(/_/g, " ")}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {formatCurrency(booking.quoted_amount)}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {new Date(
