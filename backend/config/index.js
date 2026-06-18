@@ -30,8 +30,8 @@ const config = {
     merchantKey: process.env.PAYFAST_MERCHANT_KEY || '',
     passphrase: process.env.PAYFAST_PASSPHRASE || '',
     sandbox: process.env.NODE_ENV !== 'production',
-    returnUrl: process.env.PAYFAST_RETURN_URL || 'http://localhost:5173/payment/success',
-    cancelUrl: process.env.PAYFAST_CANCEL_URL || 'http://localhost:5173/payment/cancel',
+    returnUrl: process.env.PAYFAST_RETURN_URL || 'http://localhost:5173/booking/success',
+    cancelUrl: process.env.PAYFAST_CANCEL_URL || 'http://localhost:5173/booking/cancel',
     notifyUrl: process.env.PAYFAST_NOTIFY_URL || 'http://localhost:3000/api/payments/itn',
   },
   whatsapp: {

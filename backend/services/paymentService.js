@@ -5,14 +5,20 @@ const { sanitize } = require('../utils/sanitize');
 const { createError } = require('../utils/errors');
 
 function buildPaymentRedirectUrl(template, bookingId, paymentId, result) {
-  const fallbackPath = result === 'success' ? '/payment/success' : '/payment/cancel';
+  const fallbackPath = result === 'success' ? '/booking/success' : '/booking/cancel';
   const rawUrl = template || `http://localhost:5173${fallbackPath}`;
-  const url = rawUrl
+
+  const resolvedUrl = rawUrl
     .replace(':bookingId', encodeURIComponent(String(bookingId)))
     .replace(':paymentId', encodeURIComponent(String(paymentId)));
-  const separator = url.includes('?') ? '&' : '?';
 
-  return `${url}${separator}bookingId=${encodeURIComponent(String(bookingId))}&paymentId=${encodeURIComponent(String(paymentId))}&result=${result}`;
+  const url = new URL(resolvedUrl, 'http://localhost:5173');
+  url.pathname = url.pathname.replace(/\/{2,}/g, '/');
+  url.searchParams.set('bookingId', String(bookingId));
+  url.searchParams.set('paymentId', String(paymentId));
+  url.searchParams.set('result', result);
+
+  return url.toString();
 }
 
 function paymentStatusFromPayFast(status) {
