@@ -11,39 +11,56 @@ async function initiatePayment(req, res) {
 // PayFast calls this endpoint directly via ITN — no auth header
 async function itnCallback(req, res) {
   const { payment_status, m_payment_id, pf_payment_id } = req.body;
+  const paymentId = Number(m_payment_id);
 
-  if (payment_status !== 'COMPLETE') {
-    // PayFast expects a 200 even on non-completion to acknowledge receipt
+  if (!Number.isInteger(paymentId) || paymentId <= 0) {
     return res.status(200).send('ok');
   }
 
-  await paymentService.confirmPayment(Number(m_payment_id), pf_payment_id);
+  try {
+    await paymentService.updatePaymentFromPayFast(
+      paymentId,
+      pf_payment_id,
+      payment_status
+    );
+  } catch (error) {
+    if (error.status !== 404) {
+      throw error;
+    }
+  }
+
+  // PayFast expects a 200 response once the ITN has been received.
   return res.status(200).send('ok');
 }
 
 async function getPaymentStatus(req, res) {
   const data = await paymentService.getPaymentStatus(
     Number(req.params.bookingId),
-    req.user.id
+    req.user
   );
   return res.status(200).json({ data });
 }
 
 async function paymentCancel(req, res) {
-  // For simplicity, reuse getPaymentStatus logic to return current payment status
-  const data = await paymentService.getPaymentStatus(
+  const data = await paymentService.cancelPendingPayment(
     Number(req.params.bookingId),
-    req.user.id
+    req.user
   );
   return res.status(200).json({ data });
 }
 
 async function paymentSuccess(req, res) {
-  const data = await paymentService.paymentSuccess(
+  const data = await paymentService.getPaymentStatus(
     Number(req.params.bookingId),
-    req.user.id
+    req.user
   );
   return res.status(200).json({ data });
 }
 
-module.exports = { initiatePayment, itnCallback, getPaymentStatus, paymentSuccess }; 
+module.exports = {
+  initiatePayment,
+  itnCallback,
+  getPaymentStatus,
+  paymentCancel,
+  paymentSuccess,
+};

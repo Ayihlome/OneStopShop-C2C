@@ -57,6 +57,10 @@ type BookingDetail = {
   created_at: string;
   quoted_amount?: number | string | null;
   quoted_at?: string | null;
+  payment_amount?: number | string | null;
+  payment_currency?: string | null;
+  payment_status?: string | null;
+  paid_at?: string | null;
   customer_first_name?: string;
   customer_last_name?: string;
   provider_first_name?: string;
@@ -146,8 +150,30 @@ export default function BookingDetail() {
       const pData = resp?.data ?? resp;
       if (pData.whatsapp_url) {
         setWhatsappUrl(pData.whatsapp_url);
+        setBooking((prev) =>
+          prev
+            ? {
+                ...prev,
+                booking_status: pData.booking_status || prev.booking_status,
+                payment_status: pData.payment_status,
+                payment_amount: pData.amount,
+                payment_currency: pData.currency,
+                paid_at: pData.paid_at,
+              }
+            : prev
+        );
         setStatus("Payment confirmed! You can now contact the provider.");
       } else {
+        setBooking((prev) =>
+          prev
+            ? {
+                ...prev,
+                payment_status: pData.payment_status,
+                payment_amount: pData.amount,
+                payment_currency: pData.currency,
+              }
+            : prev
+        );
         setStatus("Payment not yet confirmed. Complete the payment first.");
       }
     } catch {
@@ -341,6 +367,40 @@ export default function BookingDetail() {
 
           {/* Right column — actions */}
           <div className="space-y-6">
+            {booking.payment_status && (
+              <Card className="rounded-lg bg-card">
+                <CardHeader>
+                  <CardTitle className="text-lg">Payment status</CardTitle>
+                  <CardDescription>
+                    {booking.payment_status === "successful"
+                      ? "Your payment has been confirmed."
+                      : booking.payment_status === "pending"
+                        ? "PayFast has not confirmed this payment yet."
+                        : `Payment ${label(booking.payment_status)}.`}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Badge
+                    className={
+                      booking.payment_status === "successful"
+                        ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+                        : booking.payment_status === "pending"
+                          ? "bg-amber-100 text-amber-800 border-amber-200"
+                          : "bg-red-100 text-red-800 border-red-200"
+                    }
+                    variant="outline"
+                  >
+                    {label(booking.payment_status)}
+                  </Badge>
+                  {(booking.payment_amount || booking.quoted_amount) && (
+                    <p className="mt-3 text-2xl font-semibold">
+                      {formatCurrency(booking.payment_amount || booking.quoted_amount)}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Provider card */}
             {booking.business_name && (
               <Card className="rounded-lg bg-card">
@@ -425,10 +485,10 @@ export default function BookingDetail() {
                     <>
                       <Button
                         className="w-full"
-                        onClick={() => window.open(paymentUrl, "_blank")}
+                        onClick={() => window.location.assign(paymentUrl)}
                       >
                         <ExternalLink className="size-4" />
-                        Open PayFast
+                        Continue to PayFast
                       </Button>
                       <Button
                         className="w-full"

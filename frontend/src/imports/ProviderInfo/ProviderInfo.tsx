@@ -49,6 +49,7 @@ type Booking = {
   booking_status: string;
   preferred_schedule: string;
   quoted_amount?: number | string | null;
+  payment_status?: string | null;
   description?: string;
 };
 
@@ -417,6 +418,7 @@ export default function ProviderInfo({ userId }: { userId: number }) {
                   <TableHead>#</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Price</TableHead>
+                  <TableHead>Payment</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Actions</TableHead>
@@ -441,6 +443,24 @@ export default function ProviderInfo({ userId }: { userId: number }) {
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {formatCurrency(booking.quoted_amount)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        className={
+                          booking.payment_status === "successful"
+                            ? "bg-emerald-100 text-emerald-800"
+                            : booking.payment_status === "pending"
+                              ? "bg-amber-100 text-amber-800"
+                              : booking.payment_status
+                                ? "bg-red-100 text-red-800"
+                                : "bg-gray-100 text-gray-800"
+                        }
+                        variant="outline"
+                      >
+                        {booking.payment_status
+                          ? booking.payment_status.replace(/_/g, " ")
+                          : "not started"}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {new Date(

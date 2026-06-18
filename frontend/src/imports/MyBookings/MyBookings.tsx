@@ -32,6 +32,7 @@ type Booking = {
   preferred_schedule: string;
   created_at: string;
   quoted_amount?: number | string | null;
+  payment_status?: string | null;
   customer_first_name?: string;
   customer_last_name?: string;
   provider_first_name?: string;
@@ -162,6 +163,20 @@ export default function MyBookings() {
                       <span className="text-sm font-medium text-foreground">
                         {formatCurrency(booking.quoted_amount)}
                       </span>
+                      {booking.payment_status && (
+                        <Badge
+                          className={
+                            booking.payment_status === "successful"
+                              ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+                              : booking.payment_status === "pending"
+                                ? "bg-amber-100 text-amber-800 border-amber-200"
+                                : "bg-red-100 text-red-800 border-red-200"
+                          }
+                          variant="outline"
+                        >
+                          payment {label(booking.payment_status)}
+                        </Badge>
+                      )}
                     </div>
                     <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
                       {booking.description || "No description"}

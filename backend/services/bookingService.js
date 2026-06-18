@@ -16,12 +16,18 @@ const BOOKING_SELECT = `
     sp.id AS provider_profile_id,
     v.make AS vehicle_make,
     v.model AS vehicle_model,
-    v.license_plate
+    v.license_plate,
+    p.id AS payment_id,
+    p.amount AS payment_amount,
+    p.currency AS payment_currency,
+    p.payment_status,
+    p.paid_at
   FROM bookings b
   INNER JOIN accounts ua ON ua.id = b.customer_user_id
   INNER JOIN service_provider_profiles sp ON sp.id = b.service_provider_id
   INNER JOIN accounts pa ON pa.id = sp.account_id
   INNER JOIN vehicles v ON v.id = b.vehicle_id
+  LEFT JOIN payments p ON p.booking_id = b.id
 `;
 
 async function ensureVehicleBelongsToUser(vehicleId, userId) {

@@ -31,7 +31,7 @@ router.get(
 router.get(
   '/booking/:bookingId/cancel',
   authenticate,
-  asyncHandler(paymentController.paymentCancel) // Reuse paymentCancel to return current payment status
+  asyncHandler(paymentController.paymentCancel)
 );
 
 //success page

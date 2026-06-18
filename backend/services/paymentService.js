@@ -4,6 +4,67 @@ const logger = require('../utils/logger');
 const { sanitize } = require('../utils/sanitize');
 const { createError } = require('../utils/errors');
 
+function buildPaymentRedirectUrl(template, bookingId, paymentId, result) {
+  const fallbackPath = result === 'success' ? '/payment/success' : '/payment/cancel';
+  const rawUrl = template || `http://localhost:5173${fallbackPath}`;
+  const url = rawUrl
+    .replace(':bookingId', encodeURIComponent(String(bookingId)))
+    .replace(':paymentId', encodeURIComponent(String(paymentId)));
+  const separator = url.includes('?') ? '&' : '?';
+
+  return `${url}${separator}bookingId=${encodeURIComponent(String(bookingId))}&paymentId=${encodeURIComponent(String(paymentId))}&result=${result}`;
+}
+
+function paymentStatusFromPayFast(status) {
+  switch (String(status || '').toUpperCase()) {
+    case 'COMPLETE':
+      return 'successful';
+    case 'CANCELLED':
+    case 'CANCELED':
+      return 'cancelled';
+    case 'FAILED':
+      return 'failed';
+    default:
+      return 'failed';
+  }
+}
+
+async function notifyPaymentOutcome(client, payment, status) {
+  const bookingResult = await client.query(
+    `SELECT
+       b.id,
+       b.customer_user_id,
+       sp.account_id AS provider_account_id
+     FROM bookings b
+     INNER JOIN service_provider_profiles sp ON sp.id = b.service_provider_id
+     WHERE b.id = $1`,
+    [payment.booking_id]
+  );
+  const booking = bookingResult.rows[0];
+
+  if (!booking) {
+    return;
+  }
+
+  const providerMessage = status === 'successful'
+    ? `Payment received for booking #${booking.id}`
+    : `Payment ${status} for booking #${booking.id}`;
+  const customerMessage = status === 'successful'
+    ? `Your payment for booking #${booking.id} was successful`
+    : `Your payment for booking #${booking.id} was ${status}`;
+
+  await client.query(
+    `INSERT INTO notifications (recipient_id, recipient_type, message)
+     VALUES ($1, 'mechanic', $2), ($3, 'user', $4)`,
+    [
+      booking.provider_account_id,
+      providerMessage,
+      booking.customer_user_id,
+      customerMessage,
+    ]
+  );
+}
+
 // Build a PayFast redirect URL from a provider-priced booking.
 // The provider's PayFast merchant credentials are read from their profile.
 async function initiateSandboxPayment(bookingId, payerUserId) {
@@ -78,8 +139,8 @@ async function initiateSandboxPayment(bookingId, payerUserId) {
     const params = new URLSearchParams({
       merchant_id: merchantId,
       merchant_key: merchantKey,
-      return_url: config.payfast.returnUrl,
-      cancel_url: config.payfast.cancelUrl,
+      return_url: buildPaymentRedirectUrl(config.payfast.returnUrl, bookingId, payment.id, 'success'),
+      cancel_url: buildPaymentRedirectUrl(config.payfast.cancelUrl, bookingId, payment.id, 'cancel'),
       notify_url: config.payfast.notifyUrl,
       m_payment_id: String(payment.id),
       amount,
@@ -111,10 +172,8 @@ async function initiateSandboxPayment(bookingId, payerUserId) {
   }
 }
 
-// Called by the PayFast ITN webhook after a successful payment.
-// Marks the payment as successful and advances the booking to 'paid'.
-// The WhatsApp URL is now unlocked for the customer.
-async function confirmPayment(mPaymentId, payfastPaymentId) {
+async function updatePaymentFromPayFast(mPaymentId, payfastPaymentId, payfastStatus) {
+  const nextStatus = paymentStatusFromPayFast(payfastStatus);
   const client = await pool.connect();
 
   try {
@@ -122,13 +181,13 @@ async function confirmPayment(mPaymentId, payfastPaymentId) {
 
     const paymentResult = await client.query(
       `UPDATE payments
-       SET payment_status = 'successful',
-           payfast_payment_id = $2,
-           paid_at = NOW()
+       SET payment_status = $2,
+           payfast_payment_id = $3,
+           paid_at = CASE WHEN $2 = 'successful' THEN NOW() ELSE paid_at END
        WHERE id = $1
          AND payment_status = 'pending'
        RETURNING *`,
-      [mPaymentId, payfastPaymentId]
+      [mPaymentId, nextStatus, payfastPaymentId]
     );
 
     const payment = paymentResult.rows[0];
@@ -136,73 +195,34 @@ async function confirmPayment(mPaymentId, payfastPaymentId) {
       throw createError(404, 'Payment not found or already processed');
     }
 
-    await client.query(
-      `UPDATE bookings
-       SET booking_status = 'paid'
-       WHERE id = $1`,
-      [payment.booking_id]
-    );
+    if (nextStatus === 'successful') {
+      await client.query(
+        `UPDATE bookings
+         SET booking_status = 'paid'
+         WHERE id = $1`,
+        [payment.booking_id]
+      );
+    }
+
+    await notifyPaymentOutcome(client, payment, nextStatus);
 
     await client.query('COMMIT');
 
-    logger.info('Payment confirmed and booking advanced to paid', {
+    logger.info('PayFast payment update processed', {
       paymentId: payment.id,
       bookingId: payment.booking_id,
       payfastPaymentId,
+      status: nextStatus,
     });
 
     return sanitize(payment);
   } catch (error) {
     await client.query('ROLLBACK');
-    logger.error('Payment confirmation rolled back', { mPaymentId });
+    logger.error('Payment update rolled back', { mPaymentId, payfastStatus });
     throw error;
   } finally {
     client.release();
   }
-}
-
-// Returns the payment row for a booking and, if confirmed,
-// the provider's WhatsApp URL for the customer.
-async function getPaymentStatus(bookingId, requesterId) {
-  const result = await pool.query(
-    `SELECT
-       p.*,
-       sp.business_whatsapp_number,
-       b.customer_user_id,
-       b.booking_status
-     FROM payments p
-     INNER JOIN bookings b ON b.id = p.booking_id
-     INNER JOIN service_provider_profiles sp ON sp.id = b.service_provider_id
-     WHERE p.booking_id = $1`,
-    [bookingId]
-  );
-
-  const row = result.rows[0];
-  if (!row) {
-    throw createError(404, 'Payment not found for this booking');
-  }
-
-  // Only the customer who made the booking can see the WhatsApp URL
-  const isOwner = Number(row.customer_user_id) === Number(requesterId);
-  const paymentConfirmed = row.payment_status === 'successful';
-
-  const response = sanitize(row);
-  delete response.business_whatsapp_number; // remove by default
-
-  if (isOwner && paymentConfirmed && row.business_whatsapp_number) {
-    const cleaned = String(row.business_whatsapp_number).replace(/\D/g, '');
-    response.whatsapp_url = `https://wa.me/${cleaned}`;
-
-    // Advance booking status to 'whatsapp_redirected' if still on 'paid'
-    if (row.booking_status === 'paid') {
-      await pool.query(
-        `UPDATE bookings SET booking_status = 'whatsapp_redirected' WHERE id = $1`,
-        [bookingId]
-      );
-    }
-  }
-
-  return response;
 }
 
 async function listAllPayments() {
@@ -222,11 +242,12 @@ async function listAllPayments() {
   return sanitize(result.rows);
 }
 
-async function getPaymentStatus(bookingId, requesterId) {
+async function getPaymentStatus(bookingId, requester) {
   const result = await pool.query(
     `SELECT 
         p.*,
         sp.business_whatsapp_number,
+        sp.account_id AS provider_account_id,
         b.customer_user_id,
         b.booking_status
       FROM payments p
@@ -241,12 +262,19 @@ async function getPaymentStatus(bookingId, requesterId) {
     throw createError(404, 'Payment not found for this booking');
   }
 
-  // Only the customer who made the booking can see the WhatsApp URL
-  const isOwner = Number(row.customer_user_id) === Number(requesterId);
+  const isOwner = Number(row.customer_user_id) === Number(requester.id);
+  const isProvider = Number(row.provider_account_id) === Number(requester.id);
+  const isAdmin = ['moderator', 'superadmin'].includes(requester.role);
+
+  if (!isOwner && !isProvider && !isAdmin) {
+    throw createError(403, 'Forbidden');
+  }
+
   const paymentConfirmed = row.payment_status === 'successful';
 
   const response = sanitize(row);
   delete response.business_whatsapp_number; // remove by default
+  delete response.provider_account_id;
 
   if (isOwner && paymentConfirmed && row.business_whatsapp_number) {
     const cleaned = String(row.business_whatsapp_number).replace(/\D/g, '');
@@ -264,16 +292,45 @@ async function getPaymentStatus(bookingId, requesterId) {
   return response;
 }
 
-async function paymentSuccess(bookingId, requesterId) {
-  // For simplicity, reuse getPaymentStatus logic to return payment details
-  return getPaymentStatus(bookingId, requesterId);
+async function cancelPendingPayment(bookingId, requester) {
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const paymentResult = await client.query(
+      `UPDATE payments p
+       SET payment_status = 'cancelled'
+       FROM bookings b
+       WHERE p.booking_id = b.id
+         AND p.booking_id = $1
+         AND b.customer_user_id = $2
+         AND p.payment_status = 'pending'
+       RETURNING p.*`,
+      [bookingId, requester.id]
+    );
+
+    const payment = paymentResult.rows[0];
+    if (payment) {
+      await notifyPaymentOutcome(client, payment, 'cancelled');
+    }
+
+    await client.query('COMMIT');
+
+    return getPaymentStatus(bookingId, requester);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 
 module.exports = {
   initiateSandboxPayment,
-  confirmPayment,
+  updatePaymentFromPayFast,
   getPaymentStatus,
-  paymentSuccess,
+  cancelPendingPayment,
   listAllPayments,
 };

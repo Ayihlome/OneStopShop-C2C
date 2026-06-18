@@ -20,6 +20,7 @@ import ProviderDashboard from "../imports/ProviderDashboard/ProviderDashboard";
 import ProviderBookings from "../imports/ProviderBookings/ProviderBookings";
 import ProviderBookingDetail from "../imports/ProviderBookingDetail/ProviderBookingDetail";
 import Notifications from "../imports/Notifications/Notifications";
+import PaymentResult from "../imports/PaymentResult/PaymentResult";
 
 export const router = createBrowserRouter([
   {
@@ -90,6 +91,16 @@ export const router = createBrowserRouter([
     path: "/bookings/:id",
     loader: requireAuth,
     Component: BookingDetail,
+  },
+  {
+    path: "/payment/success",
+    loader: requireAuth,
+    Component: PaymentResult,
+  },
+  {
+    path: "/payment/cancel",
+    loader: requireAuth,
+    Component: PaymentResult,
   },
   {
     path: "/provider/dashboard",

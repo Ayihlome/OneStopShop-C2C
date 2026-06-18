@@ -46,6 +46,10 @@ type Booking = {
   created_at: string;
   quoted_amount?: number | string | null;
   quoted_at?: string | null;
+  payment_amount?: number | string | null;
+  payment_currency?: string | null;
+  payment_status?: string | null;
+  paid_at?: string | null;
   customer_first_name?: string;
   customer_last_name?: string;
   provider_first_name?: string;
@@ -330,6 +334,43 @@ export default function ProviderBookingDetail() {
                 ) : (
                   <p className="text-sm text-muted-foreground">
                     Price changes are closed after payment starts.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-lg bg-card">
+              <CardHeader>
+                <CardTitle className="text-lg">Payment</CardTitle>
+                <CardDescription>
+                  {booking.payment_status
+                    ? `Payment is ${label(booking.payment_status)}.`
+                    : "No payment has been started for this booking."}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Badge
+                  className={
+                    booking.payment_status === "successful"
+                      ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+                      : booking.payment_status === "pending"
+                        ? "bg-amber-100 text-amber-800 border-amber-200"
+                        : booking.payment_status
+                          ? "bg-red-100 text-red-800 border-red-200"
+                          : "bg-gray-100 text-gray-800 border-gray-200"
+                  }
+                  variant="outline"
+                >
+                  {booking.payment_status ? label(booking.payment_status) : "not started"}
+                </Badge>
+                {(booking.payment_amount || booking.quoted_amount) && (
+                  <p className="mt-3 text-2xl font-semibold">
+                    {formatCurrency(booking.payment_amount || booking.quoted_amount)}
+                  </p>
+                )}
+                {booking.paid_at && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Paid {formatDate(booking.paid_at)} at {formatTime(booking.paid_at)}
                   </p>
                 )}
               </CardContent>

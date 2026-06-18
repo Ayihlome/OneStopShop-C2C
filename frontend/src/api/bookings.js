@@ -31,3 +31,11 @@ export async function initiatePayment(bookingId) {
 export async function getPaymentStatus(bookingId) {
   return client.get(`/payments/booking/${bookingId}/status`);
 }
+
+export async function confirmPaymentReturn(bookingId) {
+  return client.get(`/payments/booking/${bookingId}/success`);
+}
+
+export async function cancelPaymentReturn(bookingId) {
+  return client.get(`/payments/booking/${bookingId}/cancel`);
+}
