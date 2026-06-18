@@ -103,6 +103,16 @@ export const router = createBrowserRouter([
     Component: PaymentResult,
   },
   {
+    path: "/booking/success",
+    loader: requireAuth,
+    Component: PaymentResult,
+  },
+  {
+    path: "/booking/cancel",
+    loader: requireAuth,
+    Component: PaymentResult,
+  },
+  {
     path: "/provider/dashboard",
     loader: requireAuth,
     Component: ProviderDashboard,
